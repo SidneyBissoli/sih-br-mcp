@@ -1,13 +1,17 @@
 # =============================================================================
-# build-aggregations.R
-# Gera cubos de dados Parquet a partir do SIH-SUS
+# test-aggregations.R
+# Script de TESTE - Gera cubos Parquet em data/test/
 # Projeto: sih-br-mcp
 #
 # USO:
-#   source("scripts/build-aggregations.R")
-#   build_data(years = 2023, ufs = "SP")           # 1 ano, 1 UF
-#   build_data(years = 2020:2024, ufs = "all")     # 5 anos, todas UFs
-#   build_data(years = "all", ufs = "all")         # TUDO (demorado!)
+#   source("scripts/test-aggregations.R")
+#   test_data(years = 2023:2024, ufs = c("AC", "RR"))  # Teste rapido
+#   test_data(years = 2024, ufs = "SP")                # Teste com UF grande
+#
+# FINALIDADE:
+#   - Validar que o codigo funciona corretamente
+#   - Testar apos mudancas no codigo do MCP
+#   - NAO e para gerar dados de producao (use build-aggregations.R para isso)
 # =============================================================================
 
 library(dplyr)
@@ -20,10 +24,10 @@ library(stringr)
 library(cli)
 
 # =============================================================================
-# CONFIGURACAO
+# CONFIGURACAO - PASTA DE TESTE
 # =============================================================================
 
-OUTPUT_DIR <- here::here("data")
+OUTPUT_DIR <- here::here("data", "test")
 dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
 # Todas as UFs brasileiras
@@ -35,7 +39,7 @@ ALL_UFS <- c("AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
 FIRST_YEAR <- 1998
 
 # =============================================================================
-# FUNCOES AUXILIARES
+# FUNCOES AUXILIARES (identicas ao build-aggregations.R)
 # =============================================================================
 
 #' Cria faixas etarias padronizadas
@@ -274,6 +278,13 @@ processar_ano <- function(ano, ufs_para_baixar, output_dir) {
     write_parquet(cubo_icsap, file.path(output_dir, sprintf("sih_icsap_%d.parquet", ano)))
     cli_alert_success("  sih_icsap_{ano}.parquet: {.val {format(nrow(cubo_icsap), big.mark='.')}} linhas")
 
+    # Estatisticas de validacao
+    total_internacoes <- sum(cubo_causas$n)
+    total_icsap <- sum(cubo_causas$n[cubo_causas$is_csap])
+    pct_icsap <- round(total_icsap / total_internacoes * 100, 2)
+
+    cli_alert_info("Validacao: {.val {format(total_internacoes, big.mark='.')}} internacoes, {.val {pct_icsap}}% ICSAP")
+
     # Limpa memoria
     rm(dados, cubo_causas, cubo_series, totais, icsap, cubo_icsap)
     gc()
@@ -289,10 +300,10 @@ processar_ano <- function(ano, ufs_para_baixar, output_dir) {
 }
 
 # =============================================================================
-# FUNCAO PRINCIPAL: build_data()
+# FUNCAO PRINCIPAL: test_data()
 # =============================================================================
 
-#' Gera cubos de dados Parquet a partir do SIH-SUS
+#' Gera cubos de dados Parquet de TESTE a partir do SIH-SUS
 #'
 #' @param years Anos para processar. Pode ser:
 #'   - Um ano: 2023
@@ -306,11 +317,10 @@ processar_ano <- function(ano, ufs_para_baixar, output_dir) {
 #'   - "all" para todas as 27 UFs
 #'
 #' @examples
-#' build_data(years = 2023, ufs = "SP")
-#' build_data(years = 2020:2024, ufs = "all")
-#' build_data(years = "all", ufs = "all")  # TUDO - demorado!
+#' test_data(years = 2023:2024, ufs = c("AC", "RR"))  # Teste rapido
+#' test_data(years = 2024, ufs = "SP")                # Teste com UF grande
 #'
-build_data <- function(years, ufs) {
+test_data <- function(years, ufs) {
 
   # Valida e expande parametro years
   if (identical(years, "all")) {
@@ -334,19 +344,10 @@ build_data <- function(years, ufs) {
     }
   }
 
-  # Alerta para processamento completo
-  if (length(years) > 20 && length(ufs) == 27) {
-    cli_alert_warning("Voce solicitou processar {length(years)} anos e TODAS as 27 UFs.")
-    cli_alert_warning("Isso pode levar MUITAS HORAS e usar dezenas de GB de banda.")
-    resposta <- readline(prompt = "Deseja continuar? (S/N): ")
-    if (!toupper(resposta) %in% c("S", "SIM", "Y", "YES")) {
-      cli_alert_info("Operacao cancelada pelo usuario.")
-      return(invisible(NULL))
-    }
-  }
-
   # Cabecalho
-  cli_h1("SIH-BR-MCP: Geracao de Cubos de Dados")
+
+  cli_h1("SIH-BR-MCP: TESTE de Geracao de Cubos")
+  cli_alert_warning("MODO DE TESTE - Arquivos serao salvos em data/test/")
   cli_alert_info("Anos: {.val {paste(range(years), collapse=' a ')}} ({length(years)} anos)")
   cli_alert_info("UFs: {.val {if(length(ufs)==27) 'TODAS (27)' else paste(ufs, collapse=', ')}}")
   cli_alert_info("Diretorio de saida: {.path {OUTPUT_DIR}}")
@@ -364,10 +365,11 @@ build_data <- function(years, ufs) {
     resultados[[as.character(ano)]] <- resultado
   }
 
-  # Gera dados populacionais (apenas uma vez)
-  cli_h1("Gerando dados populacionais")
+  # Gera dados populacionais de teste
+  cli_h1("Gerando dados populacionais (teste)")
 
   pop <- csapAIH::popbr2000_2021 %>%
+    filter(ano >= min(years)) %>%
     select(
       year = ano,
       municipality_code = mun,
@@ -410,12 +412,15 @@ build_data <- function(years, ufs) {
   sucessos <- sum(unlist(resultados), na.rm = TRUE)
   falhas <- sum(!unlist(resultados), na.rm = TRUE)
 
-  cli_h1("PROCESSAMENTO CONCLUIDO!")
+  cli_h1("TESTE CONCLUIDO!")
   cli_alert_success("Anos processados com sucesso: {.val {sucessos}}")
   if (falhas > 0) {
     cli_alert_warning("Anos com falha: {.val {falhas}}")
   }
-  cli_alert_info("Arquivos salvos em: {.path {OUTPUT_DIR}}")
+  cli_alert_info("Arquivos de TESTE salvos em: {.path {OUTPUT_DIR}}")
+  cli_text("")
+  cli_alert_warning("Lembre-se: estes sao dados de TESTE.")
+  cli_alert_info("Para dados de producao, use: source('scripts/build-aggregations.R')")
 
   return(invisible(resultados))
 }
@@ -424,11 +429,11 @@ build_data <- function(years, ufs) {
 # MENSAGEM AO CARREGAR
 # =============================================================================
 
-cli_alert_info("Script build-aggregations.R carregado.")
-cli_alert_info("Use: build_data(years = ..., ufs = ...)")
+cli_alert_info("Script test-aggregations.R carregado.")
+cli_alert_warning("MODO DE TESTE - Arquivos serao salvos em data/test/")
+cli_alert_info("Use: test_data(years = ..., ufs = ...)")
 cli_alert_info("Exemplos:")
 cli_bullets(c(
-  " " = "build_data(years = 2023, ufs = 'SP')",
-  " " = "build_data(years = 2020:2024, ufs = 'all')",
-  " " = "build_data(years = 'all', ufs = 'all')  # TUDO"
+  " " = "test_data(years = 2023:2024, ufs = c('AC', 'RR'))  # Teste rapido",
+  " " = "test_data(years = 2024, ufs = 'SP')                # Teste com UF grande"
 ))
