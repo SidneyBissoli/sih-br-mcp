@@ -1,0 +1,43 @@
+{
+  "name": "sih-br-mcp",
+  "version": "0.1.0",
+  "description": "MCP Server para análise de dados do SIH-SUS com foco em ICSAP",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "sih-br-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "sus",
+    "sih",
+    "icsap",
+    "csap",
+    "datasus",
+    "saude-publica",
+    "epidemiologia"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "duckdb": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist",
+    "data"
+  ]
+}

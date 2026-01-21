@@ -1,0 +1,68 @@
+{
+  "metadata": {
+    "source": "IBGE",
+    "total_regions": 5,
+    "total_ufs": 27
+  },
+  "regions": [
+    {
+      "code": "N",
+      "name_pt": "Norte",
+      "name_en": "North",
+      "ufs": ["AC", "AM", "AP", "PA", "RO", "RR", "TO"]
+    },
+    {
+      "code": "NE",
+      "name_pt": "Nordeste",
+      "name_en": "Northeast",
+      "ufs": ["AL", "BA", "CE", "MA", "PB", "PE", "PI", "RN", "SE"]
+    },
+    {
+      "code": "SE",
+      "name_pt": "Sudeste",
+      "name_en": "Southeast",
+      "ufs": ["ES", "MG", "RJ", "SP"]
+    },
+    {
+      "code": "S",
+      "name_pt": "Sul",
+      "name_en": "South",
+      "ufs": ["PR", "RS", "SC"]
+    },
+    {
+      "code": "CO",
+      "name_pt": "Centro-Oeste",
+      "name_en": "Central-West",
+      "ufs": ["DF", "GO", "MS", "MT"]
+    }
+  ],
+  "ufs": [
+    { "code": "AC", "ibge_code": "12", "name": "Acre", "region": "N", "capital": "Rio Branco" },
+    { "code": "AL", "ibge_code": "27", "name": "Alagoas", "region": "NE", "capital": "Maceió" },
+    { "code": "AM", "ibge_code": "13", "name": "Amazonas", "region": "N", "capital": "Manaus" },
+    { "code": "AP", "ibge_code": "16", "name": "Amapá", "region": "N", "capital": "Macapá" },
+    { "code": "BA", "ibge_code": "29", "name": "Bahia", "region": "NE", "capital": "Salvador" },
+    { "code": "CE", "ibge_code": "23", "name": "Ceará", "region": "NE", "capital": "Fortaleza" },
+    { "code": "DF", "ibge_code": "53", "name": "Distrito Federal", "region": "CO", "capital": "Brasília" },
+    { "code": "ES", "ibge_code": "32", "name": "Espírito Santo", "region": "SE", "capital": "Vitória" },
+    { "code": "GO", "ibge_code": "52", "name": "Goiás", "region": "CO", "capital": "Goiânia" },
+    { "code": "MA", "ibge_code": "21", "name": "Maranhão", "region": "NE", "capital": "São Luís" },
+    { "code": "MG", "ibge_code": "31", "name": "Minas Gerais", "region": "SE", "capital": "Belo Horizonte" },
+    { "code": "MS", "ibge_code": "50", "name": "Mato Grosso do Sul", "region": "CO", "capital": "Campo Grande" },
+    { "code": "MT", "ibge_code": "51", "name": "Mato Grosso", "region": "CO", "capital": "Cuiabá" },
+    { "code": "PA", "ibge_code": "15", "name": "Pará", "region": "N", "capital": "Belém" },
+    { "code": "PB", "ibge_code": "25", "name": "Paraíba", "region": "NE", "capital": "João Pessoa" },
+    { "code": "PE", "ibge_code": "26", "name": "Pernambuco", "region": "NE", "capital": "Recife" },
+    { "code": "PI", "ibge_code": "22", "name": "Piauí", "region": "NE", "capital": "Teresina" },
+    { "code": "PR", "ibge_code": "41", "name": "Paraná", "region": "S", "capital": "Curitiba" },
+    { "code": "RJ", "ibge_code": "33", "name": "Rio de Janeiro", "region": "SE", "capital": "Rio de Janeiro" },
+    { "code": "RN", "ibge_code": "24", "name": "Rio Grande do Norte", "region": "NE", "capital": "Natal" },
+    { "code": "RO", "ibge_code": "11", "name": "Rondônia", "region": "N", "capital": "Porto Velho" },
+    { "code": "RR", "ibge_code": "14", "name": "Roraima", "region": "N", "capital": "Boa Vista" },
+    { "code": "RS", "ibge_code": "43", "name": "Rio Grande do Sul", "region": "S", "capital": "Porto Alegre" },
+    { "code": "SC", "ibge_code": "42", "name": "Santa Catarina", "region": "S", "capital": "Florianópolis" },
+    { "code": "SE", "ibge_code": "28", "name": "Sergipe", "region": "NE", "capital": "Aracaju" },
+    { "code": "SP", "ibge_code": "35", "name": "São Paulo", "region": "SE", "capital": "São Paulo" },
+    { "code": "TO", "ibge_code": "17", "name": "Tocantins", "region": "N", "capital": "Palmas" }
+  ]
+}

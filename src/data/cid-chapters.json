@@ -1,0 +1,163 @@
+{
+  "metadata": {
+    "classification": "CID-10",
+    "version": "2019",
+    "source": "OMS/CBCD"
+  },
+  "chapters": [
+    {
+      "code": "I",
+      "roman": "I",
+      "range": "A00-B99",
+      "name_pt": "Algumas doenças infecciosas e parasitárias",
+      "name_en": "Certain infectious and parasitic diseases"
+    },
+    {
+      "code": "II",
+      "roman": "II",
+      "range": "C00-D48",
+      "name_pt": "Neoplasias (tumores)",
+      "name_en": "Neoplasms"
+    },
+    {
+      "code": "III",
+      "roman": "III",
+      "range": "D50-D89",
+      "name_pt": "Doenças do sangue e dos órgãos hematopoéticos e alguns transtornos imunitários",
+      "name_en": "Diseases of the blood and blood-forming organs"
+    },
+    {
+      "code": "IV",
+      "roman": "IV",
+      "range": "E00-E90",
+      "name_pt": "Doenças endócrinas, nutricionais e metabólicas",
+      "name_en": "Endocrine, nutritional and metabolic diseases"
+    },
+    {
+      "code": "V",
+      "roman": "V",
+      "range": "F00-F99",
+      "name_pt": "Transtornos mentais e comportamentais",
+      "name_en": "Mental and behavioural disorders"
+    },
+    {
+      "code": "VI",
+      "roman": "VI",
+      "range": "G00-G99",
+      "name_pt": "Doenças do sistema nervoso",
+      "name_en": "Diseases of the nervous system"
+    },
+    {
+      "code": "VII",
+      "roman": "VII",
+      "range": "H00-H59",
+      "name_pt": "Doenças do olho e anexos",
+      "name_en": "Diseases of the eye and adnexa"
+    },
+    {
+      "code": "VIII",
+      "roman": "VIII",
+      "range": "H60-H95",
+      "name_pt": "Doenças do ouvido e da apófise mastóide",
+      "name_en": "Diseases of the ear and mastoid process"
+    },
+    {
+      "code": "IX",
+      "roman": "IX",
+      "range": "I00-I99",
+      "name_pt": "Doenças do aparelho circulatório",
+      "name_en": "Diseases of the circulatory system"
+    },
+    {
+      "code": "X",
+      "roman": "X",
+      "range": "J00-J99",
+      "name_pt": "Doenças do aparelho respiratório",
+      "name_en": "Diseases of the respiratory system"
+    },
+    {
+      "code": "XI",
+      "roman": "XI",
+      "range": "K00-K93",
+      "name_pt": "Doenças do aparelho digestivo",
+      "name_en": "Diseases of the digestive system"
+    },
+    {
+      "code": "XII",
+      "roman": "XII",
+      "range": "L00-L99",
+      "name_pt": "Doenças da pele e do tecido subcutâneo",
+      "name_en": "Diseases of the skin and subcutaneous tissue"
+    },
+    {
+      "code": "XIII",
+      "roman": "XIII",
+      "range": "M00-M99",
+      "name_pt": "Doenças do sistema osteomuscular e do tecido conjuntivo",
+      "name_en": "Diseases of the musculoskeletal system and connective tissue"
+    },
+    {
+      "code": "XIV",
+      "roman": "XIV",
+      "range": "N00-N99",
+      "name_pt": "Doenças do aparelho geniturinário",
+      "name_en": "Diseases of the genitourinary system"
+    },
+    {
+      "code": "XV",
+      "roman": "XV",
+      "range": "O00-O99",
+      "name_pt": "Gravidez, parto e puerpério",
+      "name_en": "Pregnancy, childbirth and the puerperium"
+    },
+    {
+      "code": "XVI",
+      "roman": "XVI",
+      "range": "P00-P96",
+      "name_pt": "Algumas afecções originadas no período perinatal",
+      "name_en": "Certain conditions originating in the perinatal period"
+    },
+    {
+      "code": "XVII",
+      "roman": "XVII",
+      "range": "Q00-Q99",
+      "name_pt": "Malformações congênitas, deformidades e anomalias cromossômicas",
+      "name_en": "Congenital malformations, deformations and chromosomal abnormalities"
+    },
+    {
+      "code": "XVIII",
+      "roman": "XVIII",
+      "range": "R00-R99",
+      "name_pt": "Sintomas, sinais e achados anormais de exames clínicos e de laboratório",
+      "name_en": "Symptoms, signs and abnormal clinical and laboratory findings"
+    },
+    {
+      "code": "XIX",
+      "roman": "XIX",
+      "range": "S00-T98",
+      "name_pt": "Lesões, envenenamentos e algumas outras consequências de causas externas",
+      "name_en": "Injury, poisoning and certain other consequences of external causes"
+    },
+    {
+      "code": "XX",
+      "roman": "XX",
+      "range": "V01-Y98",
+      "name_pt": "Causas externas de morbidade e de mortalidade",
+      "name_en": "External causes of morbidity and mortality"
+    },
+    {
+      "code": "XXI",
+      "roman": "XXI",
+      "range": "Z00-Z99",
+      "name_pt": "Fatores que influenciam o estado de saúde e o contato com os serviços de saúde",
+      "name_en": "Factors influencing health status and contact with health services"
+    },
+    {
+      "code": "XXII",
+      "roman": "XXII",
+      "range": "U00-U99",
+      "name_pt": "Códigos para propósitos especiais",
+      "name_en": "Codes for special purposes"
+    }
+  ]
+}

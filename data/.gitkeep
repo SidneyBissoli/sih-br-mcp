@@ -1,0 +1,2 @@
+# Este diretório conterá os arquivos Parquet gerados pelo script R
+# Execute scripts/build-aggregations.R para gerar os dados
