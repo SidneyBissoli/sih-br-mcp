@@ -32,3 +32,14 @@ npm-debug.log*
 # Environment
 .env
 .env.local
+
+# dados gerados por scripts/build-population.R (versione o script, nao os dados)
+data/*.parquet
+
+# artefatos renderizados
+*.html
+
+# conflitos de sincronizacao do OneDrive
+_ul
+_ul-*
+*-Sidney-desktop*
