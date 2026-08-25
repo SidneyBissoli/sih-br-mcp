@@ -4,7 +4,7 @@
 
 O MCP SIH-BR fornece acesso aos dados do Sistema de Informações Hospitalares do SUS, com foco especial em Internações por Condições Sensíveis à Atenção Primária (ICSAP).
 
-**Período de dados:** 1998-2024 (26 anos em CID-10)
+**Período de dados:** 1998-2024 (27 anos em CID-10)  
 **Cobertura:** Brasil, 27 UFs, 5.570 municípios
 
 ---
@@ -23,21 +23,21 @@ interface GetHospitalizationsParams {
   
   // Filtros geográficos
   uf?: string | string[];             // Sigla UF: "SP", ["SP", "RJ"]
-  municipality_code?: string;         // Código IBGE 7 dígitos
+  municipality_code?: string;         // Código IBGE 6 dígitos
   region?: string;                    // "N", "NE", "SE", "S", "CO"
   
   // Filtros clínicos
-  cid_chapter?: string | string[];    // Capítulo CID-10: "IX", "X"
-  cid_group?: string;                 // Grupo CID-10: "J40-J47"
-  cid_code?: string;                  // Código específico: "J45"
+  cid_chapter?: number | number[];    // Capítulo CID-10: 1-22
+  cid_group?: string;                 // Grupo CID-10: "J45", "I10"
   
   // Filtros demográficos
-  sex?: "M" | "F";
-  age_group?: string | string[];      // "0-4", "5-14", "15-24", etc.
+  sex?: "M" | "F" | "I";
+  age?: number | [number, number];    // Idade exata ou range [min, max]
+  age_group?: string | string[];      // Faixa etária calculada: "0-4", "5-14", etc.
   race?: string | string[];           // "branca", "preta", "parda", "amarela", "indigena", "ignorado"
   
   // Agregação
-  group_by?: ("year" | "month" | "uf" | "cid_chapter" | "sex" | "age_group" | "race")[];
+  group_by?: ("year" | "month" | "uf" | "cid_chapter" | "sex" | "age" | "age_group" | "race")[];
   
   // Métricas
   metrics?: ("count" | "days" | "value" | "deaths" | "mortality_rate")[];
@@ -60,9 +60,16 @@ interface GetHospitalizationsResponse {
 }
 ```
 
+**Notas sobre idade:**
+- Os dados armazenam idade simples em anos completos (0-100+)
+- Use `age` para filtrar por idade exata ou range: `age: 65` ou `age: [60, 79]`
+- Use `age_group` para filtrar por faixas predefinidas (calculadas dinamicamente)
+- Use `group_by: ["age_group"]` para agrupar em faixas etárias
+
 **Exemplos de uso:**
 - Internações por capítulo CID em SP, 2023: `get_hospitalizations({ year: 2023, uf: "SP", group_by: ["cid_chapter"] })`
 - Série temporal por sexo: `get_hospitalizations({ year: [2019,2020,2021,2022,2023], group_by: ["year", "sex"] })`
+- Idosos (60+) por UF: `get_hospitalizations({ year: 2023, age: [60, 120], group_by: ["uf"] })`
 
 ---
 
@@ -79,10 +86,11 @@ interface GetHospitalizationTrendsParams {
   
   // Filtros (mesmos de get_hospitalizations)
   uf?: string | string[];
-  cid_chapter?: string | string[];
-  sex?: "M" | "F";
+  cid_chapter?: number | number[];
+  sex?: "M" | "F" | "I";
+  age?: number | [number, number];
   age_group?: string | string[];
-  race?: string | string[];           // "branca", "preta", "parda", "amarela", "indigena", "ignorado"
+  race?: string | string[];
   
   // Comparação
   compare_by?: "uf" | "cid_chapter" | "sex" | "age_group" | "race";
@@ -128,12 +136,13 @@ interface GetHospitalizationRatesParams {
   municipality_code?: string;
   
   // Filtros clínicos
-  cid_chapter?: string | string[];
+  cid_chapter?: number | number[];
   
   // Para taxas específicas
+  age?: number | [number, number];
   age_group?: string | string[];
-  sex?: "M" | "F";
-  race?: string | string[];           // "branca", "preta", "parda", "amarela", "indigena", "ignorado"
+  sex?: "M" | "F" | "I";
+  race?: string | string[];
   
   // Agregação
   group_by?: ("year" | "uf" | "sex" | "age_group" | "race")[];
@@ -177,7 +186,7 @@ interface CompareRegionsParams {
   metric: "count" | "rate" | "mortality_rate" | "avg_stay" | "avg_value";
   
   // Filtros clínicos
-  cid_chapter?: string | string[];
+  cid_chapter?: number | number[];
   
   // Ordenação
   order?: "asc" | "desc";              // default: desc
@@ -222,12 +231,13 @@ interface GetIcsapParams {
   region?: string;
   
   // Filtros CSAP
-  csap_group?: number | number[];      // 1-19 (grupos da Portaria 221)
+  csap_group?: string | string[];      // "g01"-"g19" (grupos da Portaria 221)
   
   // Filtros demográficos
-  sex?: "M" | "F";
+  sex?: "M" | "F" | "I";
+  age?: number | [number, number];
   age_group?: string | string[];
-  race?: string | string[];           // "branca", "preta", "parda", "amarela", "indigena", "ignorado"
+  race?: string | string[];
   
   // Agregação
   group_by?: ("year" | "month" | "uf" | "csap_group" | "sex" | "age_group" | "race")[];
@@ -269,9 +279,10 @@ interface GetIcsapIndicatorsParams {
   municipality_code?: string;
   
   // Filtros demográficos
-  sex?: "M" | "F";
+  sex?: "M" | "F" | "I";
+  age?: number | [number, number];
   age_group?: string | string[];
-  race?: string | string[];           // "branca", "preta", "parda", "amarela", "indigena", "ignorado"
+  race?: string | string[];
   
   // Indicadores desejados
   indicators?: ("percentage" | "rate_per_10k" | "rate_per_100k" | "all")[];
@@ -357,7 +368,8 @@ interface RankCsapGroupsParams {
   
   // Filtros
   uf?: string | string[];
-  sex?: "M" | "F";
+  sex?: "M" | "F" | "I";
+  age?: number | [number, number];
   age_group?: string | string[];
   
   // Métrica para ranking
@@ -371,7 +383,7 @@ interface RankCsapGroupsParams {
 interface RankCsapGroupsResponse {
   ranking: {
     rank: number;
-    csap_group_id: number;
+    csap_group: string;                // "g01", "g02", etc.
     csap_group_name: string;
     metric_value: number;
     n_hospitalizations: number;
@@ -393,14 +405,14 @@ Classifica códigos CID-10 como CSAP ou não.
 
 ```typescript
 interface ClassifyAsCsapParams {
-  cid_codes: string[];                 // Lista de códigos CID-10
+  cid_codes: string[];                 // Lista de códigos CID-10 (3 ou 4 caracteres)
 }
 
 interface ClassifyAsCsapResponse {
   classifications: {
     cid_code: string;
     is_csap: boolean;
-    csap_group_id?: number;            // null se não for CSAP
+    csap_group?: string;               // "g01"-"g19", null se não for CSAP
     csap_group_name?: string;
     diagnosis_name?: string;           // Nome do diagnóstico na lista
   }[];
@@ -456,8 +468,8 @@ interface ListCidChaptersParams {
 
 interface ListCidChaptersResponse {
   chapters: {
+    id: number;                        // 1-22
     code: string;                      // "I", "II", ..., "XXII"
-    roman: string;
     name_pt: string;
     name_en: string;
     cid_range: string;                 // "A00-B99"
@@ -517,115 +529,182 @@ interface GetDataDictionaryResponse {
 
 ## Estrutura de Dados (Parquet)
 
-### Cubo 1: `sih_causas.parquet`
+### Cubo 1: `sih_causas_{ano}.parquet`
+
 Agregação principal por causas e demografia.
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| year | int16 | Ano |
-| month | int8 | Mês (1-12) |
+| year | int | Ano |
+| month | int | Mês (1-12) |
 | uf | string | Sigla UF |
-| cid_chapter | string | Capítulo CID-10 |
-| cid_group | string | Grupo CID-10 |
-| sex | string | "M" ou "F" |
-| age_group | string | Faixa etária |
-| race | string | Raça/cor: "branca", "preta", "parda", "amarela", "indigena", "ignorado" |
+| municipality_code | string | Código IBGE 6 dígitos |
+| cid_chapter | int | Capítulo CID-10 (1-22) |
+| cid_group | string | Grupo CID-10 (3 caracteres, ex: "J45") |
+| sex | string | "M", "F" ou "I" |
+| age | int | Idade em anos completos (0-100+) |
+| race | string | Raça/cor |
 | is_csap | bool | É ICSAP |
-| csap_group | int8 | Grupo CSAP (1-19, null se não CSAP) |
-| n | int32 | Contagem |
-| days | int32 | Dias de internação |
-| value | float64 | Valor total (R$) |
-| deaths | int32 | Óbitos |
+| csap_group | string | Grupo CSAP ("g01"-"g19", null se não CSAP) |
+| n | int | Contagem de internações |
+| days | int | Soma de dias de internação |
+| value | double | Soma do valor total (R$) |
+| deaths | int | Contagem de óbitos |
 
-**Estimativa:** 3-8 MB/ano → 80-210 MB total
+**Estimativa:** 5-10 MB/ano → 135-270 MB total
 
-### Cubo 2: `sih_series.parquet`
+### Cubo 2: `sih_series_{ano}.parquet`
+
 Série temporal simplificada.
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| year_month | string | "2023-01" |
+| year_month | string | "YYYY-MM" (ex: "2023-01") |
 | uf | string | Sigla UF |
-| cid_chapter | string | Capítulo CID-10 |
-| n | int32 | Contagem |
-| deaths | int32 | Óbitos |
+| cid_chapter | int | Capítulo CID-10 (1-22) |
+| n | int | Contagem de internações |
+| deaths | int | Contagem de óbitos |
 
-### Cubo 3: `sih_icsap.parquet`
+**Estimativa:** <1 MB/ano
+
+### Cubo 3: `sih_icsap_{ano}.parquet`
+
 Dados específicos de ICSAP.
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| year | int16 | Ano |
+| year | int | Ano |
 | uf | string | Sigla UF |
-| municipality_code | string | Código IBGE 7 dígitos |
-| csap_group | int8 | Grupo CSAP (1-19) |
-| sex | string | "M" ou "F" |
-| age_group | string | Faixa etária |
-| race | string | Raça/cor: "branca", "preta", "parda", "amarela", "indigena", "ignorado" |
-| n | int32 | Contagem ICSAP |
-| n_total | int32 | Total internações (CSAP + não-CSAP) |
-| days | int32 | Dias de internação |
-| value | float64 | Valor total (R$) |
-| deaths | int32 | Óbitos |
+| municipality_code | string | Código IBGE 6 dígitos |
+| csap_group | string | Grupo CSAP ("g01"-"g19") |
+| sex | string | "M", "F" ou "I" |
+| age | int | Idade em anos completos (0-100+) |
+| race | string | Raça/cor |
+| n | int | Contagem de ICSAP |
+| n_total | int | Total de internações no estrato (CSAP + não-CSAP) |
+| days | int | Soma de dias de internação |
+| value | double | Soma do valor total (R$) |
+| deaths | int | Contagem de óbitos |
+
+**Estimativa:** 3-8 MB/ano
 
 ### Dados auxiliares
 
 #### `populacao_municipios.parquet`
+
 Estimativas populacionais do pacote csapAIH.
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| year | int16 | Ano |
+| year | int | Ano |
 | municipality_code | string | Código IBGE |
 | sex | string | "M" ou "F" |
 | age_group | string | Faixa etária |
-| population | int32 | População |
+| population | int | População |
 
 ---
 
 ## Notas de Implementação
 
-### Faixas Etárias Padrão
+### Idade
+
+Os cubos armazenam **idade simples em anos completos** (0, 1, 2, ... 100+), não faixas etárias.
+
+As ferramentas MCP podem:
+- Filtrar por idade exata: `age: 65`
+- Filtrar por range: `age: [60, 79]` (60 a 79 anos)
+- Agrupar em faixas etárias padrão: `group_by: ["age_group"]`
+
+**Faixas etárias padrão** (calculadas dinamicamente):
 ```
-"0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", 
-"35-39", "40-44", "45-49", "50-54", "55-59", "60-64", 
-"65-69", "70-74", "75-79", "80+"
+"0-4", "5-9", "10-14", "15-19", "20-29", "30-39", 
+"40-49", "50-59", "60-69", "70-79", "80+"
 ```
 
-### Raça/Cor (RACA_COR)
-| Código SIH | Valor |
-|------------|-------|
-| 01 | branca |
-| 02 | preta |
-| 03 | parda |
-| 04 | amarela |
-| 05 | indigena |
-| 99 / vazio | ignorado |
+### Raça/Cor
+
+| Valor | Descrição |
+|-------|-----------|
+| branca | Branca |
+| preta | Preta |
+| parda | Parda |
+| amarela | Amarela |
+| indigena | Indígena |
+| ignorado | Não informado / Ignorado |
 
 **Nota:** Variável disponível consistentemente a partir de ~2008. Anos anteriores podem ter alta proporção de "ignorado".
 
-### Códigos de Região
-- N: Norte
-- NE: Nordeste
-- SE: Sudeste
-- S: Sul
-- CO: Centro-Oeste
+### Grupos CSAP
 
-### UFs por Região
-```json
-{
-  "N": ["AC", "AM", "AP", "PA", "RO", "RR", "TO"],
-  "NE": ["AL", "BA", "CE", "MA", "PB", "PE", "PI", "RN", "SE"],
-  "SE": ["ES", "MG", "RJ", "SP"],
-  "S": ["PR", "RS", "SC"],
-  "CO": ["DF", "GO", "MS", "MT"]
-}
-```
+Os 19 grupos seguem a **Portaria MS/SAS 221/2008**:
+
+| Código | Nome |
+|--------|------|
+| g01 | Doenças preveníveis por imunização |
+| g02 | Gastroenterites infecciosas e complicações |
+| g03 | Anemia |
+| g04 | Deficiências nutricionais |
+| g05 | Infecções de ouvido, nariz e garganta |
+| g06 | Pneumonias bacterianas |
+| g07 | Asma |
+| g08 | Doenças pulmonares |
+| g09 | Hipertensão |
+| g10 | Angina |
+| g11 | Insuficiência cardíaca |
+| g12 | Doenças cerebrovasculares |
+| g13 | Diabetes mellitus |
+| g14 | Epilepsias |
+| g15 | Infecção no rim e trato urinário |
+| g16 | Infecção da pele e tecido subcutâneo |
+| g17 | Doença inflamatória de órgãos pélvicos femininos |
+| g18 | Úlcera gastrointestinal |
+| g19 | Doenças relacionadas ao pré-natal e parto |
+
+### Capítulos CID-10
+
+Os capítulos são identificados por número inteiro (1-22):
+
+| ID | Código | Nome | Range CID |
+|----|--------|------|-----------|
+| 1 | I | Doenças infecciosas e parasitárias | A00-B99 |
+| 2 | II | Neoplasias | C00-D48 |
+| 3 | III | Doenças do sangue | D50-D89 |
+| 4 | IV | Doenças endócrinas, nutricionais e metabólicas | E00-E90 |
+| 5 | V | Transtornos mentais e comportamentais | F00-F99 |
+| 6 | VI | Doenças do sistema nervoso | G00-G99 |
+| 7 | VII | Doenças do olho | H00-H59 |
+| 8 | VIII | Doenças do ouvido | H60-H95 |
+| 9 | IX | Doenças do aparelho circulatório | I00-I99 |
+| 10 | X | Doenças do aparelho respiratório | J00-J99 |
+| 11 | XI | Doenças do aparelho digestivo | K00-K93 |
+| 12 | XII | Doenças da pele | L00-L99 |
+| 13 | XIII | Doenças do sistema osteomuscular | M00-M99 |
+| 14 | XIV | Doenças do aparelho geniturinário | N00-N99 |
+| 15 | XV | Gravidez, parto e puerpério | O00-O99 |
+| 16 | XVI | Afecções originadas no período perinatal | P00-P96 |
+| 17 | XVII | Malformações congênitas | Q00-Q99 |
+| 18 | XVIII | Sintomas e sinais anormais | R00-R99 |
+| 19 | XIX | Lesões e causas externas | S00-T98 |
+| 20 | XX | Causas externas de morbidade | V01-Y98 |
+| 21 | XXI | Fatores que influenciam o estado de saúde | Z00-Z99 |
+| 22 | XXII | Códigos para propósitos especiais | U00-U99 |
+
+### Códigos de Região
+
+| Código | Nome | UFs |
+|--------|------|-----|
+| N | Norte | AC, AM, AP, PA, RO, RR, TO |
+| NE | Nordeste | AL, BA, CE, MA, PB, PE, PI, RN, SE |
+| SE | Sudeste | ES, MG, RJ, SP |
+| S | Sul | PR, RS, SC |
+| CO | Centro-Oeste | DF, GO, MS, MT |
 
 ### Tratamento de Partos
+
 As internações por parto (CID-10 O80-O84) são **excluídas** do cálculo de ICSAP, seguindo a metodologia padrão.
 
 ### Referências
+
 - Portaria MS/SAS nº 221, de 17 de abril de 2008
 - Alfradique et al. (2009) - Projeto ICSAP-Brasil
 - Pacote csapAIH (Nedel, 2017; 2019)

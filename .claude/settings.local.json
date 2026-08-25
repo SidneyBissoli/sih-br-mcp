@@ -18,7 +18,22 @@
       "Bash(Rscript:*)",
       "Bash(findstr:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: initial project setup for SIH-BR MCP Server\n\n- Add package.json with MCP SDK and DuckDB dependencies\n- Add TypeScript configuration\n- Add R script for downloading and aggregating SIH-SUS data\n- Add reference data \\(CSAP groups, CID chapters, Brazil regions\\)\n- Add utility modules for age groups and population data\n- Add basic DuckDB connection module\n- Add tool specifications documentation\n- Update CONTEXT.md with Step 2 completion status and Step 3 instructions\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(wmic logicaldisk:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(cmd //c \"dir C:\\\\ | findstr bytes\")",
+      "Bash(git commit:*)",
+      "WebFetch(domain:apisidra.ibge.gov.br)",
+      "WebFetch(domain:sidra.ibge.gov.br)",
+      "WebSearch",
+      "WebFetch(domain:servicodados.ibge.gov.br)",
+      "Bash(ls \"C:\\\\Users\\\\SIDNEY\\\\OneDrive\\\\Programacao\\\\MCP\\\\sih-br-mcp\\\\data\\\\test\"\"*.parquet 2>/dev/null && echo \"---\" && ls \"C:UsersSIDNEYOneDriveProgramacaoMCPsih-br-mcpdata\"\"pop*.parquet)",
+      "Bash(where Rscript)",
+      "Bash(more:*)",
+      "Bash(ls:*)",
+      "Bash(tasklist:*)",
+      "Bash(timeout:*)"
     ]
   }
 }

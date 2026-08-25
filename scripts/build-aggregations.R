@@ -38,14 +38,6 @@ FIRST_YEAR <- 1998
 # FUNCOES AUXILIARES
 # =============================================================================
 
-#' Cria faixas etarias padronizadas
-criar_faixa_etaria <- function(idade) {
-  breaks <- c(-Inf, 1, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80, Inf)
-  labels <- c("<1", "1-4", "5-9", "10-14", "15-19", "20-29", "30-39",
-              "40-49", "50-59", "60-69", "70-79", "80+")
-  cut(idade, breaks = breaks, labels = labels, right = FALSE)
-}
-
 #' Extrai capitulo CID-10 do codigo
 extrair_capitulo_cid <- function(cid) {
   if (is.na(cid) || nchar(cid) < 1) return(NA_integer_)
@@ -54,7 +46,7 @@ extrair_capitulo_cid <- function(cid) {
   num <- suppressWarnings(as.integer(substr(cid, 2, 3)))
   if (is.na(num)) num <- 0
 
-  capitulo <- case_when(
+  capitulo <- dplyr::case_when(
     letra %in% c("A", "B") ~ 1L,
     letra == "C" | (letra == "D" & num <= 48) ~ 2L,
     letra == "D" & num >= 50 ~ 3L,
@@ -96,6 +88,108 @@ uf_codigo_para_sigla <- function(codigo) {
   uf_map[codigo]
 }
 
+#' Classifica codigo CID-10 como CSAP
+#' Baseado na Portaria MS/SAS 221/2008
+#' @param cid Codigo CID-10 (3 ou 4 caracteres, sem ponto)
+#' @return Codigo do grupo CSAP (g01-g19) ou NA
+classificar_csap <- function(cid) {
+  if (is.na(cid) || cid == "") return(NA_character_)
+
+  cid <- toupper(trimws(cid))
+  cid3 <- substr(cid, 1, 3)
+  cid4 <- substr(cid, 1, 4)
+
+  # g01: Doencas preveniveis por imunizacao
+  g01_prefixos <- c("A33", "A34", "A35", "A36", "A37", "A95", "B05", "B06",
+                    "B16", "B26", "A19", "A15", "A16", "A18", "I00", "I01",
+                    "I02", "A51", "A52", "A53", "B50", "B51", "B52", "B53",
+                    "B54", "B77")
+  g01_especificos <- c("G000", "A170", "A171", "A178", "A179")
+  if (cid3 %in% g01_prefixos || cid4 %in% g01_especificos) return("g01")
+
+  # g02: Gastroenterites infecciosas
+  g02_prefixos <- c("E86", "A00", "A01", "A02", "A03", "A04", "A05", "A06",
+                    "A07", "A08", "A09")
+  if (cid3 %in% g02_prefixos) return("g02")
+
+  # g03: Anemia
+  if (cid3 == "D50") return("g03")
+
+  # g04: Deficiencias nutricionais
+  g04_prefixos <- c("E40", "E41", "E42", "E43", "E44", "E45", "E46", "E50",
+                    "E51", "E52", "E53", "E54", "E55", "E56", "E58", "E59",
+                    "E60", "E61", "E63", "E64")
+  if (cid3 %in% g04_prefixos) return("g04")
+
+  # g05: Infeccoes de ouvido, nariz e garganta
+  g05_prefixos <- c("H66", "J00", "J01", "J02", "J03", "J06", "J31")
+  if (cid3 %in% g05_prefixos) return("g05")
+
+  # g06: Pneumonias bacterianas
+  g06_prefixos <- c("J13", "J14")
+  g06_especificos <- c("J153", "J154", "J158", "J159", "J181")
+  if (cid3 %in% g06_prefixos || cid4 %in% g06_especificos) return("g06")
+
+  # g07: Asma
+  g07_prefixos <- c("J45", "J46")
+  if (cid3 %in% g07_prefixos) return("g07")
+
+  # g08: Doencas pulmonares
+  g08_prefixos <- c("J20", "J21", "J40", "J41", "J42", "J43", "J44", "J47")
+  if (cid3 %in% g08_prefixos) return("g08")
+
+  # g09: Hipertensao
+  g09_prefixos <- c("I10", "I11")
+  if (cid3 %in% g09_prefixos) return("g09")
+
+  # g10: Angina
+  if (cid3 == "I20") return("g10")
+
+  # g11: Insuficiencia cardiaca
+  g11_prefixos <- c("I50", "J81")
+  if (cid3 %in% g11_prefixos) return("g11")
+
+  # g12: Doencas cerebrovasculares
+  g12_prefixos <- c("I63", "I64", "I65", "I66", "I67", "I69", "G45", "G46")
+  if (cid3 %in% g12_prefixos) return("g12")
+
+  # g13: Diabetes mellitus
+  g13_prefixos <- c("E10", "E11", "E12", "E13", "E14")
+  if (cid3 %in% g13_prefixos) return("g13")
+
+  # g14: Epilepsias
+  g14_prefixos <- c("G40", "G41")
+  if (cid3 %in% g14_prefixos) return("g14")
+
+  # g15: Infeccao no rim e trato urinario
+  g15_prefixos <- c("N10", "N11", "N12", "N30", "N34")
+  g15_especificos <- c("N390")
+  if (cid3 %in% g15_prefixos || cid4 %in% g15_especificos) return("g15")
+
+  # g16: Infeccao da pele e tecido subcutaneo
+  g16_prefixos <- c("A46", "L01", "L02", "L03", "L04", "L08")
+  if (cid3 %in% g16_prefixos) return("g16")
+
+  # g17: Doenca inflamatoria dos orgaos pelvicos femininos
+  g17_prefixos <- c("N70", "N71", "N72", "N73", "N75", "N76")
+  if (cid3 %in% g17_prefixos) return("g17")
+
+  # g18: Ulcera gastrointestinal
+  g18_prefixos <- c("K25", "K26", "K27", "K28")
+  g18_especificos <- c("K920", "K921", "K922")
+  if (cid3 %in% g18_prefixos || cid4 %in% g18_especificos) return("g18")
+
+  # g19: Doencas relacionadas ao pre-natal e parto
+  g19_prefixos <- c("O23", "A50")
+  g19_especificos <- c("P350")
+  if (cid3 %in% g19_prefixos || cid4 %in% g19_especificos) return("g19")
+
+  return(NA_character_)
+}
+
+#' Classifica vetor de CIDs como CSAP (vetorizado)
+classificar_csap_vec <- Vectorize(classificar_csap)
+
 #' Processa dados de um ano especifico
 processar_ano <- function(ano, ufs_para_baixar, output_dir) {
 
@@ -126,7 +220,7 @@ processar_ano <- function(ano, ufs_para_baixar, output_dir) {
 
     dados <- dados %>%
       process_sih() %>%
-      mutate(
+      dplyr::mutate(
         ano = as.integer(substr(DT_INTER, 1, 4)),
         mes = as.integer(substr(DT_INTER, 5, 6)),
         ano_mes = paste0(ano, "-", sprintf("%02d", mes)),
@@ -136,26 +230,26 @@ processar_ano <- function(ano, ufs_para_baixar, output_dir) {
         cid = substr(DIAG_PRINC, 1, 3),
         cid_4 = substr(DIAG_PRINC, 1, 4),
         capitulo_cid = map_int(cid, extrair_capitulo_cid),
-        sexo = case_when(
+        sexo = dplyr::case_when(
           SEXO == "1" ~ "M",
           SEXO == "3" ~ "F",
           TRUE ~ "I"
         ),
-        idade_anos = case_when(
-          COD_IDADE == "2" ~ as.numeric(IDADE) / 12,
-          COD_IDADE == "3" ~ as.numeric(IDADE) / 365,
-          COD_IDADE == "4" ~ as.numeric(IDADE),
-          COD_IDADE == "5" ~ as.numeric(IDADE) + 100,
-          TRUE ~ NA_real_
+        # IDADE SIMPLES (em anos completos)
+        idade = dplyr::case_when(
+          COD_IDADE == "2" ~ as.integer(floor(as.numeric(IDADE) / 12)),
+          COD_IDADE == "3" ~ 0L,  # dias -> 0 anos
+          COD_IDADE == "4" ~ as.integer(IDADE),
+          COD_IDADE == "5" ~ as.integer(as.numeric(IDADE) + 100),
+          TRUE ~ NA_integer_
         ),
-        faixa_etaria = criar_faixa_etaria(floor(idade_anos)),
-        raca = case_when(
-          RACA_COR == "01" ~ "Branca",
-          RACA_COR == "02" ~ "Preta",
-          RACA_COR == "03" ~ "Parda",
-          RACA_COR == "04" ~ "Amarela",
-          RACA_COR == "05" ~ "Indigena",
-          TRUE ~ "Ignorado"
+        raca = dplyr::case_when(
+          RACA_COR == "01" ~ "branca",
+          RACA_COR == "02" ~ "preta",
+          RACA_COR == "03" ~ "parda",
+          RACA_COR == "04" ~ "amarela",
+          RACA_COR == "05" ~ "indigena",
+          TRUE ~ "ignorado"
         ),
         dias = as.numeric(DIAS_PERM),
         valor = as.numeric(VAL_TOT),
@@ -166,10 +260,9 @@ processar_ano <- function(ano, ufs_para_baixar, output_dir) {
     cli_alert_info("Classificando ICSAP...")
 
     dados <- dados %>%
-      mutate(
-        csap_result = csapAIH::csap(cid_4, session = FALSE),
-        is_csap = !is.na(csap_result) & csap_result != "",
-        grupo_csap = ifelse(is_csap, csap_result, NA_character_)
+      dplyr::mutate(
+        grupo_csap = classificar_csap_vec(cid_4),
+        is_csap = !is.na(grupo_csap)
       )
 
     # =========================================================================
@@ -179,20 +272,20 @@ processar_ano <- function(ano, ufs_para_baixar, output_dir) {
     cli_alert_info("Gerando cubo sih_causas_{ano}.parquet...")
 
     cubo_causas <- dados %>%
-      group_by(
+      dplyr::group_by(
         year = ano,
         month = mes,
         uf,
         cid_chapter = capitulo_cid,
         cid_group = cid,
         sex = sexo,
-        age_group = faixa_etaria,
+        age = idade,
         race = raca,
         is_csap,
         csap_group = grupo_csap
       ) %>%
-      summarise(
-        n = n(),
+      dplyr::summarise(
+        n = dplyr::n(),
         days = sum(dias, na.rm = TRUE),
         value = sum(valor, na.rm = TRUE),
         deaths = sum(obito, na.rm = TRUE),
@@ -209,13 +302,13 @@ processar_ano <- function(ano, ufs_para_baixar, output_dir) {
     cli_alert_info("Gerando cubo sih_series_{ano}.parquet...")
 
     cubo_series <- dados %>%
-      group_by(
+      dplyr::group_by(
         year_month = ano_mes,
         uf,
         cid_chapter = capitulo_cid
       ) %>%
-      summarise(
-        n = n(),
+      dplyr::summarise(
+        n = dplyr::n(),
         deaths = sum(obito, na.rm = TRUE),
         .groups = "drop"
       )
@@ -231,33 +324,33 @@ processar_ano <- function(ano, ufs_para_baixar, output_dir) {
 
     # Total de internacoes por estrato
     totais <- dados %>%
-      group_by(
+      dplyr::group_by(
         year = ano,
         uf,
         municipality_code = municipio_res,
         sex = sexo,
-        age_group = faixa_etaria,
+        age = idade,
         race = raca
       ) %>%
-      summarise(
-        n_total = n(),
+      dplyr::summarise(
+        n_total = dplyr::n(),
         .groups = "drop"
       )
 
     # ICSAP por grupo
     icsap <- dados %>%
-      filter(is_csap) %>%
-      group_by(
+      dplyr::filter(is_csap) %>%
+      dplyr::group_by(
         year = ano,
         uf,
         municipality_code = municipio_res,
         csap_group = grupo_csap,
         sex = sexo,
-        age_group = faixa_etaria,
+        age = idade,
         race = raca
       ) %>%
-      summarise(
-        n = n(),
+      dplyr::summarise(
+        n = dplyr::n(),
         days = sum(dias, na.rm = TRUE),
         value = sum(valor, na.rm = TRUE),
         deaths = sum(obito, na.rm = TRUE),
@@ -266,9 +359,9 @@ processar_ano <- function(ano, ufs_para_baixar, output_dir) {
 
     # Junta com totais
     cubo_icsap <- icsap %>%
-      left_join(
+      dplyr::left_join(
         totais,
-        by = c("year", "uf", "municipality_code", "sex", "age_group", "race")
+        by = c("year", "uf", "municipality_code", "sex", "age", "race")
       )
 
     write_parquet(cubo_icsap, file.path(output_dir, sprintf("sih_icsap_%d.parquet", ano)))
@@ -304,11 +397,6 @@ processar_ano <- function(ano, ufs_para_baixar, output_dir) {
 #'   - Uma UF: "SP"
 #'   - Vetor de UFs: c("SP", "RJ", "AC")
 #'   - "all" para todas as 27 UFs
-#'
-#' @examples
-#' build_data(years = 2023, ufs = "SP")
-#' build_data(years = 2020:2024, ufs = "all")
-#' build_data(years = "all", ufs = "all")  # TUDO - demorado!
 #'
 build_data <- function(years, ufs) {
 
@@ -363,48 +451,6 @@ build_data <- function(years, ufs) {
     resultado <- processar_ano(ano, ufs, OUTPUT_DIR)
     resultados[[as.character(ano)]] <- resultado
   }
-
-  # Gera dados populacionais (apenas uma vez)
-  cli_h1("Gerando dados populacionais")
-
-  pop <- csapAIH::popbr2000_2021 %>%
-    select(
-      year = ano,
-      municipality_code = mun,
-      sex = sexo,
-      age_group = fxetar5,
-      population = pop
-    ) %>%
-    mutate(
-      sex = case_when(
-        sex == "masc" ~ "M",
-        sex == "fem" ~ "F",
-        TRUE ~ "I"
-      ),
-      age_group = case_when(
-        age_group == "0a4" ~ "0-4",
-        age_group == "5a9" ~ "5-9",
-        age_group == "10a14" ~ "10-14",
-        age_group == "15a19" ~ "15-19",
-        age_group == "20a24" ~ "20-24",
-        age_group == "25a29" ~ "25-29",
-        age_group == "30a34" ~ "30-34",
-        age_group == "35a39" ~ "35-39",
-        age_group == "40a44" ~ "40-44",
-        age_group == "45a49" ~ "45-49",
-        age_group == "50a54" ~ "50-54",
-        age_group == "55a59" ~ "55-59",
-        age_group == "60a64" ~ "60-64",
-        age_group == "65a69" ~ "65-69",
-        age_group == "70a74" ~ "70-74",
-        age_group == "75a79" ~ "75-79",
-        age_group == "80+" ~ "80+",
-        TRUE ~ age_group
-      )
-    )
-
-  write_parquet(pop, file.path(OUTPUT_DIR, "populacao_municipios.parquet"))
-  cli_alert_success("populacao_municipios.parquet: {.val {format(nrow(pop), big.mark='.')}} linhas")
 
   # Resumo final
   sucessos <- sum(unlist(resultados), na.rm = TRUE)
