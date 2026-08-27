@@ -2,6 +2,10 @@
   "name": "sih-br-mcp",
   "version": "0.1.0",
   "description": "MCP Server para análise de dados do SIH-SUS com foco em ICSAP",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SidneyBissoli/sih-br-mcp.git"
+  },
   "type": "module",
   "main": "dist/index.js",
   "bin": {
