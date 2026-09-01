@@ -1,0 +1,64 @@
+name: CI
+
+# O QUE ESTE ARQUIVO AFIRMA, E O QUE ELE NÃO AFIRMA.
+#
+# Ele afirma UMA coisa: o repositório ainda instala e ainda compila, nas duas
+# linhas de LTS vivas. Não afirma que funciona — este repositório não tem
+# nenhum teste (nem `test` no package.json nem arquivo `*.test.ts`), e um CI
+# que rodasse `npm test` aqui passaria de verde sem executar nada, que é pior
+# que não ter CI: cria confiança sem dar garantia. O conserto de verdade é
+# `campanha:contrato-vitest`, e é projeto, não tarefa.
+#
+# POR QUE EXISTIR MESMO ASSIM, num repositório privado e parado. Até 31/08/2026
+# o único workflow aqui era o `publish.yml`, que roda em tag: nenhum push era
+# olhado por nada. Foi assim que o `engines.node` deste repositório ficou em
+# `>=18` enquanto o resto do portfólio estava em 20, sem ninguém notar. Aquela
+# classe de deriva hoje tem dono — o vigia de manifesto do portfolio-monitor,
+# que lê os package.json de todos os repositórios toda semana. O que sobra para
+# este arquivo é o piso: se a árvore parar de compilar, alguém fica sabendo no
+# push, e não meses depois, ao voltar ao repositório.
+#
+# É TAMBÉM O PRÉ-REQUISITO PARA LIGAR O DEPENDABOT AQUI. Este repositório tem 1
+# critical e 12 high em dependências (medido em 30/08/2026), e não é exposição
+# enquanto for privado, sem Worker e sem deploy. Mas ligar atualização
+# automática num repositório sem nenhum gate abriria PRs que ninguém tem como
+# validar — pior que PR nenhum. Este arquivo é o que torna aquele passo
+# possível, no dia em que ele for tomado.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # As duas linhas de LTS vivas, o mesmo par do resto do portfólio. O piso
+    # declarado em `engines.node` é `>=22`; sem ninguém rodando o 22, ele
+    # voltaria a ser promessa que nada exercita — que foi o defeito de origem.
+    strategy:
+      matrix:
+        node-version: ["22", "24"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      # `npm ci` e não `npm install`: parte do lock, como o CI de verdade parte,
+      # e falha se o lock e o package.json discordarem.
+      #
+      # ATENÇÃO: este passo JÁ COMPILA. O package.json tem `prepare: npm run
+      # build`, e o npm roda `prepare` no `npm ci` do próprio pacote — medido em
+      # 31/08/2026: depois de `rm -rf node_modules dist && npm ci`, o `dist/`
+      # está lá. Então uma quebra de compilação derruba o CI aqui, com o erro do
+      # tsc no meio do ruído da instalação.
+      - run: npm ci
+
+      # Redundante HOJE, de propósito. `build` é `tsc` puro, e o passo acima já
+      # o executou pelo `prepare` — mas a garantia deste arquivo não deve
+      # depender de um hook de ciclo de vida que alguém pode remover numa
+      # limpeza perfeitamente razoável. Aqui a compilação é um passo com nome
+      # próprio, que falha por si e aparece sozinho no log.
+      - run: npm run build

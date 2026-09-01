@@ -1,6 +1,7 @@
 {
   "name": "sih-br-mcp",
   "version": "0.1.0",
+  "private": true,
   "description": "MCP Server para análise de dados do SIH-SUS com foco em ICSAP",
   "repository": {
     "type": "git",
