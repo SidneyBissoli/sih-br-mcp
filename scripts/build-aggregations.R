@@ -1,23 +1,38 @@
 # =============================================================================
 # build-aggregations.R
-# Gera cubos de dados Parquet a partir do SIH-SUS
+# Gera os cubos Parquet do sih-br-mcp a partir dos microdados SIH-RD
+# redistribuídos em Parquet pelo healthbr-data (espelho do FTP do DATASUS).
 # Projeto: sih-br-mcp
+#
+# CADEIA DE PROVENIÊNCIA (registrada em data/sih_provenance_<ano>.json):
+#   Ministério da Saúde / DATASUS (RD<UF><AA><MM>.dbc no FTP)
+#     -> healthbr-data (Parquet 1:1, sem transformação; manifesto com hash e
+#        data de download de cada .dbc; CC-BY-4.0)
+#     -> este script (agrega em três cubos por ano de competência)
 #
 # USO:
 #   source("scripts/build-aggregations.R")
-#   build_data(years = 2023, ufs = "SP")           # 1 ano, 1 UF
-#   build_data(years = 2020:2024, ufs = "all")     # 5 anos, todas UFs
-#   build_data(years = "all", ufs = "all")         # TUDO (demorado!)
+#   build_data(years = 2023, ufs = "RR")           # 1 ano, 1 UF de arquivo
+#   build_data(years = 2020:2024, ufs = "all")     # 5 anos, todas as UFs
+#   build_data(years = "all", ufs = "all")         # TUDO (demorado)
+#
+# `ufs` é a UF do ARQUIVO (estabelecimento), como no FTP; a coluna `uf` dos
+# cubos é a UF de RESIDÊNCIA (MUNIC_RES). `year`/`month` vêm de DT_INTER
+# (data da internação); o arquivo do cubo é o ano de COMPETÊNCIA da AIH e por
+# isso contém internações iniciadas no ano anterior.
+#
+# Acesso ao R2: token público somente-leitura publicado no README do
+# healthbr-data; pode ser sobrescrito por HEALTHBR_R2_ACCESS_KEY /
+# HEALTHBR_R2_SECRET_KEY / HEALTHBR_R2_ENDPOINT.
 # =============================================================================
 
 library(dplyr)
 library(tidyr)
 library(purrr)
 library(arrow)
-library(microdatasus)
-library(csapAIH)
 library(stringr)
 library(cli)
+library(jsonlite)
 
 # =============================================================================
 # CONFIGURACAO
@@ -25,6 +40,26 @@ library(cli)
 
 OUTPUT_DIR <- here::here("data")
 dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
+
+BUILDER_VERSION <- "2.0.0"
+
+HEALTHBR_BUCKET <- "healthbr-data"
+HEALTHBR_PREFIX <- "sih/rd"
+HEALTHBR_ENDPOINT <- Sys.getenv("HEALTHBR_R2_ENDPOINT",
+  "https://5c499208eebced4e34bd98ffa204f2fb.r2.cloudflarestorage.com")
+HEALTHBR_ACCESS_KEY <- Sys.getenv("HEALTHBR_R2_ACCESS_KEY",
+  "28c72d4b3e1140fa468e367ae472b522")
+HEALTHBR_SECRET_KEY <- Sys.getenv("HEALTHBR_R2_SECRET_KEY",
+  "2937b2106736e2ba64e24e92f2be4e6c312bba3355586e41ce634b14c1482951")
+HEALTHBR_MANIFEST_URL <- "https://pub-99d9e1a3f5c542178d04efbddf1bba97.r2.dev/sih/rd/manifest.json"
+HEALTHBR_REPO_URL <- "https://github.com/SidneyBissoli/healthbr-data"
+HEALTHBR_LICENSE <- "CC-BY-4.0"
+
+DATASUS_FTP_DIR <- "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
+
+# Colunas cruas do SIH-RD que os cubos usam (projeção na leitura do R2)
+COLUNAS_SIH <- c("DT_INTER", "MUNIC_RES", "DIAG_PRINC", "SEXO", "IDADE",
+                 "COD_IDADE", "RACA_COR", "DIAS_PERM", "VAL_TOT", "MORTE")
 
 # Todas as UFs brasileiras
 ALL_UFS <- c("AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
@@ -190,40 +225,181 @@ classificar_csap <- function(cid) {
 #' Classifica vetor de CIDs como CSAP (vetorizado)
 classificar_csap_vec <- Vectorize(classificar_csap)
 
-#' Processa dados de um ano especifico
-processar_ano <- function(ano, ufs_para_baixar, output_dir) {
+# =============================================================================
+# ACESSO AO HEALTHBR-DATA (R2)
+# =============================================================================
+
+.healthbr <- new.env(parent = emptyenv())
+
+healthbr_fs <- function() {
+  if (is.null(.healthbr$fs)) {
+    .healthbr$fs <- S3FileSystem$create(
+      access_key = HEALTHBR_ACCESS_KEY,
+      secret_key = HEALTHBR_SECRET_KEY,
+      endpoint_override = HEALTHBR_ENDPOINT,
+      region = "auto"
+    )
+  }
+  .healthbr$fs
+}
+
+#' Manifesto do dataset sih/rd (uma partição por competência x UF de arquivo)
+healthbr_manifest <- function() {
+  if (is.null(.healthbr$manifest)) {
+    cli_alert_info("Baixando manifesto do healthbr-data ({.url {HEALTHBR_MANIFEST_URL}})")
+    .healthbr$manifest <- jsonlite::fromJSON(HEALTHBR_MANIFEST_URL, simplifyVector = FALSE)
+    n_part <- length(.healthbr$manifest$partitions)
+    atualizado <- .healthbr$manifest$last_updated
+    cli_alert_success("Manifesto: {.val {n_part}} partições, atualizado em {.val {atualizado}}")
+  }
+  .healthbr$manifest
+}
+
+#' Chaves "AAAA-MM-UF" publicadas para um ano e um conjunto de UFs de arquivo
+healthbr_particoes <- function(ano, ufs, manifest) {
+  chaves <- names(manifest$partitions)
+  padrao <- sprintf("^%d-\\d{2}-(%s)$", ano, paste(ufs, collapse = "|"))
+  sort(chaves[grepl(padrao, chaves)])
+}
+
+#' Lê as partições (só as colunas dos cubos) e recolhe a proveniência de cada
+#' arquivo: rodapé `healthbr` do Parquet + entrada do manifesto.
+ler_particoes <- function(chaves, manifest) {
+  fs <- healthbr_fs()
+  caminhos <- vapply(chaves, function(k) manifest$partitions[[k]]$output_files[[1]]$path, "")
+  completos <- paste0(HEALTHBR_BUCKET, "/", caminhos)
+
+  ds <- open_dataset(completos, filesystem = fs, format = "parquet")
+  faltam <- setdiff(COLUNAS_SIH, names(ds))
+  if (length(faltam) > 0) {
+    cli_abort("Colunas ausentes no Parquet do healthbr-data: {paste(faltam, collapse = ', ')}")
+  }
+  dados <- ds %>% select(all_of(COLUNAS_SIH)) %>% collect()
+
+  particoes <- lapply(seq_along(chaves), function(i) {
+    leitor <- ParquetFileReader$create(fs$OpenInputFile(completos[i]))
+    rodape <- jsonlite::fromJSON(leitor$GetSchema()$metadata$healthbr, simplifyVector = FALSE)
+    entrada <- manifest$partitions[[chaves[i]]]
+    saida <- entrada$output_files[[1]]
+    if (!is.null(saida$record_count) && saida$record_count != leitor$num_rows) {
+      cli_abort("Partição {chaves[i]}: manifesto diz {saida$record_count} linhas, Parquet tem {leitor$num_rows}")
+    }
+    list(
+      partition = chaves[i],
+      parquet_path = caminhos[[i]],
+      parquet_sha256 = saida$sha256,
+      record_count = leitor$num_rows,
+      source_file = rodape$source_file,
+      source_url = rodape$source_url,
+      source_hash_md5 = rodape$source_hash_md5,
+      source_size_bytes = rodape$source_size_bytes,
+      download_date = rodape$download_date,
+      processing_timestamp = entrada$processing_timestamp,
+      healthbr_pipeline_version = rodape$pipeline_version,
+      healthbr_git_commit = rodape$git_commit
+    )
+  })
+
+  total_manifesto <- sum(vapply(particoes, function(p) as.numeric(p$record_count), 0))
+  if (total_manifesto != nrow(dados)) {
+    cli_abort("Soma das partições ({total_manifesto}) difere das linhas lidas ({nrow(dados)})")
+  }
+
+  list(dados = dados, particoes = particoes)
+}
+
+#' Escreve data/sih_provenance_<ano>.json — o registro de safra do cubo
+escrever_sidecar <- function(ano, chaves, particoes, manifest, totais, output_dir) {
+  git_commit <- tryCatch(
+    trimws(system2("git", c("-C", shQuote(here::here()), "rev-parse", "HEAD"), stdout = TRUE, stderr = FALSE)),
+    error = function(e) NA_character_, warning = function(w) NA_character_
+  )
+  if (length(git_commit) != 1 || is.na(git_commit) || !nzchar(git_commit)) git_commit <- NULL
+
+  datas_download <- vapply(particoes, function(p) p$download_date, "")
+  sidecar <- list(
+    manifest_version = "1.0.0",
+    dataset = HEALTHBR_PREFIX,
+    cube_year = ano,
+    competencias = I(sort(unique(substr(chaves, 1, 7)))),
+    ufs_arquivo = I(sort(unique(substr(chaves, 9, 10)))),
+    built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+    builder = list(
+      script = "scripts/build-aggregations.R",
+      version = BUILDER_VERSION,
+      git_commit = git_commit,
+      r_version = R.version.string,
+      arrow_version = as.character(packageVersion("arrow"))
+    ),
+    source = list(
+      name = "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+      agency = "Ministério da Saúde",
+      database = "SIH/SUS",
+      endpoint = DATASUS_FTP_DIR
+    ),
+    distributor = list(
+      name = "healthbr-data",
+      url = HEALTHBR_REPO_URL,
+      bucket = sprintf("s3://%s/%s/", HEALTHBR_BUCKET, HEALTHBR_PREFIX),
+      manifest_url = HEALTHBR_MANIFEST_URL,
+      manifest_last_updated = manifest$last_updated,
+      license = HEALTHBR_LICENSE
+    ),
+    retrieved_at = max(datas_download),
+    partitions = particoes,
+    totals = totais,
+    notes = I(c(
+      "year/month derivados de DT_INTER (data da internação); o arquivo do cubo é o ano de competência da AIH e contém internações iniciadas no ano anterior.",
+      "uf dos cubos = UF de residência (MUNIC_RES); ufs_arquivo = UF do estabelecimento (nome do arquivo RD no FTP).",
+      "retrieved_at = data de download mais recente, no healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream)."
+    ))
+  )
+  destino <- file.path(output_dir, sprintf("sih_provenance_%d.json", ano))
+  jsonlite::write_json(sidecar, destino, auto_unbox = TRUE, pretty = TRUE, null = "null", digits = NA)
+  cli_alert_success("  sih_provenance_{ano}.json: {.val {length(particoes)}} partições, retrieved_at {.val {sidecar$retrieved_at}}")
+  invisible(destino)
+}
+
+#' Processa dados de um ano de competência
+processar_ano <- function(ano, ufs_arquivo, output_dir) {
 
   cli_h2("Ano {ano}")
 
   tryCatch({
-    # Download dos dados
-    cli_alert_info("Baixando dados do DATASUS para UF(s): {paste(ufs_para_baixar, collapse=', ')}")
-
-    dados <- fetch_datasus(
-      year_start = ano,
-      year_end = ano,
-      month_start = 1,
-      month_end = 12,
-      uf = ufs_para_baixar,
-      information_system = "SIH-RD"
-    )
-
-    if (is.null(dados) || nrow(dados) == 0) {
-      cli_alert_warning("Sem dados para o ano {ano}")
+    manifest <- healthbr_manifest()
+    chaves <- healthbr_particoes(ano, ufs_arquivo, manifest)
+    esperadas <- length(ufs_arquivo) * 12
+    if (length(chaves) == 0) {
+      cli_alert_warning("Sem partições publicadas para {ano} / {paste(ufs_arquivo, collapse=', ')}")
       return(NULL)
     }
+    if (length(chaves) < esperadas) {
+      cli_alert_warning("{length(chaves)} de {esperadas} partições publicadas para {ano} (competências ainda não divulgadas pelo MS ficam de fora)")
+    }
 
-    cli_alert_success("{.val {format(nrow(dados), big.mark='.')}} registros baixados")
+    cli_alert_info("Lendo {length(chaves)} partições do R2 (colunas: {paste(COLUNAS_SIH, collapse=', ')})")
+    t0 <- Sys.time()
+    lido <- ler_particoes(chaves, manifest)
+    dados <- lido$dados
+    cli_alert_success("{.val {format(nrow(dados), big.mark='.')}} registros lidos em {format(round(Sys.time() - t0, 1))}")
 
-    # Processa variaveis
+    # Processa variaveis (colunas cruas do DATASUS, todas string no healthbr)
     cli_alert_info("Processando variaveis...")
 
+    n_lidos <- nrow(dados)
     dados <- dados %>%
-      process_sih() %>%
+      dplyr::mutate(dt_inter = as.Date(DT_INTER, format = "%Y%m%d"))
+    n_invalidos <- sum(is.na(dados$dt_inter))
+    if (n_invalidos > 0) {
+      cli_alert_warning("{n_invalidos} registros com DT_INTER inválido ficam fora dos cubos")
+      dados <- dados %>% dplyr::filter(!is.na(dt_inter))
+    }
+
+    dados <- dados %>%
       dplyr::mutate(
-        ano = as.integer(substr(DT_INTER, 1, 4)),
-        mes = as.integer(substr(DT_INTER, 5, 6)),
-        ano_mes = paste0(ano, "-", sprintf("%02d", mes)),
+        ano = as.integer(format(dt_inter, "%Y")),
+        mes = as.integer(format(dt_inter, "%m")),
+        ano_mes = sprintf("%04d-%02d", ano, mes),
         uf_codigo = substr(MUNIC_RES, 1, 2),
         uf = uf_codigo_para_sigla(uf_codigo),
         municipio_res = MUNIC_RES,
@@ -253,7 +429,7 @@ processar_ano <- function(ano, ufs_para_baixar, output_dir) {
         ),
         dias = as.numeric(DIAS_PERM),
         valor = as.numeric(VAL_TOT),
-        obito = as.integer(MORTE == 1)
+        obito = as.integer(MORTE == "1")
       )
 
     # Classifica ICSAP
@@ -367,8 +543,24 @@ processar_ano <- function(ano, ufs_para_baixar, output_dir) {
     write_parquet(cubo_icsap, file.path(output_dir, sprintf("sih_icsap_%d.parquet", ano)))
     cli_alert_success("  sih_icsap_{ano}.parquet: {.val {format(nrow(cubo_icsap), big.mark='.')}} linhas")
 
+    # =========================================================================
+    # SIDECAR DE PROVENIÊNCIA
+    # =========================================================================
+
+    escrever_sidecar(
+      ano, chaves, lido$particoes, manifest,
+      totais = list(
+        records_read = n_lidos,
+        records_invalid_dt_inter = n_invalidos,
+        causas_rows = nrow(cubo_causas),
+        series_rows = nrow(cubo_series),
+        icsap_rows = nrow(cubo_icsap)
+      ),
+      output_dir = output_dir
+    )
+
     # Limpa memoria
-    rm(dados, cubo_causas, cubo_series, totais, icsap, cubo_icsap)
+    rm(dados, lido, cubo_causas, cubo_series, totais, icsap, cubo_icsap)
     gc()
 
     cli_alert_success("Ano {ano} concluido!")
@@ -425,7 +617,7 @@ build_data <- function(years, ufs) {
   # Alerta para processamento completo
   if (length(years) > 20 && length(ufs) == 27) {
     cli_alert_warning("Voce solicitou processar {length(years)} anos e TODAS as 27 UFs.")
-    cli_alert_warning("Isso pode levar MUITAS HORAS e usar dezenas de GB de banda.")
+    cli_alert_warning("Isso le todas as particoes do R2 (colunas projetadas) e pode levar horas.")
     resposta <- readline(prompt = "Deseja continuar? (S/N): ")
     if (!toupper(resposta) %in% c("S", "SIM", "Y", "YES")) {
       cli_alert_info("Operacao cancelada pelo usuario.")
@@ -470,11 +662,11 @@ build_data <- function(years, ufs) {
 # MENSAGEM AO CARREGAR
 # =============================================================================
 
-cli_alert_info("Script build-aggregations.R carregado.")
+cli_alert_info("Script build-aggregations.R carregado (origem: healthbr-data, s3://{HEALTHBR_BUCKET}/{HEALTHBR_PREFIX}/).")
 cli_alert_info("Use: build_data(years = ..., ufs = ...)")
 cli_alert_info("Exemplos:")
 cli_bullets(c(
-  " " = "build_data(years = 2023, ufs = 'SP')",
+  " " = "build_data(years = 2023, ufs = 'RR')",
   " " = "build_data(years = 2020:2024, ufs = 'all')",
   " " = "build_data(years = 'all', ufs = 'all')  # TUDO"
 ))

@@ -565,16 +565,16 @@
         {
           "n_hospitalizations": 39470,
           "total_days": 252077,
-          "total_value": 37257285.73000005,
-          "deaths": 0
+          "total_value": 37257285.72999872,
+          "deaths": 1200
         }
       ],
       "summary": {
         "total_hospitalizations": 39470,
         "total_days": 252077,
         "total_value": 37257285.73,
-        "deaths": 0,
-        "hospital_mortality_rate": 0,
+        "deaths": 1200,
+        "hospital_mortality_rate": 3.04,
         "records_returned": 1
       },
       "filters_applied": {
@@ -602,15 +602,15 @@
           "uf": "AM",
           "n_hospitalizations": 84,
           "total_days": 927,
-          "total_value": 122525.44,
-          "deaths": 0
+          "total_value": 122525.43999999999,
+          "deaths": 3
         },
         {
           "uf": "CE",
           "n_hospitalizations": 2,
           "total_days": 15,
           "total_value": 2327,
-          "deaths": 0
+          "deaths": 1
         },
         {
           "uf": "GO",
@@ -637,16 +637,16 @@
           "uf": "RR",
           "n_hospitalizations": 39377,
           "total_days": 251060,
-          "total_value": 37114750.69000004,
-          "deaths": 0
+          "total_value": 37114750.68999875,
+          "deaths": 1196
         }
       ],
       "summary": {
         "total_hospitalizations": 39470,
         "total_days": 252077,
         "total_value": 37257285.73,
-        "deaths": 0,
-        "hospital_mortality_rate": 0,
+        "deaths": 1200,
+        "hospital_mortality_rate": 3.04,
         "records_returned": 6
       },
       "filters_applied": {
@@ -725,16 +725,16 @@
           "csap_group": "g01",
           "n_hospitalizations": 487,
           "total_days": 4802,
-          "total_value": 236175.2,
-          "deaths": 0
+          "total_value": 236175.19999999943,
+          "deaths": 10
         },
         {
           "year": 2023,
           "csap_group": "g02",
           "n_hospitalizations": 448,
           "total_days": 2368,
-          "total_value": 218547.74000000002,
-          "deaths": 0
+          "total_value": 218547.73999999967,
+          "deaths": 9
         },
         {
           "year": 2023,
@@ -749,15 +749,15 @@
           "csap_group": "g04",
           "n_hospitalizations": 175,
           "total_days": 2306,
-          "total_value": 176489.64999999997,
-          "deaths": 0
+          "total_value": 176489.64999999988,
+          "deaths": 13
         },
         {
           "year": 2023,
           "csap_group": "g05",
           "n_hospitalizations": 188,
           "total_days": 854,
-          "total_value": 63947.38,
+          "total_value": 63947.380000000005,
           "deaths": 0
         },
         {
@@ -765,8 +765,8 @@
           "csap_group": "g06",
           "n_hospitalizations": 2353,
           "total_days": 24710,
-          "total_value": 3481358.06,
-          "deaths": 0
+          "total_value": 3481358.0599999884,
+          "deaths": 146
         },
         {
           "year": 2023,
@@ -774,22 +774,22 @@
           "n_hospitalizations": 195,
           "total_days": 993,
           "total_value": 127376.07,
-          "deaths": 0
+          "deaths": 1
         },
         {
           "year": 2023,
           "csap_group": "g08",
           "n_hospitalizations": 558,
           "total_days": 4029,
-          "total_value": 449941.41,
-          "deaths": 0
+          "total_value": 449941.4100000005,
+          "deaths": 18
         },
         {
           "year": 2023,
           "csap_group": "g09",
           "n_hospitalizations": 95,
           "total_days": 502,
-          "total_value": 26022,
+          "total_value": 26021.999999999993,
           "deaths": 0
         },
         {
@@ -798,62 +798,62 @@
           "n_hospitalizations": 124,
           "total_days": 1740,
           "total_value": 216424.06,
-          "deaths": 0
+          "deaths": 3
         },
         {
           "year": 2023,
           "csap_group": "g11",
           "n_hospitalizations": 367,
           "total_days": 5212,
-          "total_value": 1034472.04,
-          "deaths": 0
+          "total_value": 1034472.0399999989,
+          "deaths": 57
         },
         {
           "year": 2023,
           "csap_group": "g12",
           "n_hospitalizations": 410,
           "total_days": 5098,
-          "total_value": 487346.34,
-          "deaths": 0
+          "total_value": 487346.3400000018,
+          "deaths": 43
         },
         {
           "year": 2023,
           "csap_group": "g13",
           "n_hospitalizations": 487,
           "total_days": 6343,
-          "total_value": 641599.4600000001,
-          "deaths": 0
+          "total_value": 641599.4600000015,
+          "deaths": 17
         },
         {
           "year": 2023,
           "csap_group": "g14",
           "n_hospitalizations": 123,
           "total_days": 1043,
-          "total_value": 145935.65,
-          "deaths": 0
+          "total_value": 145935.65000000002,
+          "deaths": 7
         },
         {
           "year": 2023,
           "csap_group": "g15",
           "n_hospitalizations": 484,
           "total_days": 3920,
-          "total_value": 194763.19,
-          "deaths": 0
+          "total_value": 194763.18999999925,
+          "deaths": 10
         },
         {
           "year": 2023,
           "csap_group": "g16",
           "n_hospitalizations": 752,
           "total_days": 6043,
-          "total_value": 380869.88999999996,
-          "deaths": 0
+          "total_value": 380869.88999999914,
+          "deaths": 3
         },
         {
           "year": 2023,
           "csap_group": "g17",
           "n_hospitalizations": 97,
           "total_days": 561,
-          "total_value": 29719.070000000003,
+          "total_value": 29719.07,
           "deaths": 0
         },
         {
@@ -861,15 +861,15 @@
           "csap_group": "g18",
           "n_hospitalizations": 70,
           "total_days": 574,
-          "total_value": 64901.22,
-          "deaths": 0
+          "total_value": 64901.21999999998,
+          "deaths": 2
         },
         {
           "year": 2023,
           "csap_group": "g19",
           "n_hospitalizations": 425,
           "total_days": 3050,
-          "total_value": 97461.56999999999,
+          "total_value": 97461.57000000007,
           "deaths": 0
         }
       ],
@@ -877,8 +877,8 @@
         "total_hospitalizations": 7839,
         "total_days": 74149,
         "total_value": 8073625.93,
-        "deaths": 0,
-        "hospital_mortality_rate": 0,
+        "deaths": 339,
+        "hospital_mortality_rate": 4.32,
         "records_returned": 19
       },
       "filters_applied": {
@@ -907,12 +907,12 @@
         {
           "year": 2022,
           "n_hospitalizations": 5884,
-          "deaths": 0
+          "deaths": 250
         },
         {
           "year": 2023,
           "n_hospitalizations": 39470,
-          "deaths": 0
+          "deaths": 1200
         }
       ],
       "period": {
@@ -934,7 +934,28 @@
     "isError": false,
     "result": {
       "granularity": "monthly",
-      "series": [],
+      "series": [
+        {
+          "year_month": "2023-06",
+          "n": 1,
+          "deaths": 0
+        },
+        {
+          "year_month": "2023-07",
+          "n": 2,
+          "deaths": 0
+        },
+        {
+          "year_month": "2023-08",
+          "n": 1,
+          "deaths": 0
+        },
+        {
+          "year_month": "2023-09",
+          "n": 1,
+          "deaths": 0
+        }
+      ],
       "period": {
         "start": "2023-01",
         "end": "2023-12"
@@ -952,7 +973,68 @@
     "isError": false,
     "result": {
       "granularity": "monthly",
-      "series": [],
+      "series": [
+        {
+          "year_month": "2023-01",
+          "n": 387,
+          "deaths": 19
+        },
+        {
+          "year_month": "2023-02",
+          "n": 399,
+          "deaths": 25
+        },
+        {
+          "year_month": "2023-03",
+          "n": 439,
+          "deaths": 27
+        },
+        {
+          "year_month": "2023-04",
+          "n": 383,
+          "deaths": 33
+        },
+        {
+          "year_month": "2023-05",
+          "n": 554,
+          "deaths": 25
+        },
+        {
+          "year_month": "2023-06",
+          "n": 622,
+          "deaths": 25
+        },
+        {
+          "year_month": "2023-07",
+          "n": 675,
+          "deaths": 29
+        },
+        {
+          "year_month": "2023-08",
+          "n": 628,
+          "deaths": 30
+        },
+        {
+          "year_month": "2023-09",
+          "n": 400,
+          "deaths": 13
+        },
+        {
+          "year_month": "2023-10",
+          "n": 159,
+          "deaths": 7
+        },
+        {
+          "year_month": "2023-11",
+          "n": 25,
+          "deaths": 1
+        },
+        {
+          "year_month": "2023-12",
+          "n": 18,
+          "deaths": 0
+        }
+      ],
       "period": {
         "start": "2023-01",
         "end": "2023-12"
@@ -977,15 +1059,15 @@
           "rank": 1,
           "uf": "RR",
           "n_hospitalizations": 39377,
-          "deaths": 0,
-          "mortality_rate": 0
+          "deaths": 1196,
+          "mortality_rate": 3.04
         },
         {
           "rank": 2,
           "uf": "AM",
           "n_hospitalizations": 84,
-          "deaths": 0,
-          "mortality_rate": 0
+          "deaths": 3,
+          "mortality_rate": 3.57
         },
         {
           "rank": 3,
@@ -998,8 +1080,8 @@
           "rank": 4,
           "uf": "CE",
           "n_hospitalizations": 2,
-          "deaths": 0,
-          "mortality_rate": 0
+          "deaths": 1,
+          "mortality_rate": 50
         },
         {
           "rank": 5,
@@ -1036,17 +1118,17 @@
       "ranking": [
         {
           "rank": 1,
-          "uf": "AM",
-          "n_hospitalizations": 46,
-          "deaths": 0,
-          "mortality_rate": 0
+          "uf": "RR",
+          "n_hospitalizations": 7793,
+          "deaths": 338,
+          "mortality_rate": 4.34
         },
         {
           "rank": 2,
-          "uf": "RR",
-          "n_hospitalizations": 7793,
-          "deaths": 0,
-          "mortality_rate": 0
+          "uf": "AM",
+          "n_hospitalizations": 46,
+          "deaths": 1,
+          "mortality_rate": 2.17
         }
       ],
       "total_locations": 2
@@ -1071,8 +1153,8 @@
           "rank": 1,
           "uf": "RR",
           "n_hospitalizations": 1674,
-          "deaths": 0,
-          "mortality_rate": 0
+          "deaths": 163,
+          "mortality_rate": 9.74
         },
         {
           "rank": 2,
@@ -1097,19 +1179,19 @@
       "data": [
         {
           "n_icsap": 7839,
-          "n_total": 683341,
+          "n_total": 196160,
           "total_days": 74149,
-          "total_value": 8073625.930000006,
-          "deaths": 0
+          "total_value": 8073625.9300000025,
+          "deaths": 339
         }
       ],
       "summary": {
         "total_icsap": 7839,
-        "total_hospitalizations": 683341,
-        "icsap_percentage": 1.15,
+        "total_hospitalizations": 196160,
+        "icsap_percentage": 4,
         "total_days": 74149,
         "total_value": 8073625.93,
-        "deaths": 0,
+        "deaths": 339,
         "records_returned": 1
       },
       "filters_applied": {
@@ -1135,23 +1217,23 @@
         {
           "csap_group": "g01",
           "n_icsap": 487,
-          "n_total": 38827,
+          "n_total": 18320,
           "total_days": 4802,
-          "total_value": 236175.19999999992,
-          "deaths": 0
+          "total_value": 236175.19999999943,
+          "deaths": 10
         },
         {
           "csap_group": "g02",
           "n_icsap": 448,
-          "n_total": 38924,
+          "n_total": 8403,
           "total_days": 2368,
-          "total_value": 218547.74,
-          "deaths": 0
+          "total_value": 218547.73999999953,
+          "deaths": 9
         },
         {
           "csap_group": "g03",
           "n_icsap": 1,
-          "n_total": 23822,
+          "n_total": 1123,
           "total_days": 1,
           "total_value": 275.93,
           "deaths": 0
@@ -1159,139 +1241,139 @@
         {
           "csap_group": "g04",
           "n_icsap": 175,
-          "n_total": 31423,
+          "n_total": 5049,
           "total_days": 2306,
-          "total_value": 176489.65,
-          "deaths": 0
+          "total_value": 176489.6499999999,
+          "deaths": 13
         },
         {
           "csap_group": "g05",
           "n_icsap": 188,
-          "n_total": 37457,
+          "n_total": 6084,
           "total_days": 854,
-          "total_value": 63947.38000000001,
+          "total_value": 63947.37999999998,
           "deaths": 0
         },
         {
           "csap_group": "g06",
           "n_icsap": 2353,
-          "n_total": 39234,
+          "n_total": 22048,
           "total_days": 24710,
-          "total_value": 3481358.059999999,
-          "deaths": 0
+          "total_value": 3481358.0599999903,
+          "deaths": 146
         },
         {
           "csap_group": "g07",
           "n_icsap": 195,
-          "n_total": 35588,
+          "n_total": 5653,
           "total_days": 993,
-          "total_value": 127376.07,
-          "deaths": 0
+          "total_value": 127376.07000000002,
+          "deaths": 1
         },
         {
           "csap_group": "g08",
           "n_icsap": 558,
-          "n_total": 38773,
+          "n_total": 8650,
           "total_days": 4029,
-          "total_value": 449941.4100000001,
-          "deaths": 0
+          "total_value": 449941.4100000002,
+          "deaths": 18
         },
         {
           "csap_group": "g09",
           "n_icsap": 95,
-          "n_total": 34231,
+          "n_total": 8244,
           "total_days": 502,
-          "total_value": 26021.999999999996,
+          "total_value": 26021.999999999975,
           "deaths": 0
         },
         {
           "csap_group": "g10",
           "n_icsap": 124,
-          "n_total": 32233,
+          "n_total": 4845,
           "total_days": 1740,
           "total_value": 216424.05999999994,
-          "deaths": 0
+          "deaths": 3
         },
         {
           "csap_group": "g11",
           "n_icsap": 367,
-          "n_total": 38608,
+          "n_total": 8791,
           "total_days": 5212,
-          "total_value": 1034472.0399999997,
-          "deaths": 0
+          "total_value": 1034472.0399999999,
+          "deaths": 57
         },
         {
           "csap_group": "g12",
           "n_icsap": 410,
-          "n_total": 38052,
+          "n_total": 10865,
           "total_days": 5098,
-          "total_value": 487346.33999999997,
-          "deaths": 0
+          "total_value": 487346.3400000004,
+          "deaths": 43
         },
         {
           "csap_group": "g13",
           "n_icsap": 487,
-          "n_total": 38389,
+          "n_total": 11222,
           "total_days": 6343,
-          "total_value": 641599.4600000001,
-          "deaths": 0
+          "total_value": 641599.4600000008,
+          "deaths": 17
         },
         {
           "csap_group": "g14",
           "n_icsap": 123,
-          "n_total": 35316,
+          "n_total": 9759,
           "total_days": 1043,
           "total_value": 145935.65,
-          "deaths": 0
+          "deaths": 7
         },
         {
           "csap_group": "g15",
           "n_icsap": 484,
-          "n_total": 38397,
+          "n_total": 18556,
           "total_days": 3920,
-          "total_value": 194763.18999999994,
-          "deaths": 0
+          "total_value": 194763.1899999991,
+          "deaths": 10
         },
         {
           "csap_group": "g16",
           "n_icsap": 752,
-          "n_total": 38972,
+          "n_total": 22211,
           "total_days": 6043,
-          "total_value": 380869.8900000001,
-          "deaths": 0
+          "total_value": 380869.88999999885,
+          "deaths": 3
         },
         {
           "csap_group": "g17",
           "n_icsap": 97,
-          "n_total": 33958,
+          "n_total": 8841,
           "total_days": 561,
-          "total_value": 29719.070000000003,
+          "total_value": 29719.07000000001,
           "deaths": 0
         },
         {
           "csap_group": "g18",
           "n_icsap": 70,
-          "n_total": 33644,
+          "n_total": 3014,
           "total_days": 574,
-          "total_value": 64901.22,
-          "deaths": 0
+          "total_value": 64901.219999999994,
+          "deaths": 2
         },
         {
           "csap_group": "g19",
           "n_icsap": 425,
-          "n_total": 37493,
+          "n_total": 14482,
           "total_days": 3050,
-          "total_value": 97461.56999999999,
+          "total_value": 97461.57000000007,
           "deaths": 0
         }
       ],
       "summary": {
         "total_icsap": 7839,
-        "total_hospitalizations": 683341,
-        "icsap_percentage": 1.15,
+        "total_hospitalizations": 196160,
+        "icsap_percentage": 4,
         "total_days": 74149,
         "total_value": 8073625.93,
-        "deaths": 0,
+        "deaths": 339,
         "records_returned": 19
       },
       "filters_applied": {
@@ -1319,22 +1401,30 @@
     "result": {
       "data": [
         {
-          "sex": "I",
-          "n_icsap": 4965,
-          "n_total": 506060,
-          "total_days": 49613,
-          "total_value": 5463827.99,
-          "deaths": 0
+          "sex": "F",
+          "n_icsap": 2411,
+          "n_total": 108679,
+          "total_days": 22085,
+          "total_value": 2364310.8400000064,
+          "deaths": 92
+        },
+        {
+          "sex": "M",
+          "n_icsap": 2554,
+          "n_total": 68575,
+          "total_days": 27528,
+          "total_value": 3099517.1500000013,
+          "deaths": 138
         }
       ],
       "summary": {
         "total_icsap": 4965,
-        "total_hospitalizations": 506060,
-        "icsap_percentage": 0.98,
+        "total_hospitalizations": 177254,
+        "icsap_percentage": 2.8,
         "total_days": 49613,
         "total_value": 5463827.99,
-        "deaths": 0,
-        "records_returned": 1
+        "deaths": 230,
+        "records_returned": 2
       },
       "filters_applied": {
         "year": [
@@ -1411,11 +1501,11 @@
       "data": [
         {
           "n_icsap": 7839,
-          "n_total": 683341,
-          "icsap_percentage": 1.15,
+          "n_total": 196160,
+          "icsap_percentage": 4,
           "total_days": 74149,
-          "total_value": 8073625.930000006,
-          "deaths": 0
+          "total_value": 8073625.9300000025,
+          "deaths": 339
         }
       ],
       "indicators_calculated": [
@@ -1440,20 +1530,20 @@
         {
           "uf": "AM",
           "n_icsap": 46,
-          "n_total": 347,
-          "icsap_percentage": 13.26,
+          "n_total": 137,
+          "icsap_percentage": 33.58,
           "total_days": 620,
           "total_value": 88588.61,
-          "deaths": 0
+          "deaths": 1
         },
         {
           "uf": "RR",
           "n_icsap": 7793,
-          "n_total": 682994,
-          "icsap_percentage": 1.14,
+          "n_total": 196023,
+          "icsap_percentage": 3.98,
           "total_days": 73529,
           "total_value": 7985037.320000006,
-          "deaths": 0
+          "deaths": 338
         }
       ],
       "indicators_calculated": [
@@ -1478,7 +1568,17 @@
     },
     "isError": false,
     "result": {
-      "data": [],
+      "data": [
+        {
+          "sex": "M",
+          "n_icsap": 3958,
+          "n_total": 76859,
+          "icsap_percentage": 5.15,
+          "total_days": 39799,
+          "total_value": 4346076.180000003,
+          "deaths": 209
+        }
+      ],
       "indicators_calculated": [
         "icsap_percentage"
       ],
@@ -1505,8 +1605,8 @@
           "pct_of_total": 30.02,
           "n_hospitalizations": 2353,
           "total_days": 24710,
-          "total_value": 3481358.059999999,
-          "deaths": 0
+          "total_value": 3481358.0599999903,
+          "deaths": 146
         },
         {
           "rank": 2,
@@ -1516,8 +1616,8 @@
           "pct_of_total": 9.59,
           "n_hospitalizations": 752,
           "total_days": 6043,
-          "total_value": 380869.8900000001,
-          "deaths": 0
+          "total_value": 380869.88999999885,
+          "deaths": 3
         },
         {
           "rank": 3,
@@ -1527,8 +1627,8 @@
           "pct_of_total": 7.12,
           "n_hospitalizations": 558,
           "total_days": 4029,
-          "total_value": 449941.4100000001,
-          "deaths": 0
+          "total_value": 449941.4100000002,
+          "deaths": 18
         },
         {
           "rank": 4,
@@ -1538,8 +1638,8 @@
           "pct_of_total": 6.21,
           "n_hospitalizations": 487,
           "total_days": 4802,
-          "total_value": 236175.19999999992,
-          "deaths": 0
+          "total_value": 236175.19999999943,
+          "deaths": 10
         },
         {
           "rank": 5,
@@ -1549,8 +1649,8 @@
           "pct_of_total": 6.21,
           "n_hospitalizations": 487,
           "total_days": 6343,
-          "total_value": 641599.4600000001,
-          "deaths": 0
+          "total_value": 641599.4600000008,
+          "deaths": 17
         },
         {
           "rank": 6,
@@ -1560,8 +1660,8 @@
           "pct_of_total": 6.17,
           "n_hospitalizations": 484,
           "total_days": 3920,
-          "total_value": 194763.18999999994,
-          "deaths": 0
+          "total_value": 194763.1899999991,
+          "deaths": 10
         },
         {
           "rank": 7,
@@ -1571,8 +1671,8 @@
           "pct_of_total": 5.72,
           "n_hospitalizations": 448,
           "total_days": 2368,
-          "total_value": 218547.74,
-          "deaths": 0
+          "total_value": 218547.73999999953,
+          "deaths": 9
         },
         {
           "rank": 8,
@@ -1582,7 +1682,7 @@
           "pct_of_total": 5.42,
           "n_hospitalizations": 425,
           "total_days": 3050,
-          "total_value": 97461.56999999999,
+          "total_value": 97461.57000000007,
           "deaths": 0
         },
         {
@@ -1593,8 +1693,8 @@
           "pct_of_total": 5.23,
           "n_hospitalizations": 410,
           "total_days": 5098,
-          "total_value": 487346.33999999997,
-          "deaths": 0
+          "total_value": 487346.3400000004,
+          "deaths": 43
         },
         {
           "rank": 10,
@@ -1604,8 +1704,8 @@
           "pct_of_total": 4.68,
           "n_hospitalizations": 367,
           "total_days": 5212,
-          "total_value": 1034472.0399999997,
-          "deaths": 0
+          "total_value": 1034472.0399999999,
+          "deaths": 57
         },
         {
           "rank": 11,
@@ -1615,8 +1715,8 @@
           "pct_of_total": 2.49,
           "n_hospitalizations": 195,
           "total_days": 993,
-          "total_value": 127376.07,
-          "deaths": 0
+          "total_value": 127376.07000000002,
+          "deaths": 1
         },
         {
           "rank": 12,
@@ -1626,7 +1726,7 @@
           "pct_of_total": 2.4,
           "n_hospitalizations": 188,
           "total_days": 854,
-          "total_value": 63947.38000000001,
+          "total_value": 63947.37999999998,
           "deaths": 0
         },
         {
@@ -1637,8 +1737,8 @@
           "pct_of_total": 2.23,
           "n_hospitalizations": 175,
           "total_days": 2306,
-          "total_value": 176489.65,
-          "deaths": 0
+          "total_value": 176489.6499999999,
+          "deaths": 13
         },
         {
           "rank": 14,
@@ -1649,7 +1749,7 @@
           "n_hospitalizations": 124,
           "total_days": 1740,
           "total_value": 216424.05999999994,
-          "deaths": 0
+          "deaths": 3
         },
         {
           "rank": 15,
@@ -1660,7 +1760,7 @@
           "n_hospitalizations": 123,
           "total_days": 1043,
           "total_value": 145935.65,
-          "deaths": 0
+          "deaths": 7
         },
         {
           "rank": 16,
@@ -1670,7 +1770,7 @@
           "pct_of_total": 1.24,
           "n_hospitalizations": 97,
           "total_days": 561,
-          "total_value": 29719.070000000003,
+          "total_value": 29719.07000000001,
           "deaths": 0
         },
         {
@@ -1681,7 +1781,7 @@
           "pct_of_total": 1.21,
           "n_hospitalizations": 95,
           "total_days": 502,
-          "total_value": 26021.999999999996,
+          "total_value": 26021.999999999975,
           "deaths": 0
         },
         {
@@ -1692,8 +1792,8 @@
           "pct_of_total": 0.89,
           "n_hospitalizations": 70,
           "total_days": 574,
-          "total_value": 64901.22,
-          "deaths": 0
+          "total_value": 64901.219999999994,
+          "deaths": 2
         },
         {
           "rank": 19,
@@ -1750,12 +1850,156 @@
     "isError": false,
     "result": {
       "metric": "value",
-      "ranking": [],
+      "ranking": [
+        {
+          "rank": 1,
+          "csap_group": "g06",
+          "csap_name": "Pneumonias bacterianas",
+          "metric_value": 1080730.1599999997,
+          "pct_of_total": 69.6,
+          "n_hospitalizations": 732,
+          "total_days": 7818,
+          "total_value": 1080730.1599999997,
+          "deaths": 25
+        },
+        {
+          "rank": 2,
+          "csap_group": "g08",
+          "csap_name": "Doenças pulmonares",
+          "metric_value": 190222.0499999999,
+          "pct_of_total": 12.25,
+          "n_hospitalizations": 187,
+          "total_days": 1217,
+          "total_value": 190222.0499999999,
+          "deaths": 2
+        },
+        {
+          "rank": 3,
+          "csap_group": "g02",
+          "csap_name": "Gastroenterites infecciosas e complicações",
+          "metric_value": 89142.04999999997,
+          "pct_of_total": 5.74,
+          "n_hospitalizations": 175,
+          "total_days": 1032,
+          "total_value": 89142.04999999997,
+          "deaths": 0
+        },
+        {
+          "rank": 4,
+          "csap_group": "g16",
+          "csap_name": "Infecção da pele e tecido subcutâneo",
+          "metric_value": 37871.59,
+          "pct_of_total": 2.44,
+          "n_hospitalizations": 82,
+          "total_days": 558,
+          "total_value": 37871.59,
+          "deaths": 0
+        },
+        {
+          "rank": 5,
+          "csap_group": "g04",
+          "csap_name": "Deficiências nutricionais",
+          "metric_value": 33296.02,
+          "pct_of_total": 2.14,
+          "n_hospitalizations": 42,
+          "total_days": 488,
+          "total_value": 33296.02,
+          "deaths": 3
+        },
+        {
+          "rank": 6,
+          "csap_group": "g07",
+          "csap_name": "Asma",
+          "metric_value": 27048.68,
+          "pct_of_total": 1.74,
+          "n_hospitalizations": 43,
+          "total_days": 186,
+          "total_value": 27048.68,
+          "deaths": 0
+        },
+        {
+          "rank": 7,
+          "csap_group": "g01",
+          "csap_name": "Doenças preveníveis por imunização e condições sensíveis",
+          "metric_value": 26712.929999999993,
+          "pct_of_total": 1.72,
+          "n_hospitalizations": 32,
+          "total_days": 264,
+          "total_value": 26712.929999999993,
+          "deaths": 1
+        },
+        {
+          "rank": 8,
+          "csap_group": "g19",
+          "csap_name": "Doenças relacionadas ao pré-natal e parto",
+          "metric_value": 20099.160000000003,
+          "pct_of_total": 1.29,
+          "n_hospitalizations": 63,
+          "total_days": 627,
+          "total_value": 20099.160000000003,
+          "deaths": 0
+        },
+        {
+          "rank": 9,
+          "csap_group": "g15",
+          "csap_name": "Infecção no rim e trato urinário",
+          "metric_value": 17712.22,
+          "pct_of_total": 1.14,
+          "n_hospitalizations": 50,
+          "total_days": 275,
+          "total_value": 17712.22,
+          "deaths": 0
+        },
+        {
+          "rank": 10,
+          "csap_group": "g05",
+          "csap_name": "Infecções de ouvido, nariz e garganta",
+          "metric_value": 15558.840000000002,
+          "pct_of_total": 1,
+          "n_hospitalizations": 50,
+          "total_days": 213,
+          "total_value": 15558.840000000002,
+          "deaths": 0
+        },
+        {
+          "rank": 11,
+          "csap_group": "g14",
+          "csap_name": "Epilepsias",
+          "metric_value": 12427.730000000001,
+          "pct_of_total": 0.8,
+          "n_hospitalizations": 12,
+          "total_days": 62,
+          "total_value": 12427.730000000001,
+          "deaths": 0
+        },
+        {
+          "rank": 12,
+          "csap_group": "g12",
+          "csap_name": "Doenças cerebrovasculares",
+          "metric_value": 1034.96,
+          "pct_of_total": 0.07,
+          "n_hospitalizations": 1,
+          "total_days": 25,
+          "total_value": 1034.96,
+          "deaths": 0
+        },
+        {
+          "rank": 13,
+          "csap_group": "g13",
+          "csap_name": "Diabetes mellitus",
+          "metric_value": 846.47,
+          "pct_of_total": 0.05,
+          "n_hospitalizations": 1,
+          "total_days": 18,
+          "total_value": 846.47,
+          "deaths": 0
+        }
+      ],
       "concentration": {
-        "top_3_percentage": 0,
-        "top_5_percentage": 0
+        "top_3_percentage": 87.59,
+        "top_5_percentage": 92.17
       },
-      "total_groups": 0
+      "total_groups": 13
     }
   },
   {
@@ -1770,11 +2014,11 @@
       "data": [
         {
           "n_hospitalizations": 39470,
-          "deaths": 0,
+          "deaths": 1200,
           "population": 221272301,
           "rate_per_100k": 17.84,
           "rate_per": 100000,
-          "mortality_rate": 0
+          "mortality_rate": 3.04
         }
       ],
       "summary": {
@@ -1812,20 +2056,20 @@
         {
           "uf": "AM",
           "n_hospitalizations": 84,
-          "deaths": 0,
+          "deaths": 3,
           "population": 4435886,
           "rate_per_100k": 1.89,
           "rate_per": 100000,
-          "mortality_rate": 0
+          "mortality_rate": 3.57
         },
         {
           "uf": "CE",
           "n_hospitalizations": 2,
-          "deaths": 0,
+          "deaths": 1,
           "population": 9548607,
           "rate_per_100k": 0.02,
           "rate_per": 100000,
-          "mortality_rate": 0
+          "mortality_rate": 50
         },
         {
           "uf": "GO",
@@ -1857,11 +2101,11 @@
         {
           "uf": "RR",
           "n_hospitalizations": 39377,
-          "deaths": 0,
+          "deaths": 1196,
           "population": 688474,
           "rate_per_100k": 5719.46,
           "rate_per": 100000,
-          "mortality_rate": 0
+          "mortality_rate": 3.04
         }
       ],
       "summary": {
@@ -1901,11 +2145,20 @@
     },
     "isError": false,
     "result": {
-      "data": [],
+      "data": [
+        {
+          "n_hospitalizations": 948,
+          "deaths": 124,
+          "population": 16729471,
+          "rate_per_100k": 5.67,
+          "rate_per": 100000,
+          "mortality_rate": 13.08
+        }
+      ],
       "summary": {
-        "total_hospitalizations": 0,
+        "total_hospitalizations": 948,
         "total_population": 16729471,
-        "overall_rate": 0,
+        "overall_rate": 5.67,
         "rate_per": 100000,
         "rate_type": "crude"
       },
@@ -1921,11 +2174,7 @@
           "group_by": [
             "sex"
           ]
-        },
-        "note": "Nenhuma internação encontrada para os filtros aplicados.",
-        "available_sih_years": [
-          2023
-        ]
+        }
       }
     }
   },
