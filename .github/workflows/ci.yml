@@ -9,7 +9,10 @@ name: CI
 # ranking que passa pelo DuckDB e pelos parquet de `tests/fixtures/sih` (cópia
 # real dos cubos de 2023 e de população; `data/*.parquet` é gitignored); e
 # (3) as doze ferramentas, chamadas com argumentos fixos, devolvem byte a byte
-# o que está em `baselines/golden-tools.json`. Isso é smoke + golden, não uma
+# o que está em `baselines/golden-tools.json`; e (4) a comparação de frescor
+# dos cubos com o manifesto do espelho healthbr-data (`src/freshness.ts`)
+# ainda distingue "em dia" de "atrás", OFFLINE, sobre um trecho versionado do
+# manifesto. Isso é smoke + golden + autoteste, não uma
 # suíte: não afirma que os NÚMEROS estão certos, só que o caminho inteiro
 # (binário nativo do DuckDB incluído) ainda anda e que os números não se
 # moveram depois de um bump. O conserto de verdade continua sendo
@@ -90,3 +93,15 @@ jobs:
       # consulta de propósito? Regravar com `npm run golden:tools:baseline` no
       # MESMO commit, e dizer no commit por que os valores mudaram.
       - run: npm run golden:tools
+
+      # Frescor dos cubos (sih:cubos-frescor (a), 05/09/2026): o servidor
+      # sonda o manifesto do espelho na inicialização e marca a proveniência
+      # quando um cubo está atrás. Smoke e golden rodam com a sonda DESLIGADA
+      # (SIH_FRESHNESS_CHECK=off) — o baseline não pode depender do portal.
+      # O que se testa aqui é a comparação em si, offline: sidecar da fixture
+      # vs `tests/fixtures/sih/manifest-excerpt.json` deve dar `current`, e
+      # uma cópia adulterada do trecho deve dar `stale` com as partições
+      # certas. Se o espelho reeditar uma partição de 2023/RR, o trecho
+      # regravado (`npm run freshness:excerpt`) reprova até o cubo ser
+      # regenerado — é o gate certo para o rebuild do item (b).
+      - run: npm run freshness:selftest

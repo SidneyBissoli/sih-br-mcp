@@ -63,9 +63,15 @@ const client = new Client({ name: "sih-golden", version: "0.0.0" });
 const transport = new StdioClientTransport({
   command: process.execPath,
   args: [resolve("dist/index.js")],
-  env: fixtures
-    ? { ...getDefaultEnvironment(), SIH_DATA_DIR: resolve(fixtures) }
-    : undefined,
+  // SIH_FRESHNESS_CHECK=off: o servidor NÃO sonda o manifesto do espelho
+  // healthbr-data (src/freshness.ts) — a resposta ficaria refém da rede e o
+  // baseline deixaria de ser byte a byte. A comparação em si é coberta offline
+  // por scripts/freshness-check.mjs --selftest.
+  env: {
+    ...getDefaultEnvironment(),
+    SIH_FRESHNESS_CHECK: "off",
+    ...(fixtures ? { SIH_DATA_DIR: resolve(fixtures) } : {}),
+  },
   stderr: "pipe",
 });
 let tools;

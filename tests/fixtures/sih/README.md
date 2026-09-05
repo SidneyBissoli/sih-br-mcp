@@ -29,9 +29,19 @@ linha), por isso os `.parquet` são os mesmos arquivos e só o sidecar mudou
 (`builder.version`, `builder.healthbr_version`, sem `download_date` — o
 `retrieved_at` vem do `processing_timestamp` do manifesto, igual ao segundo).
 
+`manifest-excerpt.json` é o trecho do manifesto público do healthbr-data
+(`sih/rd/manifest.json`, 10,4 MB) restrito às 16 partições que o sidecar usou,
+mais o cabeçalho (`last_updated` etc.). Serve ao autoteste offline da
+checagem de frescor (`npm run freshness:selftest`, `src/freshness.ts`):
+sidecar vs trecho tem de dar `current`, e uma cópia adulterada do trecho tem
+de dar `stale`. Regravar com `npm run freshness:excerpt` sempre que o sidecar
+mudar; se o espelho tiver reeditado uma partição de 2023/RR, o autoteste
+reprova até o cubo ser regenerado — de propósito.
+
 Quem lê daqui:
 
 - `scripts/smoke-stdio.mjs` — superfície das ferramentas + três chamadas.
+- `scripts/freshness-check.mjs --selftest` — sidecar vs `manifest-excerpt.json`.
 - `scripts/golden-tools.mjs` — as doze ferramentas com argumentos fixos,
   comparadas byte a byte com `baselines/golden-tools.json`. Os dois cubos de
   população entraram em 05/09/2026 para que as duas ferramentas de taxa

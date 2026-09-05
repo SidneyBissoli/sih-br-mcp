@@ -113,7 +113,7 @@
   },
   {
     "name": "get_available_years",
-    "description": "Retorna os anos disponíveis nos dados do SIH-SUS carregados.",
+    "description": "Retorna os anos disponíveis nos dados do SIH-SUS carregados e o frescor dos cubos em relação ao espelho healthbr-data (`freshness.status`: current, stale, unknown, pending ou disabled; quando stale, lista por ano as partições reeditadas pelo MS, regeneradas, retiradas ou novas na janela).",
     "inputSchema": {
       "type": "object",
       "properties": {}

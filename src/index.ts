@@ -33,6 +33,7 @@ import csapGroups from "./data/csap-groups.json" with { type: "json" };
 import cidChapters from "./data/cid-chapters.json" with { type: "json" };
 import brazilRegions from "./data/brazil-regions.json" with { type: "json" };
 import { SERVER_VERSION, provenanceFor, withProvenance } from "./provenance.js";
+import { getFreshness, startFreshnessCheck } from "./freshness.js";
 
 // =============================================================================
 // DEFINIÇÃO DAS FERRAMENTAS
@@ -71,7 +72,9 @@ const tools: Tool[] = [
   {
     name: "get_available_years",
     description:
-      "Retorna os anos disponíveis nos dados do SIH-SUS carregados.",
+      "Retorna os anos disponíveis nos dados do SIH-SUS carregados e o frescor dos cubos em relação ao " +
+      "espelho healthbr-data (`freshness.status`: current, stale, unknown, pending ou disabled; " +
+      "quando stale, lista por ano as partições reeditadas pelo MS, regeneradas, retiradas ou novas na janela).",
     inputSchema: {
       type: "object",
       properties: {},
@@ -544,6 +547,9 @@ async function handleGetAvailableYears() {
         total_years: years.length,
       },
       note: "Anos com dados Parquet disponíveis",
+      // Frescor dos cubos frente ao espelho healthbr-data (src/freshness.ts):
+      // checado em segundo plano na inicialização, sem bloquear.
+      freshness: getFreshness(),
     };
   } catch (error) {
     return {
@@ -1482,6 +1488,10 @@ async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("SIH-BR-MCP Server iniciado");
+  // Frescor dos cubos: sonda o manifesto do espelho em segundo plano (512
+  // bytes; só baixa os 10 MB se o manifesto mudou), com timeout curto. Não
+  // espera — a primeira ferramenta chamada antes do veredito vê `pending`.
+  void startFreshnessCheck();
 }
 
 main().catch((error) => {

@@ -22,10 +22,11 @@ import {
 } from "@sbissoli/mcp-provenance";
 
 import { getDataDirectory } from "./db/duckdb.js";
+import { cubeFreshness, describeBehind, getFreshness } from "./freshness.js";
 import csapGroups from "./data/csap-groups.json" with { type: "json" };
 import cidChapters from "./data/cid-chapters.json" with { type: "json" };
 
-export const SERVER_VERSION = "0.4.0";
+export const SERVER_VERSION = "0.5.0";
 
 export const provenance = createProvenanceContext({
   metaNamespace: "br.sbissoli.sih",
@@ -149,13 +150,45 @@ function safraOf(iso: string): string {
   return iso.slice(0, 10);
 }
 
+/**
+ * Marca de frescor no vintage — o modo concise não mostra `notices`, então a
+ * única chave do bloco que o leitor vê é esta. Só aparece quando o cubo está
+ * ATRÁS do espelho (ver src/freshness.ts); em dia, pendente, desligado ou sem
+ * rede não acrescenta nada, para o golden (que roda com a checagem desligada)
+ * continuar byte-idêntico.
+ */
+function behindMark(year: number): string {
+  const c = cubeFreshness(year);
+  if (!c || !c.behind) return "";
+  return ` [ATRÁS do espelho healthbr-data: ${describeBehind(c, getFreshness().manifest_last_updated_remote)}]`;
+}
+
 function vintageOf(s: SihSidecar): string {
   const first = s.competencias[0];
   const last = s.competencias[s.competencias.length - 1];
   const janela = s.window
     ? `internações de ${s.cube_year} em competências ${first} a ${last}${s.window.complete ? "" : " (janela INCOMPLETA)"}`
     : `competências ${first} a ${last}`;
-  return `${s.cube_year}: ${janela}, UF de arquivo ${s.ufs_arquivo.join("/")}, safra healthbr-data ${safraOf(s.retrieved_at)}`;
+  return `${s.cube_year}: ${janela}, UF de arquivo ${s.ufs_arquivo.join("/")}, safra healthbr-data ${safraOf(s.retrieved_at)}${behindMark(s.cube_year)}`;
+}
+
+/** Avisos de frescor (bloco canônico/detailed). Vazio quando não há o que dizer. */
+function freshnessNotices(used: SihSidecar[]): string[] {
+  const f = getFreshness();
+  if (f.status === "stale") {
+    return used
+      .map((s) => cubeFreshness(s.cube_year))
+      .filter((c): c is NonNullable<typeof c> => !!c && c.behind)
+      .map(
+        (c) =>
+          `Cubo ${c.cube_year} está ATRÁS do espelho healthbr-data: ${describeBehind(c, f.manifest_last_updated_remote)}. ` +
+          `Os números vêm dos arquivos da safra do sidecar; rebuild pendente.`,
+      );
+  }
+  if (f.status === "unknown") {
+    return [`Frescor dos cubos não verificado contra o espelho healthbr-data (${f.error ?? "sem resposta"}).`];
+  }
+  return [];
 }
 
 /**
@@ -217,6 +250,7 @@ export function sihProvenance(years?: number[]): CanonicalProvenance {
       `year/month pela data de internação (DT_INTER), lendo as competências do ano e os ${first.window?.months_after ?? 0} meses seguintes ` +
       `(cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em ${builtAt} por ${first.builder.script} v${first.builder.version}. ` +
       `Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.`,
+    notices: freshnessNotices(used),
     served_from_cache: null,
   });
 }

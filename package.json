@@ -1,6 +1,6 @@
 {
   "name": "sih-br-mcp",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "description": "MCP Server para análise de dados do SIH-SUS com foco em ICSAP",
   "repository": {
@@ -20,7 +20,10 @@
     "smoke:stdio": "node scripts/smoke-stdio.mjs --fixtures tests/fixtures/sih --baseline baselines/surface-stdio.json",
     "smoke:stdio:baseline": "node scripts/smoke-stdio.mjs --fixtures tests/fixtures/sih --write baselines/surface-stdio.json",
     "golden:tools": "node scripts/golden-tools.mjs --fixtures tests/fixtures/sih --baseline baselines/golden-tools.json",
-    "golden:tools:baseline": "node scripts/golden-tools.mjs --fixtures tests/fixtures/sih --write baselines/golden-tools.json"
+    "golden:tools:baseline": "node scripts/golden-tools.mjs --fixtures tests/fixtures/sih --write baselines/golden-tools.json",
+    "freshness": "node scripts/freshness-check.mjs",
+    "freshness:selftest": "node scripts/freshness-check.mjs --fixtures tests/fixtures/sih --selftest",
+    "freshness:excerpt": "node scripts/freshness-check.mjs --fixtures tests/fixtures/sih --write-excerpt"
   },
   "keywords": [
     "mcp",

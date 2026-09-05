@@ -1,0 +1,381 @@
+{
+  "manifest_version": "1.0.0",
+  "dataset": "sih/rd",
+  "last_updated": "2026-08-18T12:33:31",
+  "pipeline_version": "1.0.0",
+  "_excerpt": {
+    "note": "Trecho do manifesto público do healthbr-data restrito às partições que o sidecar da fixture usou; gerado por scripts/freshness-check.mjs --write-excerpt a partir de https://pub-99d9e1a3f5c542178d04efbddf1bba97.r2.dev/sih/rd/manifest.json",
+    "generated_at": "2026-09-05",
+    "partitions": 16
+  },
+  "partitions": {
+    "2023-01-RR": {
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2301.dbc",
+      "source_size_bytes": 349244,
+      "source_etag": {},
+      "source_last_modified": {},
+      "processing_timestamp": "2026-03-09 03:05:34.463049",
+      "output_files": [
+        {
+          "path": "sih/rd/ano=2023/mes=01/uf=RR/part-0.parquet",
+          "size_bytes": 284765,
+          "sha256": "bab1c2fdda7b09a6117169156f51846e095de0bc502fec9adecf90d2e1f08474",
+          "record_count": 4734
+        }
+      ],
+      "total_records": 4734,
+      "total_size_bytes": 284765,
+      "source_hash_md5": "12e74d4b059589ceb47e4136e3b2ce5f",
+      "pipeline_script": "scripts/pipeline/sih-pipeline-r.R",
+      "pipeline_version": "1.0.0",
+      "git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020",
+      "git_commit_inferred": true,
+      "metadata_backfilled_at": "2026-08-18T12:06:56Z"
+    },
+    "2023-02-RR": {
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2302.dbc",
+      "source_size_bytes": 297649,
+      "source_etag": {},
+      "source_last_modified": {},
+      "processing_timestamp": "2026-03-09 03:09:10.129209",
+      "output_files": [
+        {
+          "path": "sih/rd/ano=2023/mes=02/uf=RR/part-0.parquet",
+          "size_bytes": 249463,
+          "sha256": "090a7a855ae1eb7b727d23cab3e1af21ad84cf7723ec2f68e8988adbd3b8597d",
+          "record_count": 3936
+        }
+      ],
+      "total_records": 3936,
+      "total_size_bytes": 249463,
+      "source_hash_md5": "8f6ef8dc464ac612a529132176124da6",
+      "pipeline_script": "scripts/pipeline/sih-pipeline-r.R",
+      "pipeline_version": "1.0.0",
+      "git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020",
+      "git_commit_inferred": true,
+      "metadata_backfilled_at": "2026-08-18T12:06:56Z"
+    },
+    "2023-03-RR": {
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2303.dbc",
+      "source_size_bytes": 338974,
+      "source_etag": {},
+      "source_last_modified": {},
+      "processing_timestamp": "2026-03-09 03:12:54.933992",
+      "output_files": [
+        {
+          "path": "sih/rd/ano=2023/mes=03/uf=RR/part-0.parquet",
+          "size_bytes": 277900,
+          "sha256": "c02ebafa0259e721ec9fc8ef8e55ae5078e77219ceacba7bf5985f4ce3aa804d",
+          "record_count": 4495
+        }
+      ],
+      "total_records": 4495,
+      "total_size_bytes": 277900,
+      "source_hash_md5": "71108e9a4d8c686757f4425ed19b435f",
+      "pipeline_script": "scripts/pipeline/sih-pipeline-r.R",
+      "pipeline_version": "1.0.0",
+      "git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020",
+      "git_commit_inferred": true,
+      "metadata_backfilled_at": "2026-08-18T12:06:56Z"
+    },
+    "2023-04-RR": {
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2304.dbc",
+      "source_size_bytes": 334342,
+      "source_etag": {},
+      "source_last_modified": {},
+      "processing_timestamp": "2026-03-09 03:16:39.296215",
+      "output_files": [
+        {
+          "path": "sih/rd/ano=2023/mes=04/uf=RR/part-0.parquet",
+          "size_bytes": 277334,
+          "sha256": "c318e095dc279981027d65ff1ecdea53fc6935b53160bbc2c86adad83f582e4e",
+          "record_count": 4492
+        }
+      ],
+      "total_records": 4492,
+      "total_size_bytes": 277334,
+      "source_hash_md5": "d8076a653e00a12c1d8d0c3764e4f944",
+      "pipeline_script": "scripts/pipeline/sih-pipeline-r.R",
+      "pipeline_version": "1.0.0",
+      "git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020",
+      "git_commit_inferred": true,
+      "metadata_backfilled_at": "2026-08-18T12:06:56Z"
+    },
+    "2023-05-RR": {
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2305.dbc",
+      "source_size_bytes": 295832,
+      "source_etag": {},
+      "source_last_modified": {},
+      "processing_timestamp": "2026-03-09 03:20:26.158887",
+      "output_files": [
+        {
+          "path": "sih/rd/ano=2023/mes=05/uf=RR/part-0.parquet",
+          "size_bytes": 249493,
+          "sha256": "645fcf3f802e570c2dad3c2f7e6a286c527844a7e1237c86a6851e0d36880199",
+          "record_count": 4054
+        }
+      ],
+      "total_records": 4054,
+      "total_size_bytes": 249493,
+      "source_hash_md5": "087196c5ecd327aa7052144d7423f286",
+      "pipeline_script": "scripts/pipeline/sih-pipeline-r.R",
+      "pipeline_version": "1.0.0",
+      "git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020",
+      "git_commit_inferred": true,
+      "metadata_backfilled_at": "2026-08-18T12:06:56Z"
+    },
+    "2023-06-RR": {
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2306.dbc",
+      "source_size_bytes": 292318,
+      "source_etag": {},
+      "source_last_modified": {},
+      "processing_timestamp": "2026-03-09 03:24:14.364578",
+      "output_files": [
+        {
+          "path": "sih/rd/ano=2023/mes=06/uf=RR/part-0.parquet",
+          "size_bytes": 244744,
+          "sha256": "8ee9346b674726c83cf3594f3728c637ce55f3a369e72b1a1eb87610f51156aa",
+          "record_count": 3915
+        }
+      ],
+      "total_records": 3915,
+      "total_size_bytes": 244744,
+      "source_hash_md5": "d75f36afcbf4333fef77c61948d79105",
+      "pipeline_script": "scripts/pipeline/sih-pipeline-r.R",
+      "pipeline_version": "1.0.0",
+      "git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020",
+      "git_commit_inferred": true,
+      "metadata_backfilled_at": "2026-08-18T12:06:56Z"
+    },
+    "2023-07-RR": {
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2307.dbc",
+      "source_size_bytes": 321728,
+      "source_etag": {},
+      "source_last_modified": {},
+      "processing_timestamp": "2026-03-09 03:28:03.475562",
+      "output_files": [
+        {
+          "path": "sih/rd/ano=2023/mes=07/uf=RR/part-0.parquet",
+          "size_bytes": 266215,
+          "sha256": "85187cfa090e6c439bbb901f97d37ed376f13a465884e8ffbf122cf4959f4f32",
+          "record_count": 4201
+        }
+      ],
+      "total_records": 4201,
+      "total_size_bytes": 266215,
+      "source_hash_md5": "78b7573949d5c0e16840636b6d6faf27",
+      "pipeline_script": "scripts/pipeline/sih-pipeline-r.R",
+      "pipeline_version": "1.0.0",
+      "git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020",
+      "git_commit_inferred": true,
+      "metadata_backfilled_at": "2026-08-18T12:06:56Z"
+    },
+    "2023-08-RR": {
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2308.dbc",
+      "source_size_bytes": 347846,
+      "source_etag": {},
+      "source_last_modified": {},
+      "processing_timestamp": "2026-03-09 03:31:54.555734",
+      "output_files": [
+        {
+          "path": "sih/rd/ano=2023/mes=08/uf=RR/part-0.parquet",
+          "size_bytes": 284614,
+          "sha256": "5caa6f7873459f6a14bb47a6f1877f18e8e8d5d7a37f4762c3d1382aed277250",
+          "record_count": 4655
+        }
+      ],
+      "total_records": 4655,
+      "total_size_bytes": 284614,
+      "source_hash_md5": "561a0d93408c3c0e9c1abc53559c7135",
+      "pipeline_script": "scripts/pipeline/sih-pipeline-r.R",
+      "pipeline_version": "1.0.0",
+      "git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020",
+      "git_commit_inferred": true,
+      "metadata_backfilled_at": "2026-08-18T12:06:56Z"
+    },
+    "2023-09-RR": {
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2309.dbc",
+      "source_size_bytes": 119285,
+      "source_etag": {},
+      "source_last_modified": {},
+      "processing_timestamp": "2026-03-09 03:35:44.659939",
+      "output_files": [
+        {
+          "path": "sih/rd/ano=2023/mes=09/uf=RR/part-0.parquet",
+          "size_bytes": 127427,
+          "sha256": "d10f63d892ec6c4a5304407330f8661c84ce18324a8d6a3ceb54d572751c7a2e",
+          "record_count": 1535
+        }
+      ],
+      "total_records": 1535,
+      "total_size_bytes": 127427,
+      "source_hash_md5": "24c0ad12194afe5cc0d1e1423d9750b4",
+      "pipeline_script": "scripts/pipeline/sih-pipeline-r.R",
+      "pipeline_version": "1.0.0",
+      "git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020",
+      "git_commit_inferred": true,
+      "metadata_backfilled_at": "2026-08-18T12:06:56Z"
+    },
+    "2023-10-RR": {
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2310.dbc",
+      "source_size_bytes": 166954,
+      "source_etag": {},
+      "source_last_modified": {},
+      "processing_timestamp": "2026-03-09 03:39:33.139013",
+      "output_files": [
+        {
+          "path": "sih/rd/ano=2023/mes=10/uf=RR/part-0.parquet",
+          "size_bytes": 162516,
+          "sha256": "8fb1c18e2ea92654d181597fa01c539e287dcad86caa00064ed9218d971a6fbc",
+          "record_count": 2171
+        }
+      ],
+      "total_records": 2171,
+      "total_size_bytes": 162516,
+      "source_hash_md5": "352ccad862ac43cef6d099c7b53f767f",
+      "pipeline_script": "scripts/pipeline/sih-pipeline-r.R",
+      "pipeline_version": "1.0.0",
+      "git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020",
+      "git_commit_inferred": true,
+      "metadata_backfilled_at": "2026-08-18T12:06:56Z"
+    },
+    "2023-11-RR": {
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2311.dbc",
+      "source_size_bytes": 275988,
+      "source_etag": {},
+      "source_last_modified": {},
+      "processing_timestamp": "2026-03-09 03:43:17.685204",
+      "output_files": [
+        {
+          "path": "sih/rd/ano=2023/mes=11/uf=RR/part-0.parquet",
+          "size_bytes": 234948,
+          "sha256": "af09ef5497ec764334a477fd2528a3cff85c755fc2ccce384a117157beb22260",
+          "record_count": 3632
+        }
+      ],
+      "total_records": 3632,
+      "total_size_bytes": 234948,
+      "source_hash_md5": "2ba32f57cce18da1d38bd04eb82b3a33",
+      "pipeline_script": "scripts/pipeline/sih-pipeline-r.R",
+      "pipeline_version": "1.0.0",
+      "git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020",
+      "git_commit_inferred": true,
+      "metadata_backfilled_at": "2026-08-18T12:06:56Z"
+    },
+    "2023-12-RR": {
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2312.dbc",
+      "source_size_bytes": 259816,
+      "source_etag": {},
+      "source_last_modified": {},
+      "processing_timestamp": "2026-03-09 03:47:02.374415",
+      "output_files": [
+        {
+          "path": "sih/rd/ano=2023/mes=12/uf=RR/part-0.parquet",
+          "size_bytes": 224812,
+          "sha256": "995e6ad595cb8776d369ca677eed95b89b46f88d1275e4320e788bd6f7ff4cbe",
+          "record_count": 3534
+        }
+      ],
+      "total_records": 3534,
+      "total_size_bytes": 224812,
+      "source_hash_md5": "ec378c4ee2332ca397d5428e10ce2080",
+      "pipeline_script": "scripts/pipeline/sih-pipeline-r.R",
+      "pipeline_version": "1.0.0",
+      "git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020",
+      "git_commit_inferred": true,
+      "metadata_backfilled_at": "2026-08-18T12:06:56Z"
+    },
+    "2024-01-RR": {
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2401.dbc",
+      "source_size_bytes": 275725,
+      "source_etag": {},
+      "source_last_modified": {},
+      "processing_timestamp": "2026-03-09 03:51:14.858049",
+      "output_files": [
+        {
+          "path": "sih/rd/ano=2024/mes=01/uf=RR/part-0.parquet",
+          "size_bytes": 232541,
+          "sha256": "ed23cded3352f9b86933a64c7686bbbf537e4987a89b022e190080f28d282dfd",
+          "record_count": 3714
+        }
+      ],
+      "total_records": 3714,
+      "total_size_bytes": 232541,
+      "source_hash_md5": "265a69e9e9b06a3d603dc3b294bf55c8",
+      "pipeline_script": "scripts/pipeline/sih-pipeline-r.R",
+      "pipeline_version": "1.0.0",
+      "git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020",
+      "git_commit_inferred": true,
+      "metadata_backfilled_at": "2026-08-18T12:06:56Z"
+    },
+    "2024-02-RR": {
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2402.dbc",
+      "source_size_bytes": 255806,
+      "source_etag": {},
+      "source_last_modified": {},
+      "processing_timestamp": "2026-03-09 03:54:59.36754",
+      "output_files": [
+        {
+          "path": "sih/rd/ano=2024/mes=02/uf=RR/part-0.parquet",
+          "size_bytes": 221938,
+          "sha256": "a7495df450d1ab68c75c929aab82e18eed945b0e511969259340c21f5dd51c10",
+          "record_count": 3413
+        }
+      ],
+      "total_records": 3413,
+      "total_size_bytes": 221938,
+      "source_hash_md5": "6b3d81430a101e14f73b282c2bd24520",
+      "pipeline_script": "scripts/pipeline/sih-pipeline-r.R",
+      "pipeline_version": "1.0.0",
+      "git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020",
+      "git_commit_inferred": true,
+      "metadata_backfilled_at": "2026-08-18T12:06:56Z"
+    },
+    "2024-03-RR": {
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2403.dbc",
+      "source_size_bytes": 272502,
+      "source_etag": {},
+      "source_last_modified": {},
+      "processing_timestamp": "2026-03-09 03:58:49.461675",
+      "output_files": [
+        {
+          "path": "sih/rd/ano=2024/mes=03/uf=RR/part-0.parquet",
+          "size_bytes": 230366,
+          "sha256": "ca5635cefa84a5115e67add3eccd26f39dbe3a69fed497607e0fd3683b2a35e6",
+          "record_count": 3619
+        }
+      ],
+      "total_records": 3619,
+      "total_size_bytes": 230366,
+      "source_hash_md5": "0f49c86af9b21a54e88d42a87e694278",
+      "pipeline_script": "scripts/pipeline/sih-pipeline-r.R",
+      "pipeline_version": "1.0.0",
+      "git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020",
+      "git_commit_inferred": true,
+      "metadata_backfilled_at": "2026-08-18T12:06:56Z"
+    },
+    "2024-04-RR": {
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2404.dbc",
+      "source_size_bytes": 225994,
+      "source_etag": {},
+      "source_last_modified": {},
+      "processing_timestamp": "2026-03-09 04:02:47.300987",
+      "output_files": [
+        {
+          "path": "sih/rd/ano=2024/mes=04/uf=RR/part-0.parquet",
+          "size_bytes": 200194,
+          "sha256": "95c5ff501315bc978a2a374617d577be989c0e454c311e87c10f3496064fbb83",
+          "record_count": 3041
+        }
+      ],
+      "total_records": 3041,
+      "total_size_bytes": 200194,
+      "source_hash_md5": "883a1d19b10f206856cf3602cc1badd4",
+      "pipeline_script": "scripts/pipeline/sih-pipeline-r.R",
+      "pipeline_version": "1.0.0",
+      "git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020",
+      "git_commit_inferred": true,
+      "metadata_backfilled_at": "2026-08-18T12:06:56Z"
+    }
+  }
+}

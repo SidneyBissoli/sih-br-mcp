@@ -493,9 +493,25 @@ interface GetAvailableYearsResponse {
     last_year: number;
     total_years: number;
   };
-  update_info: {
-    last_update: string;               // ISO date
-    next_expected_update: string;
+  note: string;
+  // Frescor dos cubos frente ao espelho healthbr-data (src/freshness.ts, 0.5.0):
+  // checado em segundo plano na inicialização; `pending` até o veredito.
+  freshness: {
+    status: "current" | "stale" | "unknown" | "pending" | "disabled";
+    checked_at: string | null;
+    method: "range" | "full" | null;  // sonda de 512 bytes bastou, ou baixou o manifesto
+    manifest_url: string | null;
+    manifest_last_updated_local: string | null;   // manifesto com que os cubos foram gerados (sidecar)
+    manifest_last_updated_remote: string | null;  // manifesto público agora
+    cubes: {
+      cube_year: number;
+      reedited: string[];       // .dbc reeditado pelo MS (MD5/tamanho mudou)
+      reprocessed: string[];    // Parquet regenerado no espelho (SHA-256 mudou)
+      removed: string[];        // partição sumiu do manifesto
+      new_in_window: string[];  // competência da janela publicada depois do build
+      behind: boolean;
+    }[];
+    error: string | null;
   };
 }
 ```
