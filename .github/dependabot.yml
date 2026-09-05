@@ -20,9 +20,12 @@
 # três chamadas pelo DuckDB sobre a fixture versionada. É isso que valida cada
 # PR daqui. Não há bloco worker/: o sih é stdio-only, um só lockfile, na raiz.
 #
-# `overrides.node-gyp` no package.json não é alvo do Dependabot — ele só sobe o
-# que está declarado em dependencies/devDependencies. Quando o duckdb deixar de
-# pinar node-gyp ^9 (ou migrar para @duckdb/node-api), remover o override à mão.
+# Entre 04/09 e 05/09/2026 havia um `overrides.node-gyp` no package.json,
+# contendo o `duckdb` legado que pinava node-gyp ^9 — e override não é alvo
+# do Dependabot, que só sobe o que está em dependencies/devDependencies. Com
+# a migração para `@duckdb/node-api` (05/09, PLAN-002) não sobrou quem
+# trouxesse node-gyp, e o override foi removido: tudo o que o lock tem agora
+# está ao alcance deste arquivo.
 version: 2
 updates:
   - package-ecosystem: "npm"

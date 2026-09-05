@@ -7,10 +7,13 @@ name: CI
 # mesma superfície de ferramentas gravada em `baselines/surface-stdio.json` e
 # responde a três chamadas de ponta a ponta — metadados, anos disponíveis e um
 # ranking que passa pelo DuckDB e pelos parquet de `tests/fixtures/sih` (cópia
-# real dos cubos de 2023; `data/*.parquet` é gitignored). Isso é um smoke, não
-# uma suíte: não afirma que os NÚMEROS estão certos, só que o caminho inteiro
-# (binário nativo do duckdb incluído) ainda anda depois de um bump. O conserto
-# de verdade continua sendo `campanha:contrato-vitest`, e é projeto, não tarefa.
+# real dos cubos de 2023 e de população; `data/*.parquet` é gitignored); e
+# (3) as doze ferramentas, chamadas com argumentos fixos, devolvem byte a byte
+# o que está em `baselines/golden-tools.json`. Isso é smoke + golden, não uma
+# suíte: não afirma que os NÚMEROS estão certos, só que o caminho inteiro
+# (binário nativo do DuckDB incluído) ainda anda e que os números não se
+# moveram depois de um bump. O conserto de verdade continua sendo
+# `campanha:contrato-vitest`, e é projeto, não tarefa.
 #
 # POR QUE EXISTIR MESMO ASSIM, num repositório privado e parado. Até 31/08/2026
 # o único workflow aqui era o `publish.yml`, que roda em tag: nenhum push era
@@ -24,13 +27,17 @@ name: CI
 # O SMOKE NASCEU EM 04/09/2026, no dia em que o lock foi destravado: 72 alertas
 # do Dependabot (1 critical em `tar`), todos em runtime, vinham de duas raízes —
 # o subárvore do SDK (hono, ajv, fast-uri) parado no lock, e o `duckdb` 1.4.4
-# pinando `node-gyp ^9`, que arrasta make-fetch-happen/cacache/tar 6/glob 7
-# antigos. A primeira caiu com `npm update`; a segunda com `overrides.node-gyp`
-# no package.json (o node-gyp só é invocado se não houver binário pré-compilado,
-# e a linha 12 troca make-fetch-happen por undici e não traz glob). Sem gate
-# nenhum, aquele bump seria fé; com este smoke, é medido. Foi o que permitiu
-# ligar o Dependabot (.github/dependabot.yml, no mesmo dia) sem abrir PRs que
-# ninguém tem como validar: cada PR dele passa por este arquivo.
+# (binding legado) pinando `node-gyp ^9`, que arrasta make-fetch-happen/cacache/
+# tar 6/glob 7 antigos. A primeira caiu com `npm update`; a segunda foi contida
+# por um dia com `overrides.node-gyp` e resolvida em 05/09 pela migração para
+# `@duckdb/node-api` (PLAN-002): binário pré-compilado por plataforma, zero
+# node-gyp e zero tar na árvore. O GOLDEN NASCEU nesse dia, gravado com o
+# binding antigo ANTES da troca, e foi o que provou que a troca não moveu um
+# número — e, de quebra, expôs que as consultas agrupadas não tinham ordem
+# garantida (corrigido no funil antes de gravar). Sem gate nenhum, aqueles
+# bumps seriam fé; com smoke e golden, são medidos. Foi o que permitiu ligar
+# o Dependabot (.github/dependabot.yml) sem abrir PRs que ninguém tem como
+# validar: cada PR dele passa por este arquivo.
 
 on:
   push:

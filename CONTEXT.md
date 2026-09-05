@@ -38,6 +38,9 @@ Desenvolver um **MCP Server** para análise de dados do Sistema de Informações
 4. **Grupos CSAP** como string ("g01"-"g19")
 5. **Capítulos CID** como inteiro (1-22)
 6. **População incluída no MCP** (não depende de outro MCP)
+7. **Cliente DuckDB: `@duckdb/node-api`** ("Node Neo", cliente oficial atual), desde 2026-09-05 — o binding legado `duckdb` pinava `node-gyp ^9` em runtime e arrastava tar/cacache/glob antigos para o lock (60 dos 72 alertas do Dependabot de 09/2026); o Neo tem binário pré-compilado por plataforma e nenhum toolchain nativo na árvore. Só `src/db/duckdb.ts` toca o cliente, pelo funil `query()`, que lê com `getRowObjectsJS()` e converte bigint. Plano e medições: `docs/plan-002-migracao-duckdb-node-api.md`
+8. **Ordem das linhas garantida** nas consultas agrupadas (`buildOrderBy` no funil, 2026-09-05): toda coluna de agrupamento não ordenada pelo chamador entra como desempate — sem isso, duas chamadas iguais devolviam rankings diferentes em empate e subconjuntos diferentes com `limit`
+9. **Gate do CI: smoke + golden pelo stdio** (`scripts/smoke-stdio.mjs`, `scripts/golden-tools.mjs`) sobre a fixture versionada em `tests/fixtures/sih` — superfície e valores das 12 ferramentas byte a byte contra `baselines/`; não é suíte (ver `campanha:contrato-vitest` no portfolio-monitor)
 
 ---
 
