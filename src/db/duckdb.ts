@@ -297,6 +297,31 @@ function buildWhereClause(filters: CausasFilters | IcsapFilters): string {
 }
 
 /**
+ * ORDER BY determinístico para consultas agrupadas.
+ *
+ * Sem isto, duas chamadas iguais devolvem respostas diferentes: GROUP BY sem
+ * ORDER BY sai na ordem em que as 4 threads do DuckDB terminam, e ORDER BY
+ * por métrica empata (dois grupos com o mesmo SUM) sem critério de desempate —
+ * medido em 05/09/2026 sobre a fixture: `compare_regions` dava posição 5 a GO
+ * numa chamada e a PB na seguinte, `rank_csap_groups` trocava g01 e g13, e
+ * qualquer `limit` em cima disso devolvia SUBCONJUNTOS diferentes. O golden
+ * das ferramentas (scripts/golden-tools.mjs) foi o que expôs; o conserto é
+ * aqui, no funil, e não tool a tool: toda coluna de agrupamento que o chamador
+ * não ordenou explicitamente entra como desempate, na ordem do GROUP BY.
+ */
+function buildOrderBy(orderBy: string | undefined, groupBy: string[]): string {
+  const mentioned = new Set(
+    (orderBy ?? "")
+      .split(",")
+      .map((part) => part.trim().split(/\s+/)[0])
+      .filter(Boolean)
+  );
+  const tieBreak = groupBy.filter((column) => !mentioned.has(column));
+  const parts = [orderBy, ...tieBreak].filter((part): part is string => !!part);
+  return parts.length > 0 ? ` ORDER BY ${parts.join(", ")}` : "";
+}
+
+/**
  * Query no cubo de causas com agregação flexível
  */
 export async function queryCausas<T = Record<string, unknown>>(options: {
@@ -332,9 +357,7 @@ export async function queryCausas<T = Record<string, unknown>>(options: {
     ${groupByClause}
   `;
 
-  if (options.orderBy) {
-    sql += ` ORDER BY ${options.orderBy}`;
-  }
+  sql += buildOrderBy(options.orderBy, groupBy);
 
   if (options.limit) {
     sql += ` LIMIT ${options.limit}`;
@@ -380,9 +403,7 @@ export async function queryIcsap<T = Record<string, unknown>>(options: {
     ${groupByClause}
   `;
 
-  if (options.orderBy) {
-    sql += ` ORDER BY ${options.orderBy}`;
-  }
+  sql += buildOrderBy(options.orderBy, groupBy);
 
   if (options.limit) {
     sql += ` LIMIT ${options.limit}`;
@@ -432,11 +453,7 @@ export async function querySeries<T = Record<string, unknown>>(options: {
     ${groupByClause}
   `;
 
-  if (options.orderBy) {
-    sql += ` ORDER BY ${options.orderBy}`;
-  } else if (groupBy.includes("year_month")) {
-    sql += ` ORDER BY year_month`;
-  }
+  sql += buildOrderBy(options.orderBy, groupBy);
 
   return query<T>(sql);
 }
@@ -471,7 +488,7 @@ export async function rankCsapGroups<T = Record<string, unknown>>(options: {
     FROM read_parquet('${pattern}')
     WHERE ${whereClause}
     GROUP BY csap_group
-    ORDER BY metric_value DESC
+    ORDER BY metric_value DESC, csap_group
     ${options.limit ? `LIMIT ${options.limit}` : ""}
   `;
 
@@ -503,7 +520,7 @@ export async function calculateIcsapIndicators<T = Record<string, unknown>>(opti
       SUM(deaths) as deaths
     FROM read_parquet('${pattern}')
     WHERE ${whereClause}
-    ${groupByClause}
+    ${groupByClause}${buildOrderBy(undefined, groupBy)}
   `;
 
   return query<T>(sql);
@@ -599,7 +616,7 @@ export async function queryPopulationUf<T = Record<string, unknown>>(options: {
       SUM(population) as population
     FROM read_parquet('${pattern}')
     WHERE ${whereClause}
-    ${groupByClause}
+    ${groupByClause}${buildOrderBy(undefined, groupBy)}
   `;
 
   return query<T>(sql);
@@ -642,7 +659,7 @@ export async function queryPopulationUfAgregado<T = Record<string, unknown>>(opt
       SUM(population) as population
     FROM read_parquet('${pattern}')
     WHERE ${whereClause}
-    ${groupByClause}
+    ${groupByClause}${buildOrderBy(undefined, groupBy)}
   `;
 
   return query<T>(sql);
@@ -693,7 +710,7 @@ async function queryPopulationFromMunicipios<T = Record<string, unknown>>(option
       SUM(population) as population
     FROM read_parquet('${pattern}')
     WHERE ${whereClause}
-    ${groupByClause}
+    ${groupByClause}${buildOrderBy(undefined, groupBy)}
   `;
 
   return query<T>(sql);
