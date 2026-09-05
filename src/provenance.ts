@@ -46,7 +46,8 @@ export interface SihSidecarPartition {
   source_url: string;
   source_hash_md5: string;
   source_size_bytes: number;
-  download_date: string;
+  /** Só em sidecars do builder <= 2.1.0 (rodapé do Parquet); igual a processing_timestamp ao segundo. */
+  download_date?: string;
   processing_timestamp: string;
   healthbr_pipeline_version: string;
   healthbr_git_commit: string;
@@ -72,6 +73,8 @@ export interface SihSidecar {
     git_commit: string | null;
     r_version: string;
     arrow_version: string;
+    /** Builder >= 2.2.0: o pacote healthbR que leu o espelho. */
+    healthbr_version?: string;
   };
   source: { name: string; agency: string; database: string; endpoint: string };
   distributor: {

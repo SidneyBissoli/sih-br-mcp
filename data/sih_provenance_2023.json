@@ -11,13 +11,14 @@
   },
   "competencias": ["2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04"],
   "ufs_arquivo": ["RR"],
-  "built_at": "2026-09-05T17:27:53Z",
+  "built_at": "2026-09-05T18:30:49Z",
   "builder": {
     "script": "scripts/build-aggregations.R",
-    "version": "2.1.0",
-    "git_commit": "e1e712d9c6562bf2e1aa30832c757892f7d4a62d",
+    "version": "2.2.0",
+    "git_commit": "d89f8907c9d2002561d12affa33ab3560882c8f2",
     "r_version": "R version 4.6.1 (2026-06-24 ucrt)",
-    "arrow_version": "25.0.0"
+    "arrow_version": "25.0.0",
+    "healthbr_version": "0.3.1"
   },
   "source": {
     "name": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
@@ -44,7 +45,6 @@
       "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2301.dbc",
       "source_hash_md5": "12e74d4b059589ceb47e4136e3b2ce5f",
       "source_size_bytes": 349244,
-      "download_date": "2026-03-09T03:05:34Z",
       "processing_timestamp": "2026-03-09 03:05:34.463049",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
@@ -58,7 +58,6 @@
       "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2302.dbc",
       "source_hash_md5": "8f6ef8dc464ac612a529132176124da6",
       "source_size_bytes": 297649,
-      "download_date": "2026-03-09T03:09:10Z",
       "processing_timestamp": "2026-03-09 03:09:10.129209",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
@@ -72,7 +71,6 @@
       "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2303.dbc",
       "source_hash_md5": "71108e9a4d8c686757f4425ed19b435f",
       "source_size_bytes": 338974,
-      "download_date": "2026-03-09T03:12:54Z",
       "processing_timestamp": "2026-03-09 03:12:54.933992",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
@@ -86,7 +84,6 @@
       "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2304.dbc",
       "source_hash_md5": "d8076a653e00a12c1d8d0c3764e4f944",
       "source_size_bytes": 334342,
-      "download_date": "2026-03-09T03:16:39Z",
       "processing_timestamp": "2026-03-09 03:16:39.296215",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
@@ -100,7 +97,6 @@
       "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2305.dbc",
       "source_hash_md5": "087196c5ecd327aa7052144d7423f286",
       "source_size_bytes": 295832,
-      "download_date": "2026-03-09T03:20:26Z",
       "processing_timestamp": "2026-03-09 03:20:26.158887",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
@@ -114,7 +110,6 @@
       "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2306.dbc",
       "source_hash_md5": "d75f36afcbf4333fef77c61948d79105",
       "source_size_bytes": 292318,
-      "download_date": "2026-03-09T03:24:14Z",
       "processing_timestamp": "2026-03-09 03:24:14.364578",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
@@ -128,7 +123,6 @@
       "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2307.dbc",
       "source_hash_md5": "78b7573949d5c0e16840636b6d6faf27",
       "source_size_bytes": 321728,
-      "download_date": "2026-03-09T03:28:03Z",
       "processing_timestamp": "2026-03-09 03:28:03.475562",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
@@ -142,7 +136,6 @@
       "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2308.dbc",
       "source_hash_md5": "561a0d93408c3c0e9c1abc53559c7135",
       "source_size_bytes": 347846,
-      "download_date": "2026-03-09T03:31:54Z",
       "processing_timestamp": "2026-03-09 03:31:54.555734",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
@@ -156,7 +149,6 @@
       "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2309.dbc",
       "source_hash_md5": "24c0ad12194afe5cc0d1e1423d9750b4",
       "source_size_bytes": 119285,
-      "download_date": "2026-03-09T03:35:44Z",
       "processing_timestamp": "2026-03-09 03:35:44.659939",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
@@ -170,7 +162,6 @@
       "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2310.dbc",
       "source_hash_md5": "352ccad862ac43cef6d099c7b53f767f",
       "source_size_bytes": 166954,
-      "download_date": "2026-03-09T03:39:33Z",
       "processing_timestamp": "2026-03-09 03:39:33.139013",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
@@ -184,7 +175,6 @@
       "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2311.dbc",
       "source_hash_md5": "2ba32f57cce18da1d38bd04eb82b3a33",
       "source_size_bytes": 275988,
-      "download_date": "2026-03-09T03:43:17Z",
       "processing_timestamp": "2026-03-09 03:43:17.685204",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
@@ -198,7 +188,6 @@
       "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2312.dbc",
       "source_hash_md5": "ec378c4ee2332ca397d5428e10ce2080",
       "source_size_bytes": 259816,
-      "download_date": "2026-03-09T03:47:02Z",
       "processing_timestamp": "2026-03-09 03:47:02.374415",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
@@ -212,7 +201,6 @@
       "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2401.dbc",
       "source_hash_md5": "265a69e9e9b06a3d603dc3b294bf55c8",
       "source_size_bytes": 275725,
-      "download_date": "2026-03-09T03:51:14Z",
       "processing_timestamp": "2026-03-09 03:51:14.858049",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
@@ -226,7 +214,6 @@
       "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2402.dbc",
       "source_hash_md5": "6b3d81430a101e14f73b282c2bd24520",
       "source_size_bytes": 255806,
-      "download_date": "2026-03-09T03:54:59Z",
       "processing_timestamp": "2026-03-09 03:54:59.36754",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
@@ -240,7 +227,6 @@
       "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2403.dbc",
       "source_hash_md5": "0f49c86af9b21a54e88d42a87e694278",
       "source_size_bytes": 272502,
-      "download_date": "2026-03-09T03:58:49Z",
       "processing_timestamp": "2026-03-09 03:58:49.461675",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
@@ -254,7 +240,6 @@
       "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2404.dbc",
       "source_hash_md5": "883a1d19b10f206856cf3602cc1badd4",
       "source_size_bytes": 225994,
-      "download_date": "2026-03-09T04:02:47Z",
       "processing_timestamp": "2026-03-09 04:02:47.300987",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
@@ -269,5 +254,5 @@
     "series_rows": 309,
     "icsap_rows": 4092
   },
-  "notes": ["Cubo por ANO DE INTERNAÇÃO (DT_INTER): lê as competências do ano e os meses seguintes de Y+1 (window.months_after) e descarta internações de outros anos. Com 4 meses, 99,7-99,9% das internações do ano (dezembro 99,3-99,7%); o restante é reapresentação tardia difusa.", "uf dos cubos = UF de residência (MUNIC_RES); ufs_arquivo = UF do estabelecimento (nome do arquivo RD no FTP).", "retrieved_at = data de download mais recente, no healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream)."]
+  "notes": ["Cubo por ANO DE INTERNAÇÃO (DT_INTER): lê as competências do ano e os meses seguintes de Y+1 (window.months_after) e descarta internações de outros anos. Com 4 meses, 99,7-99,9% das internações do ano (dezembro 99,3-99,7%); o restante é reapresentação tardia difusa.", "uf dos cubos = UF de residência (MUNIC_RES); ufs_arquivo = UF do estabelecimento (nome do arquivo RD no FTP).", "retrieved_at = processing_timestamp mais recente, no manifesto do healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream; igual, ao segundo, ao download_date do rodapé do Parquet). Lido por healthbR::sih_status()."]
 }

@@ -21,7 +21,13 @@ ficam de fora — cubo por ano de internação, janela de 4 meses, ver
 residência, por isso aparecem AL AM AP CE GO MA MG PB RJ RR. O sidecar diz de quais `.dbc`
 (URL, MD5, tamanho, data de download no espelho) cada número saiu; é dele que
 o servidor tira `retrieved_at` e `data_vintage` do bloco de proveniência — e é
-por isso que o bloco é determinístico e cabe no golden.
+por isso que o bloco é determinístico e cabe no golden. O sidecar aqui é o do
+build v2.2.0 (2026-09-05), o primeiro a ler o espelho pelo pacote healthbR
+(`sih_status()` + `sih_data(source = "r2", lazy = TRUE)`) em vez de código S3
+próprio: os três cubos saíram idênticos aos do build v2.1.0 (comparados linha a
+linha), por isso os `.parquet` são os mesmos arquivos e só o sidecar mudou
+(`builder.version`, `builder.healthbr_version`, sem `download_date` — o
+`retrieved_at` vem do `processing_timestamp` do manifesto, igual ao segundo).
 
 Quem lê daqui:
 

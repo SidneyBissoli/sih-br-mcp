@@ -28,18 +28,30 @@
 # FECHADO quando a competência (Y+1)-04 é publicada: partições posteriores não
 # o alteram, só reedições dentro da janela.
 #
-# Acesso ao R2: token público somente-leitura publicado no README do
-# healthbr-data; pode ser sobrescrito por HEALTHBR_R2_ACCESS_KEY /
-# HEALTHBR_R2_SECRET_KEY / HEALTHBR_R2_ENDPOINT.
+# Acesso ao R2: pelo pacote healthbR (>= 0.3.1.9000, dev de 2026-09-05):
+# `healthbR::sih_status()` diz quais partições existem e de que .dbc vieram;
+# `healthbR::sih_data(source = "r2", lazy = TRUE)` abre o espelho como dataset
+# arrow remoto, com a projeção das 10 colunas empurrada para o Parquet. O token
+# público somente-leitura vive no pacote; outro bucket entra por
+# `r2_credentials` (ver ?healthbR::sih_data). Este script não tem código S3
+# próprio desde a v2.2.0.
 # =============================================================================
 
 library(dplyr)
 library(tidyr)
 library(purrr)
-library(arrow)
+library(arrow)      # write_parquet dos cubos
 library(stringr)
 library(cli)
 library(jsonlite)
+
+if (!requireNamespace("healthbR", quietly = TRUE) ||
+    !exists("sih_status", asNamespace("healthbR"))) {
+  stop(paste(
+    "Este script precisa do healthbR com sih_status() (versao dev >= 2026-09-05).",
+    "Instale com: devtools::install('C:/dev/r-packages/healthbR', upgrade = FALSE)"
+  ), call. = FALSE)
+}
 
 # =============================================================================
 # CONFIGURACAO
@@ -48,19 +60,14 @@ library(jsonlite)
 OUTPUT_DIR <- here::here("data")
 dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
-BUILDER_VERSION <- "2.1.0"
+BUILDER_VERSION <- "2.2.0"
 
 # Meses de Y+1 lidos para fechar as internações de Y (ver cabeçalho)
 MESES_SEGUINTES <- 4L
 
+# Identidade do distribuidor, registrada no sidecar (o acesso é do healthbR)
 HEALTHBR_BUCKET <- "healthbr-data"
 HEALTHBR_PREFIX <- "sih/rd"
-HEALTHBR_ENDPOINT <- Sys.getenv("HEALTHBR_R2_ENDPOINT",
-  "https://5c499208eebced4e34bd98ffa204f2fb.r2.cloudflarestorage.com")
-HEALTHBR_ACCESS_KEY <- Sys.getenv("HEALTHBR_R2_ACCESS_KEY",
-  "28c72d4b3e1140fa468e367ae472b522")
-HEALTHBR_SECRET_KEY <- Sys.getenv("HEALTHBR_R2_SECRET_KEY",
-  "2937b2106736e2ba64e24e92f2be4e6c312bba3355586e41ce634b14c1482951")
 HEALTHBR_MANIFEST_URL <- "https://pub-99d9e1a3f5c542178d04efbddf1bba97.r2.dev/sih/rd/manifest.json"
 HEALTHBR_REPO_URL <- "https://github.com/SidneyBissoli/healthbr-data"
 HEALTHBR_LICENSE <- "CC-BY-4.0"
@@ -236,33 +243,33 @@ classificar_csap <- function(cid) {
 classificar_csap_vec <- Vectorize(classificar_csap)
 
 # =============================================================================
-# ACESSO AO HEALTHBR-DATA (R2)
+# ACESSO AO HEALTHBR-DATA (via healthbR)
 # =============================================================================
 
 .healthbr <- new.env(parent = emptyenv())
 
-healthbr_fs <- function() {
-  if (is.null(.healthbr$fs)) {
-    .healthbr$fs <- S3FileSystem$create(
-      access_key = HEALTHBR_ACCESS_KEY,
-      secret_key = HEALTHBR_SECRET_KEY,
-      endpoint_override = HEALTHBR_ENDPOINT,
-      region = "auto"
-    )
+#' Estado do espelho: uma linha por partição publicada (competência x UF de
+#' arquivo), com o .dbc de origem, o Parquet gerado e a versão do pipeline.
+#' `attr(, "last_updated")` é a data do manifesto. Memorizado por sessão.
+healthbr_status <- function() {
+  if (is.null(.healthbr$status)) {
+    cli_alert_info("Lendo o manifesto do healthbr-data pelo healthbR ({.fn healthbR::sih_status})")
+    st <- healthbR::sih_status()
+    precisa <- c("year", "month", "uf", "records", "processing_timestamp",
+                 "source_url", "source_hash_md5", "source_size_bytes",
+                 "parquet_path", "parquet_sha256", "pipeline_version", "git_commit")
+    faltam <- setdiff(precisa, names(st))
+    if (nrow(st) == 0 || length(faltam) > 0) {
+      cli_abort(c(
+        "healthbR::sih_status() não trouxe o que o sidecar precisa.",
+        "x" = if (nrow(st) == 0) "Manifesto vazio ou inacessível." else
+          "Colunas ausentes: {paste(faltam, collapse = ', ')} (healthbR dev >= 2026-09-05)."
+      ))
+    }
+    .healthbr$status <- st
+    cli_alert_success("Manifesto: {.val {nrow(st)}} partições, atualizado em {.val {attr(st, 'last_updated')}}")
   }
-  .healthbr$fs
-}
-
-#' Manifesto do dataset sih/rd (uma partição por competência x UF de arquivo)
-healthbr_manifest <- function() {
-  if (is.null(.healthbr$manifest)) {
-    cli_alert_info("Baixando manifesto do healthbr-data ({.url {HEALTHBR_MANIFEST_URL}})")
-    .healthbr$manifest <- jsonlite::fromJSON(HEALTHBR_MANIFEST_URL, simplifyVector = FALSE)
-    n_part <- length(.healthbr$manifest$partitions)
-    atualizado <- .healthbr$manifest$last_updated
-    cli_alert_success("Manifesto: {.val {n_part}} partições, atualizado em {.val {atualizado}}")
-  }
-  .healthbr$manifest
+  .healthbr$status
 }
 
 #' Competências "AAAA-MM" da janela do ano Y: Y-01..Y-12 + MESES_SEGUINTES de Y+1
@@ -271,68 +278,87 @@ janela_competencias <- function(ano) {
     if (MESES_SEGUINTES > 0) sprintf("%d-%02d", ano + 1L, seq_len(MESES_SEGUINTES)))
 }
 
-#' Chaves "AAAA-MM-UF" publicadas na janela de um ano, para as UFs de arquivo
-healthbr_particoes <- function(ano, ufs, manifest) {
-  chaves <- names(manifest$partitions)
-  esperadas <- as.vector(outer(janela_competencias(ano), ufs, paste, sep = "-"))
-  sort(intersect(esperadas, chaves))
+#' Partições publicadas na janela de um ano, para as UFs de arquivo: linhas
+#' de healthbr_status() com a chave "AAAA-MM-UF", ordenadas por chave.
+healthbr_particoes <- function(ano, ufs, status) {
+  status %>%
+    dplyr::mutate(competencia = sprintf("%04d-%02d", year, month),
+                  chave = paste(competencia, uf, sep = "-")) %>%
+    dplyr::filter(competencia %in% janela_competencias(ano), uf %in% ufs) %>%
+    dplyr::arrange(chave)
 }
 
-#' Lê as partições (só as colunas dos cubos) e recolhe a proveniência de cada
-#' arquivo: rodapé `healthbr` do Parquet + entrada do manifesto.
-ler_particoes <- function(chaves, manifest) {
-  fs <- healthbr_fs()
-  caminhos <- vapply(chaves, function(k) manifest$partitions[[k]]$output_files[[1]]$path, "")
-  completos <- paste0(HEALTHBR_BUCKET, "/", caminhos)
-
-  ds <- open_dataset(completos, filesystem = fs, format = "parquet")
+#' Lê as partições (só as colunas dos cubos) pelo healthbR, em modo lazy: a
+#' projeção e o filtro da janela são empurrados para o Parquet no R2. Confere,
+#' partição a partição, que as linhas lidas batem com o manifesto, e monta o
+#' registro de proveniência de cada arquivo.
+ler_particoes <- function(ano, ufs, particoes) {
+  anos <- sort(unique(particoes$year))
+  ds <- healthbR::sih_data(year = anos, uf = ufs, source = "r2",
+                           lazy = TRUE, parse = FALSE)
   faltam <- setdiff(COLUNAS_SIH, names(ds))
   if (length(faltam) > 0) {
     cli_abort("Colunas ausentes no Parquet do healthbr-data: {paste(faltam, collapse = ', ')}")
   }
-  dados <- ds %>% select(all_of(COLUNAS_SIH)) %>% collect()
+  dados <- ds %>%
+    dplyr::filter(year == ano | (year == ano + 1L & month <= MESES_SEGUINTES)) %>%
+    dplyr::select(dplyr::all_of(c("year", "month", "uf_source", COLUNAS_SIH))) %>%
+    dplyr::collect()
 
-  particoes <- lapply(seq_along(chaves), function(i) {
-    leitor <- ParquetFileReader$create(fs$OpenInputFile(completos[i]))
-    rodape <- jsonlite::fromJSON(leitor$GetSchema()$metadata$healthbr, simplifyVector = FALSE)
-    entrada <- manifest$partitions[[chaves[i]]]
-    saida <- entrada$output_files[[1]]
-    if (!is.null(saida$record_count) && saida$record_count != leitor$num_rows) {
-      cli_abort("Partição {chaves[i]}: manifesto diz {saida$record_count} linhas, Parquet tem {leitor$num_rows}")
-    }
+  # Cada partição lida tem de ter exatamente as linhas que o manifesto declara
+  lidas <- dados %>%
+    dplyr::count(year, month, uf = uf_source, name = "linhas") %>%
+    dplyr::mutate(chave = sprintf("%04d-%02d-%s", year, month, uf))
+  conferencia <- particoes %>%
+    dplyr::select(chave, records) %>%
+    dplyr::full_join(lidas %>% dplyr::select(chave, linhas), by = "chave") %>%
+    dplyr::mutate(linhas = dplyr::coalesce(linhas, 0L),
+                  records = dplyr::coalesce(records, 0))
+  divergentes <- conferencia %>% dplyr::filter(linhas != records)
+  if (nrow(divergentes) > 0) {
+    detalhe <- sprintf("%s: manifesto %s, lidas %s", divergentes$chave,
+                       format(divergentes$records, big.mark = "."),
+                       format(divergentes$linhas, big.mark = "."))
+    cli_abort(c("Partições com contagem diferente do manifesto:", setNames(detalhe, rep("x", length(detalhe)))))
+  }
+  dados <- dados %>% dplyr::select(-year, -month, -uf_source)
+
+  registro <- lapply(seq_len(nrow(particoes)), function(i) {
+    p <- particoes[i, ]
     list(
-      partition = chaves[i],
-      parquet_path = caminhos[[i]],
-      parquet_sha256 = saida$sha256,
-      record_count = leitor$num_rows,
-      source_file = rodape$source_file,
-      source_url = rodape$source_url,
-      source_hash_md5 = rodape$source_hash_md5,
-      source_size_bytes = rodape$source_size_bytes,
-      download_date = rodape$download_date,
-      processing_timestamp = entrada$processing_timestamp,
-      healthbr_pipeline_version = rodape$pipeline_version,
-      healthbr_git_commit = rodape$git_commit
+      partition = p$chave,
+      parquet_path = p$parquet_path,
+      parquet_sha256 = p$parquet_sha256,
+      record_count = as.integer(p$records),
+      source_file = basename(p$source_url),
+      source_url = p$source_url,
+      source_hash_md5 = p$source_hash_md5,
+      source_size_bytes = p$source_size_bytes,
+      processing_timestamp = p$processing_timestamp,
+      healthbr_pipeline_version = p$pipeline_version,
+      healthbr_git_commit = p$git_commit
     )
   })
 
-  total_manifesto <- sum(vapply(particoes, function(p) as.numeric(p$record_count), 0))
-  if (total_manifesto != nrow(dados)) {
-    cli_abort("Soma das partições ({total_manifesto}) difere das linhas lidas ({nrow(dados)})")
-  }
+  list(dados = dados, particoes = registro)
+}
 
-  list(dados = dados, particoes = particoes)
+#' "AAAA-MM-DD HH:MM:SS.ffffff" (UTC, do manifesto) -> "AAAA-MM-DDTHH:MM:SSZ"
+iso_utc <- function(ts) {
+  sub("^(\\d{4}-\\d{2}-\\d{2})[ T](\\d{2}:\\d{2}:\\d{2}).*$", "\\1T\\2Z", ts)
 }
 
 #' Escreve data/sih_provenance_<ano>.json — o registro de safra do cubo
-escrever_sidecar <- function(ano, chaves, particoes, manifest, janela_completa, totais, output_dir) {
+escrever_sidecar <- function(ano, chaves, particoes, manifest_last_updated, janela_completa, totais, output_dir) {
   git_commit <- tryCatch(
     trimws(system2("git", c("-C", shQuote(here::here()), "rev-parse", "HEAD"), stdout = TRUE, stderr = FALSE)),
     error = function(e) NA_character_, warning = function(w) NA_character_
   )
   if (length(git_commit) != 1 || is.na(git_commit) || !nzchar(git_commit)) git_commit <- NULL
 
-  datas_download <- vapply(particoes, function(p) p$download_date, "")
+  # processing_timestamp do manifesto == download_date do rodapé do Parquet ao
+  # segundo (o pipeline do healthbr-data grava os dois no mesmo instante)
+  processados_em <- iso_utc(vapply(particoes, function(p) p$processing_timestamp, ""))
   sidecar <- list(
     manifest_version = "1.0.0",
     dataset = HEALTHBR_PREFIX,
@@ -352,7 +378,8 @@ escrever_sidecar <- function(ano, chaves, particoes, manifest, janela_completa, 
       version = BUILDER_VERSION,
       git_commit = git_commit,
       r_version = R.version.string,
-      arrow_version = as.character(packageVersion("arrow"))
+      arrow_version = as.character(packageVersion("arrow")),
+      healthbr_version = as.character(packageVersion("healthbR"))
     ),
     source = list(
       name = "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
@@ -365,16 +392,16 @@ escrever_sidecar <- function(ano, chaves, particoes, manifest, janela_completa, 
       url = HEALTHBR_REPO_URL,
       bucket = sprintf("s3://%s/%s/", HEALTHBR_BUCKET, HEALTHBR_PREFIX),
       manifest_url = HEALTHBR_MANIFEST_URL,
-      manifest_last_updated = manifest$last_updated,
+      manifest_last_updated = manifest_last_updated,
       license = HEALTHBR_LICENSE
     ),
-    retrieved_at = max(datas_download),
+    retrieved_at = max(processados_em),
     partitions = particoes,
     totals = totais,
     notes = I(c(
       "Cubo por ANO DE INTERNAÇÃO (DT_INTER): lê as competências do ano e os meses seguintes de Y+1 (window.months_after) e descarta internações de outros anos. Com 4 meses, 99,7-99,9% das internações do ano (dezembro 99,3-99,7%); o restante é reapresentação tardia difusa.",
       "uf dos cubos = UF de residência (MUNIC_RES); ufs_arquivo = UF do estabelecimento (nome do arquivo RD no FTP).",
-      "retrieved_at = data de download mais recente, no healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream)."
+      "retrieved_at = processing_timestamp mais recente, no manifesto do healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream; igual, ao segundo, ao download_date do rodapé do Parquet). Lido por healthbR::sih_status()."
     ))
   )
   destino <- file.path(output_dir, sprintf("sih_provenance_%d.json", ano))
@@ -389,8 +416,9 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
   cli_h2("Ano {ano}")
 
   tryCatch({
-    manifest <- healthbr_manifest()
-    chaves <- healthbr_particoes(ano, ufs_arquivo, manifest)
+    status <- healthbr_status()
+    particoes <- healthbr_particoes(ano, ufs_arquivo, status)
+    chaves <- particoes$chave
     esperadas <- length(ufs_arquivo) * length(janela_competencias(ano))
     if (length(chaves) == 0) {
       cli_alert_warning("Sem partições publicadas para {ano} / {paste(ufs_arquivo, collapse=', ')}")
@@ -401,9 +429,9 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
       cli_alert_warning("{length(chaves)} de {esperadas} partições publicadas na janela de {ano} (competências ainda não divulgadas pelo MS ficam de fora; o cubo sai INCOMPLETO)")
     }
 
-    cli_alert_info("Lendo {length(chaves)} partições do R2 (colunas: {paste(COLUNAS_SIH, collapse=', ')})")
+    cli_alert_info("Lendo {length(chaves)} partições do R2 pelo healthbR (colunas: {paste(COLUNAS_SIH, collapse=', ')})")
     t0 <- Sys.time()
-    lido <- ler_particoes(chaves, manifest)
+    lido <- ler_particoes(ano, ufs_arquivo, particoes)
     dados <- lido$dados
     cli_alert_success("{.val {format(nrow(dados), big.mark='.')}} registros lidos em {format(round(Sys.time() - t0, 1))}")
 
@@ -578,7 +606,7 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     # =========================================================================
 
     escrever_sidecar(
-      ano, chaves, lido$particoes, manifest, janela_completa,
+      ano, chaves, lido$particoes, attr(status, "last_updated"), janela_completa,
       totais = list(
         records_read = n_lidos,
         records_invalid_dt_inter = n_invalidos,
@@ -694,7 +722,7 @@ build_data <- function(years, ufs) {
 # MENSAGEM AO CARREGAR
 # =============================================================================
 
-cli_alert_info("Script build-aggregations.R carregado (origem: healthbr-data, s3://{HEALTHBR_BUCKET}/{HEALTHBR_PREFIX}/).")
+cli_alert_info("Script build-aggregations.R v{BUILDER_VERSION} carregado (origem: healthbr-data s3://{HEALTHBR_BUCKET}/{HEALTHBR_PREFIX}/, lido pelo healthbR {packageVersion('healthbR')}).")
 cli_alert_info("Use: build_data(years = ..., ufs = ...)")
 cli_alert_info("Exemplos:")
 cli_bullets(c(
