@@ -25,7 +25,7 @@ import { getDataDirectory } from "./db/duckdb.js";
 import csapGroups from "./data/csap-groups.json" with { type: "json" };
 import cidChapters from "./data/cid-chapters.json" with { type: "json" };
 
-export const SERVER_VERSION = "0.3.0";
+export const SERVER_VERSION = "0.4.0";
 
 export const provenance = createProvenanceContext({
   metaNamespace: "br.sbissoli.sih",
@@ -56,6 +56,13 @@ export interface SihSidecar {
   manifest_version: string;
   dataset: string;
   cube_year: number;
+  window?: {
+    rule: string;
+    months_after: number;
+    competencias_expected: string[];
+    complete: boolean;
+    evidence: string;
+  };
   competencias: string[];
   ufs_arquivo: string[];
   built_at: string;
@@ -142,7 +149,10 @@ function safraOf(iso: string): string {
 function vintageOf(s: SihSidecar): string {
   const first = s.competencias[0];
   const last = s.competencias[s.competencias.length - 1];
-  return `${s.cube_year}: competências ${first} a ${last}, UF de arquivo ${s.ufs_arquivo.join("/")}, safra healthbr-data ${safraOf(s.retrieved_at)}`;
+  const janela = s.window
+    ? `internações de ${s.cube_year} em competências ${first} a ${last}${s.window.complete ? "" : " (janela INCOMPLETA)"}`
+    : `competências ${first} a ${last}`;
+  return `${s.cube_year}: ${janela}, UF de arquivo ${s.ufs_arquivo.join("/")}, safra healthbr-data ${safraOf(s.retrieved_at)}`;
 }
 
 /**
@@ -199,9 +209,10 @@ export function sihProvenance(years?: number[]): CanonicalProvenance {
       `agregados por sih-br-mcp v${SERVER_VERSION}.`,
     derived: true,
     derivation_note:
-      `Agregação em cubos por ano de competência (causas, séries mensais, ICSAP) a partir de ${files} arquivo(s) RD do FTP do DATASUS, ` +
+      `Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de ${files} arquivo(s) RD do FTP do DATASUS, ` +
       `lidos do espelho healthbr-data (${first.distributor.bucket}; manifesto de ${manifestVersion}); ` +
-      `year/month pela data de internação (DT_INTER); cubos gerados em ${builtAt} por ${first.builder.script} v${first.builder.version}. ` +
+      `year/month pela data de internação (DT_INTER), lendo as competências do ano e os ${first.window?.months_after ?? 0} meses seguintes ` +
+      `(cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em ${builtAt} por ${first.builder.script} v${first.builder.version}. ` +
       `Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.`,
     served_from_cache: null,
   });

@@ -17,9 +17,16 @@
 #   build_data(years = "all", ufs = "all")         # TUDO (demorado)
 #
 # `ufs` é a UF do ARQUIVO (estabelecimento), como no FTP; a coluna `uf` dos
-# cubos é a UF de RESIDÊNCIA (MUNIC_RES). `year`/`month` vêm de DT_INTER
-# (data da internação); o arquivo do cubo é o ano de COMPETÊNCIA da AIH e por
-# isso contém internações iniciadas no ano anterior.
+# cubos é a UF de RESIDÊNCIA (MUNIC_RES).
+#
+# JANELA DE COMPETÊNCIAS (decidida nos dados em 2026-09-05, ver
+# docs/analise-001-janela-competencia.md): o cubo do ano Y contém as
+# internações com DT_INTER em Y, lidas das competências Y-01..Y-12 e dos
+# MESES_SEGUINTES primeiros meses de Y+1. Com 4 meses: 99,7–99,9% das
+# internações do ano (dezembro 99,3–99,7%) em todas as UFs; o que falta é
+# reapresentação tardia difusa, que nem +12 meses recupera. O cubo de Y fica
+# FECHADO quando a competência (Y+1)-04 é publicada: partições posteriores não
+# o alteram, só reedições dentro da janela.
 #
 # Acesso ao R2: token público somente-leitura publicado no README do
 # healthbr-data; pode ser sobrescrito por HEALTHBR_R2_ACCESS_KEY /
@@ -41,7 +48,10 @@ library(jsonlite)
 OUTPUT_DIR <- here::here("data")
 dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
-BUILDER_VERSION <- "2.0.0"
+BUILDER_VERSION <- "2.1.0"
+
+# Meses de Y+1 lidos para fechar as internações de Y (ver cabeçalho)
+MESES_SEGUINTES <- 4L
 
 HEALTHBR_BUCKET <- "healthbr-data"
 HEALTHBR_PREFIX <- "sih/rd"
@@ -255,11 +265,17 @@ healthbr_manifest <- function() {
   .healthbr$manifest
 }
 
-#' Chaves "AAAA-MM-UF" publicadas para um ano e um conjunto de UFs de arquivo
+#' Competências "AAAA-MM" da janela do ano Y: Y-01..Y-12 + MESES_SEGUINTES de Y+1
+janela_competencias <- function(ano) {
+  c(sprintf("%d-%02d", ano, 1:12),
+    if (MESES_SEGUINTES > 0) sprintf("%d-%02d", ano + 1L, seq_len(MESES_SEGUINTES)))
+}
+
+#' Chaves "AAAA-MM-UF" publicadas na janela de um ano, para as UFs de arquivo
 healthbr_particoes <- function(ano, ufs, manifest) {
   chaves <- names(manifest$partitions)
-  padrao <- sprintf("^%d-\\d{2}-(%s)$", ano, paste(ufs, collapse = "|"))
-  sort(chaves[grepl(padrao, chaves)])
+  esperadas <- as.vector(outer(janela_competencias(ano), ufs, paste, sep = "-"))
+  sort(intersect(esperadas, chaves))
 }
 
 #' Lê as partições (só as colunas dos cubos) e recolhe a proveniência de cada
@@ -309,7 +325,7 @@ ler_particoes <- function(chaves, manifest) {
 }
 
 #' Escreve data/sih_provenance_<ano>.json — o registro de safra do cubo
-escrever_sidecar <- function(ano, chaves, particoes, manifest, totais, output_dir) {
+escrever_sidecar <- function(ano, chaves, particoes, manifest, janela_completa, totais, output_dir) {
   git_commit <- tryCatch(
     trimws(system2("git", c("-C", shQuote(here::here()), "rev-parse", "HEAD"), stdout = TRUE, stderr = FALSE)),
     error = function(e) NA_character_, warning = function(w) NA_character_
@@ -321,6 +337,13 @@ escrever_sidecar <- function(ano, chaves, particoes, manifest, totais, output_di
     manifest_version = "1.0.0",
     dataset = HEALTHBR_PREFIX,
     cube_year = ano,
+    window = list(
+      rule = "internações com DT_INTER no ano; competências do ano + meses seguintes de Y+1",
+      months_after = MESES_SEGUINTES,
+      competencias_expected = I(janela_competencias(ano)),
+      complete = janela_completa,
+      evidence = "docs/analise-001-janela-competencia.md"
+    ),
     competencias = I(sort(unique(substr(chaves, 1, 7)))),
     ufs_arquivo = I(sort(unique(substr(chaves, 9, 10)))),
     built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
@@ -349,7 +372,7 @@ escrever_sidecar <- function(ano, chaves, particoes, manifest, totais, output_di
     partitions = particoes,
     totals = totais,
     notes = I(c(
-      "year/month derivados de DT_INTER (data da internação); o arquivo do cubo é o ano de competência da AIH e contém internações iniciadas no ano anterior.",
+      "Cubo por ANO DE INTERNAÇÃO (DT_INTER): lê as competências do ano e os meses seguintes de Y+1 (window.months_after) e descarta internações de outros anos. Com 4 meses, 99,7-99,9% das internações do ano (dezembro 99,3-99,7%); o restante é reapresentação tardia difusa.",
       "uf dos cubos = UF de residência (MUNIC_RES); ufs_arquivo = UF do estabelecimento (nome do arquivo RD no FTP).",
       "retrieved_at = data de download mais recente, no healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream)."
     ))
@@ -368,13 +391,14 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
   tryCatch({
     manifest <- healthbr_manifest()
     chaves <- healthbr_particoes(ano, ufs_arquivo, manifest)
-    esperadas <- length(ufs_arquivo) * 12
+    esperadas <- length(ufs_arquivo) * length(janela_competencias(ano))
     if (length(chaves) == 0) {
       cli_alert_warning("Sem partições publicadas para {ano} / {paste(ufs_arquivo, collapse=', ')}")
       return(NULL)
     }
-    if (length(chaves) < esperadas) {
-      cli_alert_warning("{length(chaves)} de {esperadas} partições publicadas para {ano} (competências ainda não divulgadas pelo MS ficam de fora)")
+    janela_completa <- length(chaves) == esperadas
+    if (!janela_completa) {
+      cli_alert_warning("{length(chaves)} de {esperadas} partições publicadas na janela de {ano} (competências ainda não divulgadas pelo MS ficam de fora; o cubo sai INCOMPLETO)")
     }
 
     cli_alert_info("Lendo {length(chaves)} partições do R2 (colunas: {paste(COLUNAS_SIH, collapse=', ')})")
@@ -394,6 +418,12 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
       cli_alert_warning("{n_invalidos} registros com DT_INTER inválido ficam fora dos cubos")
       dados <- dados %>% dplyr::filter(!is.na(dt_inter))
     }
+    # O cubo é por ANO DE INTERNAÇÃO: o que a janela trouxe de outros anos
+    # (internações de Y-1 faturadas em Y; de Y+1 nas competências extras) sai.
+    ano_inter <- as.integer(format(dados$dt_inter, "%Y"))
+    n_outros_anos <- sum(ano_inter != ano)
+    dados <- dados[ano_inter == ano, , drop = FALSE]
+    cli_alert_info("{format(n_outros_anos, big.mark='.')} registros de outros anos de internação descartados; {format(nrow(dados), big.mark='.')} internações de {ano}")
 
     dados <- dados %>%
       dplyr::mutate(
@@ -548,10 +578,12 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     # =========================================================================
 
     escrever_sidecar(
-      ano, chaves, lido$particoes, manifest,
+      ano, chaves, lido$particoes, manifest, janela_completa,
       totais = list(
         records_read = n_lidos,
         records_invalid_dt_inter = n_invalidos,
+        records_other_year = n_outros_anos,
+        records_in_cube = sum(cubo_causas$n),
         causas_rows = nrow(cubo_causas),
         series_rows = nrow(cubo_series),
         icsap_rows = nrow(cubo_icsap)

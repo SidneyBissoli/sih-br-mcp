@@ -12,10 +12,13 @@ servidor é apontado para esta pasta pela variável `SIH_DATA_DIR` (ver
 cubos de população.
 
 Os cubos SIH foram gerados em 05/09/2026 com `build_data(years = 2023, ufs =
-"RR")`: as 12 partições `sih/rd/ano=2023/mes=MM/uf=RR/` do healthbr-data
-(espelho Parquet do FTP do DATASUS), 45.354 internações de competência 2023 em
-estabelecimentos de Roraima. A coluna `uf` dos cubos é a UF de residência, por
-isso aparecem AL AM AP CE GO MA MG PB RJ RR. O sidecar diz de quais `.dbc`
+"RR")`: as 16 partições `sih/rd/ano=2023/mes=MM/uf=RR/` e
+`ano=2024/mes=01..04/uf=RR/` do healthbr-data (espelho Parquet do FTP do
+DATASUS), 59.141 AIH lidas, das quais 48.480 são internações iniciadas em 2023
+em estabelecimentos de Roraima (as 10.661 restantes são de 2022 ou 2024 e
+ficam de fora — cubo por ano de internação, janela de 4 meses, ver
+`docs/analise-001-janela-competencia.md`). A coluna `uf` dos cubos é a UF de
+residência, por isso aparecem AL AM AP CE GO MA MG PB RJ RR. O sidecar diz de quais `.dbc`
 (URL, MD5, tamanho, data de download no espelho) cada número saiu; é dele que
 o servidor tira `retrieved_at` e `data_vintage` do bloco de proveniência — e é
 por isso que o bloco é determinístico e cabe no golden.
@@ -41,12 +44,12 @@ Quando o esquema dos cubos mudar nos scripts R, regenerar `data/` e copiar os
 arquivos (cubos e sidecar) de novo — smoke e golden reprovam sozinhos se eles
 ficarem para trás.
 
-Semântica que o golden grava e que não é defeito: o arquivo do cubo é o ano de
-COMPETÊNCIA da AIH, e `year`/`month` vêm da data de internação (`DT_INTER`).
-Por isso `sih_causas_2023.parquet` contém linhas com `year = 2022`
-(internações de 2022 com alta em 2023) e poucas linhas em out–dez/2023 (as
-altas dessas internações caem em competências de 2024). Até 05/09/2026 o cubo
-tinha `month` só com `-1`/`0`, `sex = "I"` em todas as linhas, `age` nulo e
-`deaths = 0` — efeito do `process_sih()` do microdatasus sobre um script que
-comparava códigos; corrigido ao trocar a origem para o healthbr-data (ver
-CONTEXT.md, decisão 10).
+Semântica que o golden grava: `year` é sempre 2023 e `month` vai de 1 a 12,
+com `year`/`month` vindos da data de internação (`DT_INTER`). Os dois casos
+de tendência que pedem 2022 gravam como o servidor trata um ano pedido e
+ausente. História: até 05/09/2026 o cubo tinha `month` só com `-1`/`0`,
+`sex = "I"` em todas as linhas, `age` nulo e `deaths = 0` — efeito do
+`process_sih()` do microdatasus sobre um script que comparava códigos — e,
+por ser recortado por competência, trazia internações de 2022 e perdia as de
+out–dez/2023 faturadas em 2024. Corrigido ao trocar a origem para o
+healthbr-data e adotar a janela de 4 meses (CONTEXT.md, decisões 10 e 10a).

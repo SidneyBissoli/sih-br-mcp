@@ -2,13 +2,20 @@
   "manifest_version": "1.0.0",
   "dataset": "sih/rd",
   "cube_year": 2023,
-  "competencias": ["2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12"],
+  "window": {
+    "rule": "internações com DT_INTER no ano; competências do ano + meses seguintes de Y+1",
+    "months_after": 4,
+    "competencias_expected": ["2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04"],
+    "complete": true,
+    "evidence": "docs/analise-001-janela-competencia.md"
+  },
+  "competencias": ["2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04"],
   "ufs_arquivo": ["RR"],
-  "built_at": "2026-09-05T12:45:06Z",
+  "built_at": "2026-09-05T17:27:53Z",
   "builder": {
     "script": "scripts/build-aggregations.R",
-    "version": "2.0.0",
-    "git_commit": "74ab330b5a44998175c5893d6b8f8a73351f5616",
+    "version": "2.1.0",
+    "git_commit": "e1e712d9c6562bf2e1aa30832c757892f7d4a62d",
     "r_version": "R version 4.6.1 (2026-06-24 ucrt)",
     "arrow_version": "25.0.0"
   },
@@ -26,7 +33,7 @@
     "manifest_last_updated": "2026-08-18T12:33:31",
     "license": "CC-BY-4.0"
   },
-  "retrieved_at": "2026-03-09T03:47:02Z",
+  "retrieved_at": "2026-03-09T04:02:47Z",
   "partitions": [
     {
       "partition": "2023-01-RR",
@@ -195,14 +202,72 @@
       "processing_timestamp": "2026-03-09 03:47:02.374415",
       "healthbr_pipeline_version": "1.0.0",
       "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
+    },
+    {
+      "partition": "2024-01-RR",
+      "parquet_path": "sih/rd/ano=2024/mes=01/uf=RR/part-0.parquet",
+      "parquet_sha256": "ed23cded3352f9b86933a64c7686bbbf537e4987a89b022e190080f28d282dfd",
+      "record_count": 3714,
+      "source_file": "RDRR2401.dbc",
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2401.dbc",
+      "source_hash_md5": "265a69e9e9b06a3d603dc3b294bf55c8",
+      "source_size_bytes": 275725,
+      "download_date": "2026-03-09T03:51:14Z",
+      "processing_timestamp": "2026-03-09 03:51:14.858049",
+      "healthbr_pipeline_version": "1.0.0",
+      "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
+    },
+    {
+      "partition": "2024-02-RR",
+      "parquet_path": "sih/rd/ano=2024/mes=02/uf=RR/part-0.parquet",
+      "parquet_sha256": "a7495df450d1ab68c75c929aab82e18eed945b0e511969259340c21f5dd51c10",
+      "record_count": 3413,
+      "source_file": "RDRR2402.dbc",
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2402.dbc",
+      "source_hash_md5": "6b3d81430a101e14f73b282c2bd24520",
+      "source_size_bytes": 255806,
+      "download_date": "2026-03-09T03:54:59Z",
+      "processing_timestamp": "2026-03-09 03:54:59.36754",
+      "healthbr_pipeline_version": "1.0.0",
+      "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
+    },
+    {
+      "partition": "2024-03-RR",
+      "parquet_path": "sih/rd/ano=2024/mes=03/uf=RR/part-0.parquet",
+      "parquet_sha256": "ca5635cefa84a5115e67add3eccd26f39dbe3a69fed497607e0fd3683b2a35e6",
+      "record_count": 3619,
+      "source_file": "RDRR2403.dbc",
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2403.dbc",
+      "source_hash_md5": "0f49c86af9b21a54e88d42a87e694278",
+      "source_size_bytes": 272502,
+      "download_date": "2026-03-09T03:58:49Z",
+      "processing_timestamp": "2026-03-09 03:58:49.461675",
+      "healthbr_pipeline_version": "1.0.0",
+      "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
+    },
+    {
+      "partition": "2024-04-RR",
+      "parquet_path": "sih/rd/ano=2024/mes=04/uf=RR/part-0.parquet",
+      "parquet_sha256": "95c5ff501315bc978a2a374617d577be989c0e454c311e87c10f3496064fbb83",
+      "record_count": 3041,
+      "source_file": "RDRR2404.dbc",
+      "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/RDRR2404.dbc",
+      "source_hash_md5": "883a1d19b10f206856cf3602cc1badd4",
+      "source_size_bytes": 225994,
+      "download_date": "2026-03-09T04:02:47Z",
+      "processing_timestamp": "2026-03-09 04:02:47.300987",
+      "healthbr_pipeline_version": "1.0.0",
+      "healthbr_git_commit": "020ee5cc3a0a2de79843e48cc3874bc0108f5020"
     }
   ],
   "totals": {
-    "records_read": 45354,
+    "records_read": 59141,
     "records_invalid_dt_inter": 0,
-    "causas_rows": 28823,
-    "series_rows": 374,
-    "icsap_rows": 4673
+    "records_other_year": 10661,
+    "records_in_cube": 48480,
+    "causas_rows": 30102,
+    "series_rows": 309,
+    "icsap_rows": 4092
   },
-  "notes": ["year/month derivados de DT_INTER (data da internação); o arquivo do cubo é o ano de competência da AIH e contém internações iniciadas no ano anterior.", "uf dos cubos = UF de residência (MUNIC_RES); ufs_arquivo = UF do estabelecimento (nome do arquivo RD no FTP).", "retrieved_at = data de download mais recente, no healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream)."]
+  "notes": ["Cubo por ANO DE INTERNAÇÃO (DT_INTER): lê as competências do ano e os meses seguintes de Y+1 (window.months_after) e descarta internações de outros anos. Com 4 meses, 99,7-99,9% das internações do ano (dezembro 99,3-99,7%); o restante é reapresentação tardia difusa.", "uf dos cubos = UF de residência (MUNIC_RES); ufs_arquivo = UF do estabelecimento (nome do arquivo RD no FTP).", "retrieved_at = data de download mais recente, no healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream)."]
 }
