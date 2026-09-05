@@ -6,7 +6,8 @@ name: CI
 # duas linhas de LTS vivas; (2) o servidor compilado SOBE pelo stdio, expõe a
 # mesma superfície de ferramentas gravada em `baselines/surface-stdio.json` e
 # responde a três chamadas de ponta a ponta — metadados, anos disponíveis e um
-# ranking que passa pelo DuckDB e pelos parquet de `data/`. Isso é um smoke, não
+# ranking que passa pelo DuckDB e pelos parquet de `tests/fixtures/sih` (cópia
+# real dos cubos de 2023; `data/*.parquet` é gitignored). Isso é um smoke, não
 # uma suíte: não afirma que os NÚMEROS estão certos, só que o caminho inteiro
 # (binário nativo do duckdb incluído) ainda anda depois de um bump. O conserto
 # de verdade continua sendo `campanha:contrato-vitest`, e é projeto, não tarefa.

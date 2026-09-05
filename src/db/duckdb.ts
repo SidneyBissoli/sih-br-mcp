@@ -5,7 +5,7 @@
 
 import duckdb from "duckdb";
 import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import { dirname, join, resolve } from "path";
 import { existsSync, readdirSync } from "fs";
 
 // Tipos do DuckDB
@@ -16,7 +16,12 @@ type Connection = ReturnType<Database["connect"]>;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PROJECT_ROOT = join(__dirname, "..", "..");
-const DATA_DIR = join(PROJECT_ROOT, "data");
+// SIH_DATA_DIR aponta o servidor para outra pasta de cubos — é a costura que o
+// smoke stdio usa para ler a fixture versionada em tests/fixtures/sih, já que
+// data/*.parquet não vai para o git. Sem a variável, nada muda: data/ do projeto.
+const DATA_DIR = process.env.SIH_DATA_DIR
+  ? resolve(process.env.SIH_DATA_DIR)
+  : join(PROJECT_ROOT, "data");
 const TEST_DATA_DIR = join(DATA_DIR, "test");
 
 // Singleton do banco de dados

@@ -17,8 +17,8 @@
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "prepare": "npm run build",
-    "smoke:stdio": "node scripts/smoke-stdio.mjs --baseline baselines/surface-stdio.json",
-    "smoke:stdio:baseline": "node scripts/smoke-stdio.mjs --write baselines/surface-stdio.json"
+    "smoke:stdio": "node scripts/smoke-stdio.mjs --fixtures tests/fixtures/sih --baseline baselines/surface-stdio.json",
+    "smoke:stdio:baseline": "node scripts/smoke-stdio.mjs --fixtures tests/fixtures/sih --write baselines/surface-stdio.json"
   },
   "keywords": [
     "mcp",

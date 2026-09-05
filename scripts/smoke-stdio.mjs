@@ -7,14 +7,21 @@
 // `--baseline <arquivo>`, comparada byte a byte com a gravada antes. É assim que
 // um bump de dependência prova que não mexeu no que o cliente vê.
 //
-//   node scripts/smoke-stdio.mjs --write  baselines/surface-stdio.json
-//   node scripts/smoke-stdio.mjs --baseline baselines/surface-stdio.json
+//   node scripts/smoke-stdio.mjs --fixtures tests/fixtures/sih --write    baselines/surface-stdio.json
+//   node scripts/smoke-stdio.mjs --fixtures tests/fixtures/sih --baseline baselines/surface-stdio.json
 //
+// `--fixtures <dir>` aponta o servidor (via SIH_DATA_DIR) para os cubos
+// versionados em tests/fixtures/sih — data/*.parquet é gitignored e o CI parte
+// de um checkout sem dado nenhum; foi assim que a 1ª rodada do smoke no CI
+// reprovou em 04/09/2026. Sem a flag, o servidor lê data/ como sempre.
 // O ano consultado vem de `get_available_years`, não de literal.
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import {
+  StdioClientTransport,
+  getDefaultEnvironment,
+} from "@modelcontextprotocol/sdk/client/stdio.js";
 
 const args = process.argv.slice(2);
 const opt = (flag) => {
@@ -23,6 +30,7 @@ const opt = (flag) => {
 };
 const writeTo = opt("--write");
 const baseline = opt("--baseline");
+const fixtures = opt("--fixtures");
 
 const fail = (msg) => {
   console.error(`SMOKE FALHOU: ${msg}`);
@@ -33,11 +41,18 @@ const client = new Client({ name: "sih-smoke", version: "0.0.0" });
 const transport = new StdioClientTransport({
   command: process.execPath,
   args: [resolve("dist/index.js")],
+  env: fixtures
+    ? { ...getDefaultEnvironment(), SIH_DATA_DIR: resolve(fixtures) }
+    : undefined,
   stderr: "pipe",
 });
-await client.connect(transport);
-
-const { tools } = await client.listTools();
+let tools;
+try {
+  await client.connect(transport);
+  ({ tools } = await client.listTools());
+} catch (e) {
+  fail(`servidor não subiu ou não respondeu ao tools/list: ${e?.message ?? e}`);
+}
 if (!Array.isArray(tools) || tools.length === 0) fail("tools/list vazio");
 for (const t of tools) {
   if (!t.inputSchema || t.inputSchema.type !== "object")
