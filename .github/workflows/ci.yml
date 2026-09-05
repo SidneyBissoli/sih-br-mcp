@@ -28,9 +28,9 @@ name: CI
 # antigos. A primeira caiu com `npm update`; a segunda com `overrides.node-gyp`
 # no package.json (o node-gyp só é invocado se não houver binário pré-compilado,
 # e a linha 12 troca make-fetch-happen por undici e não traz glob). Sem gate
-# nenhum, aquele bump seria fé; com este smoke, é medido. É também o que torna
-# possível, no dia em que a decisão for tomada, ligar a atualização automática
-# de dependências aqui sem abrir PRs que ninguém tem como validar.
+# nenhum, aquele bump seria fé; com este smoke, é medido. Foi o que permitiu
+# ligar o Dependabot (.github/dependabot.yml, no mesmo dia) sem abrir PRs que
+# ninguém tem como validar: cada PR dele passa por este arquivo.
 
 on:
   push:
