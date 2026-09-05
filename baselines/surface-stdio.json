@@ -1,0 +1,537 @@
+[
+  {
+    "name": "classify_as_csap",
+    "description": "Classifica um ou mais códigos CID-10 como CSAP ou não. Retorna o grupo CSAP correspondente se aplicável.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "cid_codes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Códigos CID-10 para classificar (ex: ['J18', 'A09', 'K35'])"
+        }
+      },
+      "required": [
+        "cid_codes"
+      ]
+    }
+  },
+  {
+    "name": "compare_icsap_trends",
+    "description": "Análise temporal comparativa de ICSAP entre UFs ou grupos CSAP. Calcula tendências, variação anual e identifica melhores/piores desempenhos. Anos válidos: 2000-2024.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "start_year": {
+          "type": "integer",
+          "description": "Ano inicial"
+        },
+        "end_year": {
+          "type": "integer",
+          "description": "Ano final"
+        },
+        "compare_by": {
+          "type": "string",
+          "enum": [
+            "uf",
+            "csap_group"
+          ],
+          "description": "Comparar por UF ou grupo CSAP"
+        },
+        "compare_values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Valores específicos para comparar (UFs ou grupos CSAP)"
+        },
+        "indicator": {
+          "type": "string",
+          "enum": [
+            "percentage",
+            "count",
+            "rate_per_10k"
+          ],
+          "description": "Indicador: percentage (% ICSAP), count (número), rate_per_10k (taxa)"
+        },
+        "include_trend_line": {
+          "type": "boolean",
+          "description": "Incluir análise de tendência linear (default: true)"
+        }
+      },
+      "required": [
+        "start_year",
+        "end_year"
+      ]
+    }
+  },
+  {
+    "name": "compare_regions",
+    "description": "Compara internações entre UFs ou regiões do Brasil. Gera rankings e identifica variações regionais.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "year": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "Anos para consultar"
+        },
+        "compare_by": {
+          "type": "string",
+          "enum": [
+            "uf",
+            "region"
+          ],
+          "description": "Comparar por UF ou região (default: uf)"
+        },
+        "cid_chapter": {
+          "type": "integer",
+          "description": "Capítulo CID-10 específico"
+        },
+        "is_csap": {
+          "type": "boolean",
+          "description": "Filtrar apenas CSAP"
+        },
+        "metric": {
+          "type": "string",
+          "enum": [
+            "n",
+            "deaths"
+          ],
+          "description": "Métrica para ranking (default: n)"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Número de resultados (default: 10)"
+        }
+      }
+    }
+  },
+  {
+    "name": "get_available_years",
+    "description": "Retorna os anos disponíveis nos dados do SIH-SUS carregados.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "get_hospitalization_rates",
+    "description": "Calcula taxas de internação por população (por 100.000 habitantes, configurável). Requer dados populacionais (pop_uf.parquet). Anos válidos: 2000-2024.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "year": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "Anos para calcular"
+        },
+        "rate_type": {
+          "type": "string",
+          "enum": [
+            "crude",
+            "specific"
+          ],
+          "description": "Tipo de taxa: crude (bruta) ou specific (específica por filtro)"
+        },
+        "rate_per": {
+          "type": "integer",
+          "enum": [
+            1000,
+            10000,
+            100000
+          ],
+          "description": "Taxa por X habitantes (default: 100000)"
+        },
+        "uf": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "UFs para filtrar"
+        },
+        "cid_chapter": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "Capítulos CID-10 (1-22)"
+        },
+        "sex": {
+          "type": "string",
+          "enum": [
+            "M",
+            "F"
+          ],
+          "description": "Filtrar por sexo"
+        },
+        "age_min": {
+          "type": "integer",
+          "description": "Idade mínima"
+        },
+        "age_max": {
+          "type": "integer",
+          "description": "Idade máxima"
+        },
+        "is_csap": {
+          "type": "boolean",
+          "description": "Filtrar apenas CSAP"
+        },
+        "group_by": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "year",
+              "uf",
+              "sex"
+            ]
+          },
+          "description": "Dimensões para agrupamento"
+        }
+      }
+    }
+  },
+  {
+    "name": "get_hospitalization_trends",
+    "description": "Retorna séries temporais de internações (mensal ou anual). Útil para análise de tendências e sazonalidade.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "year_start": {
+          "type": "integer",
+          "description": "Ano inicial"
+        },
+        "year_end": {
+          "type": "integer",
+          "description": "Ano final"
+        },
+        "uf": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "UFs para filtrar"
+        },
+        "cid_chapter": {
+          "type": "integer",
+          "description": "Capítulo CID-10 específico"
+        },
+        "granularity": {
+          "type": "string",
+          "enum": [
+            "monthly",
+            "yearly"
+          ],
+          "description": "Granularidade temporal (default: yearly)"
+        }
+      },
+      "required": [
+        "year_start",
+        "year_end"
+      ]
+    }
+  },
+  {
+    "name": "get_hospitalizations",
+    "description": "Consulta dados de internações hospitalares do SUS com filtros flexíveis. Permite agregar por múltiplas dimensões (UF, CID, sexo, idade, raça, ano/mês).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "year": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "Anos para consultar (ex: [2023, 2024])"
+        },
+        "month": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "Meses (1-12). Se omitido, todos."
+        },
+        "uf": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Lista de UFs (ex: ['SP', 'RJ']). Se omitido, todas."
+        },
+        "cid_chapter": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "Capítulos CID-10 (1-22). Se omitido, todos."
+        },
+        "sex": {
+          "type": "string",
+          "enum": [
+            "M",
+            "F"
+          ],
+          "description": "Filtrar por sexo"
+        },
+        "age_min": {
+          "type": "integer",
+          "description": "Idade mínima em anos"
+        },
+        "age_max": {
+          "type": "integer",
+          "description": "Idade máxima em anos"
+        },
+        "race": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Raça/cor (branca, preta, parda, amarela, indigena, ignorado)"
+        },
+        "is_csap": {
+          "type": "boolean",
+          "description": "Filtrar apenas CSAP (true) ou não-CSAP (false)"
+        },
+        "group_by": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "year",
+              "month",
+              "uf",
+              "cid_chapter",
+              "cid_group",
+              "sex",
+              "age",
+              "race",
+              "is_csap",
+              "csap_group"
+            ]
+          },
+          "description": "Dimensões para agrupamento"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Limitar número de resultados"
+        }
+      }
+    }
+  },
+  {
+    "name": "get_icsap",
+    "description": "Consulta internações por Condições Sensíveis à Atenção Primária (ICSAP). Permite filtros por grupo CSAP, UF, município, sexo, idade e raça.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "year": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "Anos para consultar"
+        },
+        "uf": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "UFs para filtrar"
+        },
+        "municipality_code": {
+          "type": "string",
+          "description": "Código IBGE do município (6 dígitos)"
+        },
+        "csap_group": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Grupos CSAP (ex: ['g01', 'g05'])"
+        },
+        "sex": {
+          "type": "string",
+          "enum": [
+            "M",
+            "F"
+          ],
+          "description": "Filtrar por sexo"
+        },
+        "age_min": {
+          "type": "integer",
+          "description": "Idade mínima"
+        },
+        "age_max": {
+          "type": "integer",
+          "description": "Idade máxima"
+        },
+        "race": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Raça/cor"
+        },
+        "group_by": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "year",
+              "uf",
+              "municipality_code",
+              "csap_group",
+              "sex",
+              "age",
+              "race"
+            ]
+          },
+          "description": "Dimensões para agrupamento"
+        }
+      }
+    }
+  },
+  {
+    "name": "get_icsap_indicators",
+    "description": "Calcula indicadores de ICSAP: percentual (ICSAP/Total×100). Métricas-chave para avaliar a Atenção Primária.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "year": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "Anos para calcular"
+        },
+        "uf": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "UFs para calcular"
+        },
+        "municipality_code": {
+          "type": "string",
+          "description": "Código IBGE do município"
+        },
+        "sex": {
+          "type": "string",
+          "enum": [
+            "M",
+            "F"
+          ],
+          "description": "Filtrar por sexo"
+        },
+        "age_min": {
+          "type": "integer",
+          "description": "Idade mínima"
+        },
+        "age_max": {
+          "type": "integer",
+          "description": "Idade máxima"
+        },
+        "group_by": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "year",
+              "uf",
+              "sex",
+              "race"
+            ]
+          },
+          "description": "Dimensões para agrupamento"
+        }
+      }
+    }
+  },
+  {
+    "name": "list_cid_chapters",
+    "description": "Lista os 22 capítulos da CID-10 com seus códigos e faixas de diagnóstico.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "list_csap_groups",
+    "description": "Lista os 19 grupos de Condições Sensíveis à Atenção Primária (CSAP) conforme Portaria MS/SAS 221/2008. Retorna código, nome e códigos CID-10 de cada grupo.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "group_code": {
+          "type": "string",
+          "description": "Código do grupo específico (ex: 'g01'). Se omitido, retorna todos."
+        },
+        "include_cid_codes": {
+          "type": "boolean",
+          "description": "Se true, inclui lista de códigos CID-10 (default: false)"
+        }
+      }
+    }
+  },
+  {
+    "name": "rank_csap_groups",
+    "description": "Gera ranking dos 19 grupos CSAP por número de internações, dias de internação ou valor. Identifica principais causas evitáveis.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "year": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "Anos para consultar"
+        },
+        "uf": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "UFs para filtrar"
+        },
+        "sex": {
+          "type": "string",
+          "enum": [
+            "M",
+            "F"
+          ],
+          "description": "Filtrar por sexo"
+        },
+        "age_min": {
+          "type": "integer",
+          "description": "Idade mínima"
+        },
+        "age_max": {
+          "type": "integer",
+          "description": "Idade máxima"
+        },
+        "metric": {
+          "type": "string",
+          "enum": [
+            "n",
+            "days",
+            "value",
+            "deaths"
+          ],
+          "description": "Métrica para ranking (default: n)"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Número de grupos no ranking (default: 19)",
+          "minimum": 1,
+          "maximum": 19
+        }
+      }
+    }
+  }
+]
