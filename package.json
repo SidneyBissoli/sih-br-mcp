@@ -1,6 +1,6 @@
 {
   "name": "sih-br-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "MCP Server para análise de dados do SIH-SUS com foco em ICSAP",
   "repository": {
@@ -35,8 +35,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
-    "duckdb": "^1.1.0"
+    "@duckdb/node-api": "^1.5.5-r.4",
+    "@modelcontextprotocol/sdk": "^1.30.0"
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
@@ -48,8 +48,5 @@
   "files": [
     "dist",
     "data"
-  ],
-  "overrides": {
-    "node-gyp": "^12.4.0"
-  }
+  ]
 }

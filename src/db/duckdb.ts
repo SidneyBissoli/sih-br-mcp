@@ -3,14 +3,17 @@
  * Suporta múltiplos arquivos Parquet por ano (sih_causas_YYYY.parquet)
  */
 
-import duckdb from "duckdb";
+// Cliente DuckDB: `@duckdb/node-api` ("Node Neo"), o cliente oficial atual,
+// desde 05/09/2026 (PLAN-002). Antes era o binding legado `duckdb`, que pinava
+// `node-gyp ^9` em runtime e arrastava tar 6/cacache 16/glob 7 para o lock — a
+// origem de 60 dos 72 alertas do Dependabot zerados em 04/09. O Neo traz
+// binário pré-compilado por plataforma (optionalDependencies de
+// @duckdb/node-bindings): zero node-gyp, zero tar. A API é toda de Promise;
+// o funil `query()` continua sendo o único ponto que toca a conexão.
+import { DuckDBConnection, DuckDBInstance } from "@duckdb/node-api";
 import { fileURLToPath } from "url";
 import { dirname, join, resolve } from "path";
 import { existsSync, readdirSync } from "fs";
-
-// Tipos do DuckDB
-type Database = InstanceType<typeof duckdb.Database>;
-type Connection = ReturnType<Database["connect"]>;
 
 // Obtém diretório do projeto
 const __filename = fileURLToPath(import.meta.url);
@@ -24,9 +27,12 @@ const DATA_DIR = process.env.SIH_DATA_DIR
   : join(PROJECT_ROOT, "data");
 const TEST_DATA_DIR = join(DATA_DIR, "test");
 
-// Singleton do banco de dados
-let db: Database | null = null;
-let conn: Connection | null = null;
+// Singleton do banco de dados. `connecting` segura a Promise da primeira
+// abertura para que chamadas concorrentes (as tools de taxa disparam várias
+// consultas) não criem duas instâncias — o legado tinha essa corrida.
+let instance: DuckDBInstance | null = null;
+let conn: DuckDBConnection | null = null;
+let connecting: Promise<DuckDBConnection> | null = null;
 
 // Detecta se estamos em modo teste (data/test tem arquivos)
 let dataDirectory: string | null = null;
@@ -96,49 +102,55 @@ export function getAvailableYears(): number[] {
 /**
  * Inicializa conexão com DuckDB
  */
-export async function getDatabase(): Promise<Connection> {
+export async function getDatabase(): Promise<DuckDBConnection> {
   if (conn) {
     return conn;
   }
+  if (connecting) {
+    return connecting;
+  }
 
-  return new Promise((resolve, reject) => {
+  connecting = (async () => {
     // Usa banco em memória (consultas diretas aos Parquet)
-    db = new duckdb.Database(":memory:", (err) => {
-      if (err) {
-        reject(new Error(`Erro ao criar banco DuckDB: ${err.message}`));
-        return;
-      }
+    try {
+      instance = await DuckDBInstance.create(":memory:");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new Error(`Erro ao criar banco DuckDB: ${message}`);
+    }
+    const connection = await instance.connect();
 
-      conn = db!.connect();
+    // Configura DuckDB para melhor performance com Parquet
+    try {
+      await connection.run("SET threads TO 4");
+    } catch {
+      console.error("Aviso: não foi possível configurar threads");
+    }
 
-      // Configura DuckDB para melhor performance com Parquet
-      conn.run("SET threads TO 4", (err) => {
-        if (err) console.error("Aviso: não foi possível configurar threads");
-      });
+    conn = connection;
+    return connection;
+  })();
 
-      resolve(conn);
-    });
-  });
+  try {
+    return await connecting;
+  } finally {
+    connecting = null;
+  }
 }
 
 /**
  * Fecha conexão com o banco
  */
 export async function closeDatabase(): Promise<void> {
-  return new Promise((resolve) => {
-    if (conn) {
-      conn = null;
-    }
-    if (db) {
-      db.close(() => {
-        db = null;
-        dataDirectory = null; // Reset para próxima conexão
-        resolve();
-      });
-    } else {
-      resolve();
-    }
-  });
+  if (conn) {
+    conn.closeSync();
+    conn = null;
+  }
+  if (instance) {
+    instance.closeSync();
+    instance = null;
+  }
+  dataDirectory = null; // Reset para próxima conexão
 }
 
 /**
@@ -172,17 +184,24 @@ export async function query<T = Record<string, unknown>>(
 ): Promise<T[]> {
   const connection = await getDatabase();
 
-  return new Promise((resolve, reject) => {
-    connection.all(sql, (err, rows) => {
-      if (err) {
-        reject(new Error(`Erro na query: ${err.message}\nSQL: ${sql}`));
-        return;
-      }
-      // Converte BigInt para Number para serialização JSON
-      const convertedRows = convertBigIntToNumber(rows || []) as T[];
-      resolve(convertedRows);
-    });
-  });
+  let rows: Record<string, unknown>[];
+  try {
+    const result = await connection.runAndReadAll(sql);
+    // `getRowObjectsJS()` e não `getRowObjects()`: o segundo devolve DECIMAL
+    // como {width, scale, value} e DATE como {days} (classes do Neo), que
+    // virariam objetos no JSON da ferramenta; o primeiro entrega tipos JS
+    // nativos (DECIMAL → number, DATE → ISO). Medido em 05/09/2026. Hoje os
+    // cubos só têm INTEGER/DOUBLE/VARCHAR/BOOLEAN, mas o funil é um só e a
+    // defesa fica aqui. BIGINT e HUGEINT (SUM de INTEGER) continuam chegando
+    // como bigint nos dois leitores — é o que `convertBigIntToNumber` trata.
+    rows = result.getRowObjectsJS();
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`Erro na query: ${message}\nSQL: ${sql}`);
+  }
+
+  // Converte BigInt para Number para serialização JSON
+  return convertBigIntToNumber(rows) as T[];
 }
 
 // =============================================================================
