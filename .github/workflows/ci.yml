@@ -74,3 +74,12 @@ jobs:
       # chama três ferramentas. Mudou a superfície de propósito? Regravar com
       # `npm run smoke:stdio:baseline` no MESMO commit que muda as ferramentas.
       - run: npm run smoke:stdio
+
+      # Chama as doze ferramentas com argumentos fixos e compara o resultado
+      # byte a byte com `baselines/golden-tools.json`. Gravado em 05/09/2026
+      # com o binding `duckdb` legado, ANTES da migração para @duckdb/node-api
+      # (PLAN-002): é o que torna a troca de binding medível. Não afirma que
+      # os números estão certos — afirma que não se moveram. Mudou uma
+      # consulta de propósito? Regravar com `npm run golden:tools:baseline` no
+      # MESMO commit, e dizer no commit por que os valores mudaram.
+      - run: npm run golden:tools
