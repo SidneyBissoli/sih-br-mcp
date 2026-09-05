@@ -99,7 +99,13 @@ const csap = await call("list_csap_groups");
 if (!/g01/i.test(csap)) fail("list_csap_groups não menciona g01");
 
 const yearsText = await call("get_available_years");
-const years = [...yearsText.matchAll(/\b(19|20)\d{2}\b/g)].map((m) => Number(m[0]));
+// Lê o campo estrutural `years`; o texto inteiro não serve porque o bloco de
+// proveniência traz outros anos (safra, citação) e o regex pegaria o maior.
+let yearsJson = null;
+try { yearsJson = JSON.parse(yearsText); } catch { /* texto não JSON: cai no regex */ }
+const years = Array.isArray(yearsJson?.years)
+  ? yearsJson.years.map(Number).filter(Number.isInteger)
+  : [...yearsText.matchAll(/(19|20)\d{2}/g)].map((m) => Number(m[0]));
 if (years.length === 0) fail("get_available_years não devolveu nenhum ano");
 const year = Math.max(...years);
 

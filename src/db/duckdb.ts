@@ -42,7 +42,7 @@ let dataDirectory: string | null = null;
  * - Padrão: data/ (dados reais)
  * - Teste: data/test/ (somente se SIH_TEST_MODE=1 estiver definido)
  */
-function getDataDirectory(): string {
+export function getDataDirectory(): string {
   if (dataDirectory) return dataDirectory;
 
   // Usa data/test/ somente em modo teste explícito

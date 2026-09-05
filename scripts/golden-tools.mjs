@@ -92,7 +92,11 @@ const call = async (name, toolArgs = {}) => {
 // o servidor trata um ano pedido e ausente — hoje a fixture só tem 2023.
 const yearsCase = await call("get_available_years");
 const yearsText = JSON.stringify(yearsCase.result);
-const years = [...yearsText.matchAll(/\b(19|20)\d{2}\b/g)].map((m) => Number(m[0]));
+// Lê o campo estrutural `years`; o texto inteiro não serve porque o bloco de
+// proveniência traz outros anos (safra, citação) e o regex pegaria o maior.
+const years = Array.isArray(yearsCase.result?.years)
+  ? yearsCase.result.years.map(Number).filter(Number.isInteger)
+  : [...yearsText.matchAll(/(19|20)\d{2}/g)].map((m) => Number(m[0]));
 if (years.length === 0) fail("get_available_years não devolveu nenhum ano");
 const Y = Math.max(...years);
 

@@ -102,6 +102,17 @@
           "name": "Doenças relacionadas ao pré-natal e parto",
           "cid_count": 3
         }
+      ],
+      "provenance": {
+        "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+        "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+        "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+        "retrieved_at": "2026-01-21T00:00:00Z",
+        "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+        "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+      },
+      "attribution": [
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
       ]
     }
   },
@@ -286,7 +297,18 @@
           "B54",
           "B77"
         ]
-      }
+      },
+      "provenance": {
+        "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+        "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+        "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+        "retrieved_at": "2026-01-21T00:00:00Z",
+        "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+        "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+      },
+      "attribution": [
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
     }
   },
   {
@@ -450,6 +472,17 @@
           "name_pt": "Códigos para propósitos especiais",
           "name_en": "Codes for special purposes"
         }
+      ],
+      "provenance": {
+        "source": "OMS — CID-10, capítulos (versão 2019)",
+        "source_url": "https://icd.who.int/browse10/2019/en",
+        "data_vintage": "CID-10 versão 2019",
+        "retrieved_at": "2026-01-21T00:00:00Z",
+        "citation": "Organização Mundial da Saúde. Classificação Estatística Internacional de Doenças e Problemas Relacionados à Saúde, 10ª revisão (CID-10), versão 2019.",
+        "license": "Classificação pública da OMS; capítulos transcritos em src/data/cid-chapters.json"
+      },
+      "attribution": [
+        "https://icd.who.int/browse10/2019/en"
       ]
     }
   },
@@ -466,7 +499,18 @@
         "last_year": 2023,
         "total_years": 1
       },
-      "note": "Anos com dados Parquet disponíveis"
+      "note": "Anos com dados Parquet disponíveis",
+      "provenance": {
+        "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+        "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+        "retrieved_at": "2026-03-09T03:47:02Z",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+      },
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
+      ]
     }
   },
   {
@@ -511,7 +555,18 @@
         "total": 4,
         "csap": 2,
         "non_csap": 2
-      }
+      },
+      "provenance": {
+        "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+        "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+        "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+        "retrieved_at": "2026-01-21T00:00:00Z",
+        "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+        "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+      },
+      "attribution": [
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
     }
   },
   {
@@ -549,7 +604,18 @@
         "total": 3,
         "csap": 0,
         "non_csap": 3
-      }
+      },
+      "provenance": {
+        "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+        "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+        "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+        "retrieved_at": "2026-01-21T00:00:00Z",
+        "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+        "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+      },
+      "attribution": [
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
     }
   },
   {
@@ -581,7 +647,18 @@
         "year": [
           2023
         ]
-      }
+      },
+      "provenance": {
+        "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+        "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+        "retrieved_at": "2026-03-09T03:47:02Z",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+      },
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
+      ]
     }
   },
   {
@@ -657,7 +734,18 @@
           "uf"
         ],
         "limit": 50
-      }
+      },
+      "provenance": {
+        "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+        "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+        "retrieved_at": "2026-03-09T03:47:02Z",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+      },
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
+      ]
     }
   },
   {
@@ -702,7 +790,18 @@
         "group_by": [
           "cid_chapter"
         ]
-      }
+      },
+      "provenance": {
+        "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+        "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+        "retrieved_at": "2026-03-09T03:47:02Z",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+      },
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
+      ]
     }
   },
   {
@@ -890,7 +989,18 @@
           "year",
           "csap_group"
         ]
-      }
+      },
+      "provenance": {
+        "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+        "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+        "retrieved_at": "2026-03-09T03:47:02Z",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+      },
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
+      ]
     }
   },
   {
@@ -918,7 +1028,18 @@
       "period": {
         "start": 2022,
         "end": 2023
-      }
+      },
+      "provenance": {
+        "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+        "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+        "retrieved_at": "2026-03-09T03:47:02Z",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+      },
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
+      ]
     }
   },
   {
@@ -959,7 +1080,18 @@
       "period": {
         "start": "2023-01",
         "end": "2023-12"
-      }
+      },
+      "provenance": {
+        "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+        "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+        "retrieved_at": "2026-03-09T03:47:02Z",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+      },
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
+      ]
     }
   },
   {
@@ -1038,7 +1170,18 @@
       "period": {
         "start": "2023-01",
         "end": "2023-12"
-      }
+      },
+      "provenance": {
+        "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+        "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+        "retrieved_at": "2026-03-09T03:47:02Z",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+      },
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
+      ]
     }
   },
   {
@@ -1098,7 +1241,18 @@
           "mortality_rate": 0
         }
       ],
-      "total_locations": 6
+      "total_locations": 6,
+      "provenance": {
+        "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+        "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+        "retrieved_at": "2026-03-09T03:47:02Z",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+      },
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
+      ]
     }
   },
   {
@@ -1131,7 +1285,18 @@
           "mortality_rate": 2.17
         }
       ],
-      "total_locations": 2
+      "total_locations": 2,
+      "provenance": {
+        "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+        "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+        "retrieved_at": "2026-03-09T03:47:02Z",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+      },
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
+      ]
     }
   },
   {
@@ -1164,7 +1329,18 @@
           "mortality_rate": 0
         }
       ],
-      "total_locations": 2
+      "total_locations": 2,
+      "provenance": {
+        "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+        "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+        "retrieved_at": "2026-03-09T03:47:02Z",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+      },
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
+      ]
     }
   },
   {
@@ -1198,7 +1374,29 @@
         "year": [
           2023
         ]
-      }
+      },
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T03:47:02Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+          "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+          "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+          "retrieved_at": "2026-01-21T00:00:00Z",
+          "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
     }
   },
   {
@@ -1383,7 +1581,29 @@
         "group_by": [
           "csap_group"
         ]
-      }
+      },
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T03:47:02Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+          "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+          "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+          "retrieved_at": "2026-01-21T00:00:00Z",
+          "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
     }
   },
   {
@@ -1434,7 +1654,29 @@
         "group_by": [
           "sex"
         ]
-      }
+      },
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T03:47:02Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+          "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+          "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+          "retrieved_at": "2026-01-21T00:00:00Z",
+          "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
     }
   },
   {
@@ -1486,7 +1728,29 @@
           "uf",
           "race"
         ]
-      }
+      },
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T03:47:02Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+          "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+          "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+          "retrieved_at": "2026-01-21T00:00:00Z",
+          "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
     }
   },
   {
@@ -1511,7 +1775,29 @@
       "indicators_calculated": [
         "icsap_percentage"
       ],
-      "note": "icsap_percentage = (n_icsap / n_total) * 100"
+      "note": "icsap_percentage = (n_icsap / n_total) * 100",
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T03:47:02Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+          "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+          "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+          "retrieved_at": "2026-01-21T00:00:00Z",
+          "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
     }
   },
   {
@@ -1549,7 +1835,29 @@
       "indicators_calculated": [
         "icsap_percentage"
       ],
-      "note": "icsap_percentage = (n_icsap / n_total) * 100"
+      "note": "icsap_percentage = (n_icsap / n_total) * 100",
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T03:47:02Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+          "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+          "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+          "retrieved_at": "2026-01-21T00:00:00Z",
+          "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
     }
   },
   {
@@ -1582,7 +1890,29 @@
       "indicators_calculated": [
         "icsap_percentage"
       ],
-      "note": "icsap_percentage = (n_icsap / n_total) * 100"
+      "note": "icsap_percentage = (n_icsap / n_total) * 100",
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T03:47:02Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+          "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+          "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+          "retrieved_at": "2026-01-21T00:00:00Z",
+          "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
     }
   },
   {
@@ -1811,7 +2141,29 @@
         "top_3_percentage": 46.73,
         "top_5_percentage": 59.15
       },
-      "total_groups": 19
+      "total_groups": 19,
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T03:47:02Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+          "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+          "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+          "retrieved_at": "2026-01-21T00:00:00Z",
+          "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
     }
   },
   {
@@ -1833,7 +2185,29 @@
         "top_3_percentage": 0,
         "top_5_percentage": 0
       },
-      "total_groups": 0
+      "total_groups": 0,
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T03:47:02Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+          "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+          "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+          "retrieved_at": "2026-01-21T00:00:00Z",
+          "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
     }
   },
   {
@@ -1999,7 +2373,29 @@
         "top_3_percentage": 87.59,
         "top_5_percentage": 92.17
       },
-      "total_groups": 13
+      "total_groups": 13,
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T03:47:02Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+          "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+          "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+          "retrieved_at": "2026-01-21T00:00:00Z",
+          "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
     }
   },
   {
@@ -2035,7 +2431,29 @@
             2023
           ]
         }
-      }
+      },
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T03:47:02Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "IBGE — SIDRA, tabela 7358 (projeção da população por sexo e idade, UF)",
+          "source_url": "https://sidra.ibge.gov.br/tabela/7358",
+          "data_vintage": "Projeções 2000–2024 baixadas por scripts/build-population.R (pop_uf.parquet)",
+          "retrieved_at": "2026-01-23T00:00:00Z",
+          "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade. SIDRA, tabela 7358.",
+          "license": "Dados abertos do IBGE"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://sidra.ibge.gov.br/tabela/7358"
+      ]
     }
   },
   {
@@ -2127,7 +2545,29 @@
             "uf"
           ]
         }
-      }
+      },
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T03:47:02Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "IBGE — SIDRA, tabela 7358 (projeção da população por sexo e idade, UF)",
+          "source_url": "https://sidra.ibge.gov.br/tabela/7358",
+          "data_vintage": "Projeções 2000–2024 baixadas por scripts/build-population.R (pop_uf.parquet)",
+          "retrieved_at": "2026-01-23T00:00:00Z",
+          "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade. SIDRA, tabela 7358.",
+          "license": "Dados abertos do IBGE"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://sidra.ibge.gov.br/tabela/7358"
+      ]
     }
   },
   {
@@ -2175,7 +2615,29 @@
             "sex"
           ]
         }
-      }
+      },
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T03:47:02Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "IBGE — SIDRA, tabela 7358 (projeção da população por sexo e idade, UF)",
+          "source_url": "https://sidra.ibge.gov.br/tabela/7358",
+          "data_vintage": "Projeções 2000–2024 baixadas por scripts/build-population.R (pop_uf.parquet)",
+          "retrieved_at": "2026-01-23T00:00:00Z",
+          "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade. SIDRA, tabela 7358.",
+          "license": "Dados abertos do IBGE"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://sidra.ibge.gov.br/tabela/7358"
+      ]
     }
   },
   {
@@ -2206,7 +2668,29 @@
       "trends": {},
       "summary": {
         "note": "Para % ICSAP, queda indica melhoria na Atenção Primária"
-      }
+      },
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T03:47:02Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+          "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+          "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+          "retrieved_at": "2026-01-21T00:00:00Z",
+          "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
     }
   },
   {
@@ -2237,7 +2721,29 @@
         }
       ],
       "trends": {},
-      "summary": {}
+      "summary": {},
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T03:47:02Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+          "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+          "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+          "retrieved_at": "2026-01-21T00:00:00Z",
+          "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
     }
   },
   {
@@ -2264,7 +2770,29 @@
           "RR": 7793
         }
       ],
-      "summary": {}
+      "summary": {},
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: competências 2023-01 a 2023-12, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T03:47:02Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.3.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+          "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+          "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+          "retrieved_at": "2026-01-21T00:00:00Z",
+          "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
     }
   }
 ]

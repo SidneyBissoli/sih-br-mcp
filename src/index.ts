@@ -32,6 +32,7 @@ import {
 import csapGroups from "./data/csap-groups.json" with { type: "json" };
 import cidChapters from "./data/cid-chapters.json" with { type: "json" };
 import brazilRegions from "./data/brazil-regions.json" with { type: "json" };
+import { SERVER_VERSION, provenanceFor, withProvenance } from "./provenance.js";
 
 // =============================================================================
 // DEFINIÇÃO DAS FERRAMENTAS
@@ -1378,7 +1379,7 @@ async function handleCompareIcsapTrends(args: CompareIcsapTrendsArgs) {
 const server = new Server(
   {
     name: "sih-br-mcp",
-    version: "0.2.0",
+    version: SERVER_VERSION,
   },
   {
     capabilities: {
@@ -1456,14 +1457,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
     }
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(result, null, 2),
-        },
-      ],
-    };
+    // Toda resposta sai com o bloco de proveniência do contrato (concise):
+    // fonte, URL, safra, retrieved_at, citação e licença — ver src/provenance.ts.
+    return withProvenance(result, provenanceFor(name, args));
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return {
