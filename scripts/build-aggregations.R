@@ -60,7 +60,7 @@ if (!requireNamespace("healthbR", quietly = TRUE) ||
 OUTPUT_DIR <- here::here("data")
 dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
-BUILDER_VERSION <- "2.2.1"
+BUILDER_VERSION <- "2.3.0"
 
 # Meses de Y+1 lidos para fechar as internações de Y (ver cabeçalho)
 MESES_SEGUINTES <- 4L
@@ -427,7 +427,154 @@ escrever_sidecar <- function(ano, chaves, particoes, manifest_last_updated, jane
   invisible(destino)
 }
 
-#' Processa dados de um ano de competência
+#' Agrega UM LOTE de internações já lidas (as colunas cruas do healthbr-data)
+#' nos três cubos parciais do ano. Devolve as agregações do lote e as contagens
+#' de controle; quem soma os lotes é processar_ano(). Um lote = uma UF de
+#' arquivo: o ano nacional de 2023 são 13,3 milhões de internações e, num
+#' único data frame, estourou os 16 GB do runner (run 34038116890, 06/09/2026);
+#' por UF o maior lote (SP) fica em ~3,5 milhões. Somar agregados de lotes
+#' disjuntos dá o mesmo cubo que agregar tudo de uma vez: n, deaths e days são
+#' contagens/inteiros (exatos); value é soma de doubles, igual ao último ulp.
+agregar_lote <- function(dados, ano) {
+  n_lidos <- nrow(dados)
+  dados <- dados %>%
+    dplyr::mutate(dt_inter = as.Date(DT_INTER, format = "%Y%m%d"))
+  n_invalidos <- sum(is.na(dados$dt_inter))
+  if (n_invalidos > 0) {
+    cli_alert_warning("{n_invalidos} registros com DT_INTER inválido ficam fora dos cubos")
+    dados <- dados %>% dplyr::filter(!is.na(dt_inter))
+  }
+  # O cubo é por ANO DE INTERNAÇÃO: o que a janela trouxe de outros anos
+  # (internações de Y-1 faturadas em Y; de Y+1 nas competências extras) sai.
+  ano_inter <- as.integer(format(dados$dt_inter, "%Y"))
+  n_outros_anos <- sum(ano_inter != ano)
+  dados <- dados[ano_inter == ano, , drop = FALSE]
+
+  dados <- dados %>%
+    dplyr::mutate(
+      ano = as.integer(format(dt_inter, "%Y")),
+      mes = as.integer(format(dt_inter, "%m")),
+      ano_mes = sprintf("%04d-%02d", ano, mes),
+      uf_codigo = substr(MUNIC_RES, 1, 2),
+      uf = uf_codigo_para_sigla(uf_codigo),
+      municipio_res = MUNIC_RES,
+      cid = substr(DIAG_PRINC, 1, 3),
+      cid_4 = substr(DIAG_PRINC, 1, 4),
+      capitulo_cid = por_valor_unico(cid, extrair_capitulo_cid, NA_integer_),
+      sexo = dplyr::case_when(
+        SEXO == "1" ~ "M",
+        SEXO == "3" ~ "F",
+        TRUE ~ "I"
+      ),
+      # IDADE SIMPLES (em anos completos)
+      idade = dplyr::case_when(
+        COD_IDADE == "2" ~ as.integer(floor(as.numeric(IDADE) / 12)),
+        COD_IDADE == "3" ~ 0L,  # dias -> 0 anos
+        COD_IDADE == "4" ~ as.integer(IDADE),
+        COD_IDADE == "5" ~ as.integer(as.numeric(IDADE) + 100),
+        TRUE ~ NA_integer_
+      ),
+      raca = dplyr::case_when(
+        RACA_COR == "01" ~ "branca",
+        RACA_COR == "02" ~ "preta",
+        RACA_COR == "03" ~ "parda",
+        RACA_COR == "04" ~ "amarela",
+        RACA_COR == "05" ~ "indigena",
+        TRUE ~ "ignorado"
+      ),
+      dias = as.numeric(DIAS_PERM),
+      valor = as.numeric(VAL_TOT),
+      obito = as.integer(MORTE == "1"),
+      grupo_csap = por_valor_unico(cid_4, classificar_csap, NA_character_),
+      is_csap = !is.na(grupo_csap)
+    )
+
+  causas <- dados %>%
+    dplyr::group_by(
+      year = ano,
+      month = mes,
+      uf,
+      cid_chapter = capitulo_cid,
+      cid_group = cid,
+      sex = sexo,
+      age = idade,
+      race = raca,
+      is_csap,
+      csap_group = grupo_csap
+    ) %>%
+    dplyr::summarise(
+      n = dplyr::n(),
+      days = sum(dias, na.rm = TRUE),
+      value = sum(valor, na.rm = TRUE),
+      deaths = sum(obito, na.rm = TRUE),
+      .groups = "drop"
+    )
+
+  series <- dados %>%
+    dplyr::group_by(
+      year_month = ano_mes,
+      uf,
+      cid_chapter = capitulo_cid
+    ) %>%
+    dplyr::summarise(
+      n = dplyr::n(),
+      deaths = sum(obito, na.rm = TRUE),
+      .groups = "drop"
+    )
+
+  # Total de internacoes por estrato
+  totais <- dados %>%
+    dplyr::group_by(
+      year = ano,
+      uf,
+      municipality_code = municipio_res,
+      sex = sexo,
+      age = idade,
+      race = raca
+    ) %>%
+    dplyr::summarise(
+      n_total = dplyr::n(),
+      .groups = "drop"
+    )
+
+  # ICSAP por grupo
+  icsap <- dados %>%
+    dplyr::filter(is_csap) %>%
+    dplyr::group_by(
+      year = ano,
+      uf,
+      municipality_code = municipio_res,
+      csap_group = grupo_csap,
+      sex = sexo,
+      age = idade,
+      race = raca
+    ) %>%
+    dplyr::summarise(
+      n = dplyr::n(),
+      days = sum(dias, na.rm = TRUE),
+      value = sum(valor, na.rm = TRUE),
+      deaths = sum(obito, na.rm = TRUE),
+      .groups = "drop"
+    )
+
+  list(
+    causas = causas, series = series, totais = totais, icsap = icsap,
+    n_lidos = n_lidos, n_invalidos = n_invalidos, n_outros_anos = n_outros_anos,
+    n_cubo = nrow(dados)
+  )
+}
+
+#' Soma agregados parciais (um por lote) nas mesmas chaves de grupo:
+#' bind_rows + summarise(sum). Com um lote só, devolve o próprio.
+somar_lotes <- function(lotes, chaves) {
+  x <- dplyr::bind_rows(lotes)
+  if (length(lotes) == 1L) return(x)
+  x %>%
+    dplyr::group_by(dplyr::across(dplyr::all_of(chaves))) %>%
+    dplyr::summarise(dplyr::across(dplyr::everything(), ~ sum(.x)), .groups = "drop")
+}
+
+#' Processa dados de um ano de competência, UMA UF DE ARQUIVO POR VEZ
 processar_ano <- function(ano, ufs_arquivo, output_dir) {
 
   cli_h2("Ano {ano}")
@@ -446,103 +593,36 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
       cli_alert_warning("{length(chaves)} de {esperadas} partições publicadas na janela de {ano} (competências ainda não divulgadas pelo MS ficam de fora; o cubo sai INCOMPLETO)")
     }
 
-    cli_alert_info("Lendo {length(chaves)} partições do R2 pelo healthbR (colunas: {paste(COLUNAS_SIH, collapse=', ')})")
+    ufs_com_dados <- sort(unique(particoes$uf))
+    cli_alert_info("Lendo {length(chaves)} partições do R2 pelo healthbR, {length(ufs_com_dados)} UF(s) de arquivo em lotes (colunas: {paste(COLUNAS_SIH, collapse=', ')})")
     t0 <- Sys.time()
-    lido <- ler_particoes(ano, ufs_arquivo, particoes)
-    dados <- lido$dados
-    cli_alert_success("{.val {format(nrow(dados), big.mark='.')}} registros lidos em {format(round(Sys.time() - t0, 1))}")
-
-    # Processa variaveis (colunas cruas do DATASUS, todas string no healthbr)
-    cli_alert_info("Processando variaveis...")
-
-    n_lidos <- nrow(dados)
-    dados <- dados %>%
-      dplyr::mutate(dt_inter = as.Date(DT_INTER, format = "%Y%m%d"))
-    n_invalidos <- sum(is.na(dados$dt_inter))
-    if (n_invalidos > 0) {
-      cli_alert_warning("{n_invalidos} registros com DT_INTER inválido ficam fora dos cubos")
-      dados <- dados %>% dplyr::filter(!is.na(dt_inter))
+    lotes <- list()
+    registro <- list()
+    for (uf in ufs_com_dados) {
+      part_uf <- particoes[particoes$uf == uf, , drop = FALSE]
+      lido <- ler_particoes(ano, uf, part_uf)
+      registro <- c(registro, lido$particoes)
+      lote <- agregar_lote(lido$dados, ano)
+      cli_alert_info("  {uf}: {format(lote$n_lidos, big.mark='.')} lidas, {format(lote$n_cubo, big.mark='.')} internações de {ano}, {format(nrow(lote$causas), big.mark='.')} linhas de causas ({format(round(Sys.time() - t0, 1))})")
+      lotes[[uf]] <- lote
+      rm(lido, lote)
+      gc()
     }
-    # O cubo é por ANO DE INTERNAÇÃO: o que a janela trouxe de outros anos
-    # (internações de Y-1 faturadas em Y; de Y+1 nas competências extras) sai.
-    ano_inter <- as.integer(format(dados$dt_inter, "%Y"))
-    n_outros_anos <- sum(ano_inter != ano)
-    dados <- dados[ano_inter == ano, , drop = FALSE]
-    cli_alert_info("{format(n_outros_anos, big.mark='.')} registros de outros anos de internação descartados; {format(nrow(dados), big.mark='.')} internações de {ano}")
-
-    dados <- dados %>%
-      dplyr::mutate(
-        ano = as.integer(format(dt_inter, "%Y")),
-        mes = as.integer(format(dt_inter, "%m")),
-        ano_mes = sprintf("%04d-%02d", ano, mes),
-        uf_codigo = substr(MUNIC_RES, 1, 2),
-        uf = uf_codigo_para_sigla(uf_codigo),
-        municipio_res = MUNIC_RES,
-        cid = substr(DIAG_PRINC, 1, 3),
-        cid_4 = substr(DIAG_PRINC, 1, 4),
-        capitulo_cid = por_valor_unico(cid, extrair_capitulo_cid, NA_integer_),
-        sexo = dplyr::case_when(
-          SEXO == "1" ~ "M",
-          SEXO == "3" ~ "F",
-          TRUE ~ "I"
-        ),
-        # IDADE SIMPLES (em anos completos)
-        idade = dplyr::case_when(
-          COD_IDADE == "2" ~ as.integer(floor(as.numeric(IDADE) / 12)),
-          COD_IDADE == "3" ~ 0L,  # dias -> 0 anos
-          COD_IDADE == "4" ~ as.integer(IDADE),
-          COD_IDADE == "5" ~ as.integer(as.numeric(IDADE) + 100),
-          TRUE ~ NA_integer_
-        ),
-        raca = dplyr::case_when(
-          RACA_COR == "01" ~ "branca",
-          RACA_COR == "02" ~ "preta",
-          RACA_COR == "03" ~ "parda",
-          RACA_COR == "04" ~ "amarela",
-          RACA_COR == "05" ~ "indigena",
-          TRUE ~ "ignorado"
-        ),
-        dias = as.numeric(DIAS_PERM),
-        valor = as.numeric(VAL_TOT),
-        obito = as.integer(MORTE == "1")
-      )
-
-    # Classifica ICSAP
-    cli_alert_info("Classificando ICSAP...")
-
-    dados <- dados %>%
-      dplyr::mutate(
-        grupo_csap = por_valor_unico(cid_4, classificar_csap, NA_character_),
-        is_csap = !is.na(grupo_csap)
-      )
+    n_lidos <- sum(vapply(lotes, function(l) l$n_lidos, numeric(1)))
+    n_invalidos <- sum(vapply(lotes, function(l) l$n_invalidos, numeric(1)))
+    n_outros_anos <- sum(vapply(lotes, function(l) l$n_outros_anos, numeric(1)))
+    cli_alert_success("{.val {format(n_lidos, big.mark='.')}} registros lidos em {format(round(Sys.time() - t0, 1))}")
+    cli_alert_info("{format(n_outros_anos, big.mark='.')} registros de outros anos de internação descartados; {format(n_lidos - n_invalidos - n_outros_anos, big.mark='.')} internações de {ano}")
 
     # =========================================================================
     # CUBO 1: sih_causas_{ano}.parquet
     # =========================================================================
 
     cli_alert_info("Gerando cubo sih_causas_{ano}.parquet...")
-
-    cubo_causas <- dados %>%
-      dplyr::group_by(
-        year = ano,
-        month = mes,
-        uf,
-        cid_chapter = capitulo_cid,
-        cid_group = cid,
-        sex = sexo,
-        age = idade,
-        race = raca,
-        is_csap,
-        csap_group = grupo_csap
-      ) %>%
-      dplyr::summarise(
-        n = dplyr::n(),
-        days = sum(dias, na.rm = TRUE),
-        value = sum(valor, na.rm = TRUE),
-        deaths = sum(obito, na.rm = TRUE),
-        .groups = "drop"
-      )
-
+    cubo_causas <- somar_lotes(
+      lapply(lotes, function(l) l$causas),
+      c("year", "month", "uf", "cid_chapter", "cid_group", "sex", "age", "race", "is_csap", "csap_group")
+    )
     write_parquet(cubo_causas, file.path(output_dir, sprintf("sih_causas_%d.parquet", ano)))
     cli_alert_success("  sih_causas_{ano}.parquet: {.val {format(nrow(cubo_causas), big.mark='.')}} linhas")
 
@@ -551,19 +631,10 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     # =========================================================================
 
     cli_alert_info("Gerando cubo sih_series_{ano}.parquet...")
-
-    cubo_series <- dados %>%
-      dplyr::group_by(
-        year_month = ano_mes,
-        uf,
-        cid_chapter = capitulo_cid
-      ) %>%
-      dplyr::summarise(
-        n = dplyr::n(),
-        deaths = sum(obito, na.rm = TRUE),
-        .groups = "drop"
-      )
-
+    cubo_series <- somar_lotes(
+      lapply(lotes, function(l) l$series),
+      c("year_month", "uf", "cid_chapter")
+    )
     write_parquet(cubo_series, file.path(output_dir, sprintf("sih_series_%d.parquet", ano)))
     cli_alert_success("  sih_series_{ano}.parquet: {.val {format(nrow(cubo_series), big.mark='.')}} linhas")
 
@@ -572,49 +643,20 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     # =========================================================================
 
     cli_alert_info("Gerando cubo sih_icsap_{ano}.parquet...")
-
-    # Total de internacoes por estrato
-    totais <- dados %>%
-      dplyr::group_by(
-        year = ano,
-        uf,
-        municipality_code = municipio_res,
-        sex = sexo,
-        age = idade,
-        race = raca
-      ) %>%
-      dplyr::summarise(
-        n_total = dplyr::n(),
-        .groups = "drop"
-      )
-
-    # ICSAP por grupo
-    icsap <- dados %>%
-      dplyr::filter(is_csap) %>%
-      dplyr::group_by(
-        year = ano,
-        uf,
-        municipality_code = municipio_res,
-        csap_group = grupo_csap,
-        sex = sexo,
-        age = idade,
-        race = raca
-      ) %>%
-      dplyr::summarise(
-        n = dplyr::n(),
-        days = sum(dias, na.rm = TRUE),
-        value = sum(valor, na.rm = TRUE),
-        deaths = sum(obito, na.rm = TRUE),
-        .groups = "drop"
-      )
-
+    totais <- somar_lotes(
+      lapply(lotes, function(l) l$totais),
+      c("year", "uf", "municipality_code", "sex", "age", "race")
+    )
+    icsap <- somar_lotes(
+      lapply(lotes, function(l) l$icsap),
+      c("year", "uf", "municipality_code", "csap_group", "sex", "age", "race")
+    )
     # Junta com totais
     cubo_icsap <- icsap %>%
       dplyr::left_join(
         totais,
         by = c("year", "uf", "municipality_code", "sex", "age", "race")
       )
-
     write_parquet(cubo_icsap, file.path(output_dir, sprintf("sih_icsap_%d.parquet", ano)))
     cli_alert_success("  sih_icsap_{ano}.parquet: {.val {format(nrow(cubo_icsap), big.mark='.')}} linhas")
 
@@ -623,7 +665,7 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     # =========================================================================
 
     escrever_sidecar(
-      ano, chaves, lido$particoes, attr(status, "last_updated"), janela_completa,
+      ano, chaves, registro, attr(status, "last_updated"), janela_completa,
       totais = list(
         records_read = n_lidos,
         records_invalid_dt_inter = n_invalidos,
@@ -637,7 +679,7 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     )
 
     # Limpa memoria
-    rm(dados, lido, cubo_causas, cubo_series, totais, icsap, cubo_icsap)
+    rm(lotes, registro, cubo_causas, cubo_series, totais, icsap, cubo_icsap)
     gc()
 
     cli_alert_success("Ano {ano} concluido!")

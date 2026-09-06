@@ -162,8 +162,17 @@ TAREFAS.md L104 com "(b) FEITO"; memória.
   (`configuredDataDirectory()`); o sidecar é o registro de safra e vale por
   si. A verificação local sobre árvore suja não pegou isso (data/ tem os
   Parquet) — o smoke com uma pasta só de sidecar é o teste que faltava.
-- **Ano nacional**: medido, não decidido. Se o usuário pedir, o caminho é
-  dispatch `years=<ano> ufs=all` e olhar o tempo do run.
+- **Ano nacional**: decidido pelo usuário em 06/09 (2023, `ufs=all`). O 1º
+  run (34038116890) leu as 432 partições em 1,6 min e MORREU na agregação:
+  13,3 milhões de internações num único data frame estouraram os 16 GB do
+  runner ("The runner has received a shutdown signal"). Builder 2.3.0:
+  `agregar_lote()` processa UMA UF de arquivo por vez e `somar_lotes()` soma
+  os agregados nas chaves de grupo — mesmo cubo (n, deaths, days, n_total
+  exatos; `value` igual ao último ulp, medido ≤ 1,5e-11 em 5 UFs), pico de
+  memória do maior lote (SP, ~3,5 milhões). 2023/RR continua byte a byte no
+  conteúdo. Custo: cada lote paga ~25 s de abertura do dataset no R2 — 27
+  UFs somam ~12 min de sobrecarga; aceitável hoje, otimizar (abrir o dataset
+  uma vez) se virar rotina.
 
 ## 5. Fora de escopo, de propósito
 
