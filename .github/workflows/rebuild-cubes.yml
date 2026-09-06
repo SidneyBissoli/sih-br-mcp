@@ -245,8 +245,10 @@ jobs:
 
       # O sidecar novo é a memória do frescor: sem commitá-lo, a próxima rodada
       # acharia os mesmos cubos "atrás" e reconstruiria de novo. Os .parquet
-      # continuam gitignored (vão na release). Push no master dispara o CI da
-      # fixture, que continua verde — a fixture não é tocada aqui.
+      # continuam gitignored (vão na release). O push com o GITHUB_TOKEN NÃO
+      # dispara o ci.yml (o GitHub não encadeia workflows a partir do token do
+      # próprio job) — e não precisa: a fixture não é tocada aqui, e o commit
+      # só muda o sidecar.
       - name: Commitar os sidecars
         id: commit
         run: |
