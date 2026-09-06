@@ -264,7 +264,27 @@ jobs:
 
           ${{ needs.decide.outputs.reason }}
           run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          git push origin HEAD:${{ github.ref_name }}
+          # O checkout é o commit do momento do DISPARO; num build de 30 min o
+          # master pode ter andado (outro run desta fila, um push do autor).
+          # Sem isto o push é rejeitado (visto em 06/09/2026: run 34045154637,
+          # 2019, enfileirado atrás do run de 2020+2021). Os sidecars são um
+          # arquivo por ano, então o rebase só conflita se DOIS runs tocarem o
+          # mesmo ano — e aí falhar é o certo.
+          BRANCH="${{ github.ref_name }}"
+          for tentativa in 1 2 3; do
+            git fetch origin "$BRANCH"
+            if ! git rebase "origin/$BRANCH"; then
+              git rebase --abort
+              echo "::error::sidecar conflita com o master atual (outro run do mesmo ano?)"
+              exit 1
+            fi
+            if git push origin "HEAD:$BRANCH"; then
+              break
+            fi
+            echo "push rejeitado (tentativa $tentativa) — master andou de novo; refazendo"
+            [ "$tentativa" = 3 ] && exit 1
+            sleep 5
+          done
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Publicar release com cubos + sidecars
