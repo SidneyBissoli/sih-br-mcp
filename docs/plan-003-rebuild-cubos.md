@@ -173,9 +173,26 @@ TAREFAS.md L104 com "(b) FEITO"; memória.
   conteúdo. Custo: cada lote paga ~25 s de abertura do dataset no R2 — 27
   UFs somam ~12 min de sobrecarga; aceitável hoje, otimizar (abrir o dataset
   uma vez) se virar rotina.
+- **Master anda durante o build** (visto em 06/09, run 34045154637): o
+  `workflow_dispatch` fixa o commit do momento do disparo. O run de 2019
+  ficou pendente na fila do `concurrency` atrás do run de 2020+2021; quando
+  chegou ao passo de commit, o master já tinha o sidecar do run anterior e o
+  `git push HEAD:master` foi rejeitado (non-fast-forward) — 14 min de build
+  perdidos, sem release. Vale para qualquer push no master durante os ~30 min
+  de um run (schedule de terça inclusive). Conserto (7f272c9): o passo de
+  commit faz `fetch` + `rebase origin/master` + `push`, três tentativas; os
+  sidecars são um arquivo por ano, então o rebase só conflita se dois runs
+  tocarem o mesmo ano — e aí falhar é o certo.
+- **Anos nacionais em lote** (06/09, 30ª sessão): dois anos por run cabem
+  folgados no timeout de 120 min — 2024+2022 em 31 min 54 s de run (build
+  de 2022 em 13,5 min, de 2024 em 15,5 min), 2021+2020 em 34 min 38 s de
+  build. Um dispatch pode ficar pendente atrás do que está rodando (o
+  `concurrency` mantém um em execução e um na fila); um terceiro é
+  cancelado.
 
 ## 5. Fora de escopo, de propósito
 
 - Cache local de cubos e canal público (`sih/cubos/` no R2) — item (c).
 - Regravar golden/baseline no workflow.
-- Cubo nacional.
+- Cubo nacional — entrou depois: 2023 em 06/09 à tarde e 2019–2024 na 30ª
+  sessão (mesmo dia); ver decisões 15 e 16 do CONTEXT.md.
