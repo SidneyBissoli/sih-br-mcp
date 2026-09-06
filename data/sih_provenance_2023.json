@@ -11,13 +11,13 @@
   },
   "competencias": ["2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04"],
   "ufs_arquivo": ["RR"],
-  "built_at": "2026-09-05T18:30:49Z",
+  "built_at": "2026-09-06T03:01:54Z",
   "builder": {
     "script": "scripts/build-aggregations.R",
-    "version": "2.2.0",
-    "git_commit": "d89f8907c9d2002561d12affa33ab3560882c8f2",
-    "r_version": "R version 4.6.1 (2026-06-24 ucrt)",
-    "arrow_version": "25.0.0",
+    "version": "2.2.1",
+    "git_commit": "0e7dc41dd446c6b20329d008322232cc09283dbf",
+    "r_version": "R version 4.6.1 (2026-06-24)",
+    "arrow_version": "25.0.1",
     "healthbr_version": "0.3.1"
   },
   "source": {
