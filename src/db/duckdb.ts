@@ -42,6 +42,16 @@ let dataDirectory: string | null = null;
  * - Padrão: data/ (dados reais)
  * - Teste: data/test/ (somente se SIH_TEST_MODE=1 estiver definido)
  */
+/**
+ * A pasta de cubos CONFIGURADA (SIH_DATA_DIR ou data/ do projeto), exista
+ * cubo nela ou não. Quem precisa só do sidecar de proveniência — o frescor
+ * num checkout limpo, onde data/*.parquet é gitignored e só o JSON está
+ * versionado — lê daqui; quem precisa de Parquet usa getDataDirectory().
+ */
+export function configuredDataDirectory(): string {
+  return DATA_DIR;
+}
+
 export function getDataDirectory(): string {
   if (dataDirectory) return dataDirectory;
 

@@ -14,14 +14,14 @@
  * gravá-lo.
  */
 
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   createProvenanceContext,
   type CanonicalProvenance,
 } from "@sbissoli/mcp-provenance";
 
-import { getDataDirectory } from "./db/duckdb.js";
+import { configuredDataDirectory, getDataDirectory } from "./db/duckdb.js";
 import { cubeFreshness, describeBehind, getFreshness } from "./freshness.js";
 import csapGroups from "./data/csap-groups.json" with { type: "json" };
 import cidChapters from "./data/cid-chapters.json" with { type: "json" };
@@ -99,10 +99,16 @@ let sidecars: SihSidecar[] | null = null;
 /** Lê os sidecars da pasta de cubos em uso (uma vez por processo). */
 export function loadSidecars(): SihSidecar[] {
   if (sidecars) return sidecars;
+  // Sem Parquet na pasta (checkout limpo: o workflow rebuild-cubes.yml decide
+  // o que reconstruir lendo SÓ os sidecars versionados), o sidecar ainda vale:
+  // é o registro de safra, e é dele que o frescor parte.
   let dir: string;
   try {
     dir = getDataDirectory();
   } catch {
+    dir = configuredDataDirectory();
+  }
+  if (!existsSync(dir)) {
     sidecars = [];
     return sidecars;
   }

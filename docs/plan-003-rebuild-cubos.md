@@ -155,6 +155,13 @@ TAREFAS.md L104 com "(b) FEITO"; memória.
 - **Cubo novo sem sidecar**: o frescor nunca o vê "atrás" — só nasce por
   dispatch com `years` + `ufs`. Escopo é explícito, sempre.
 - **Falha de rede no `decide`**: vermelho, não silêncio. Rodar de novo.
+- **Achado no 1º run (34007725421)**: `loadSidecars()` só encontrava o
+  sidecar se houvesse Parquet ao lado (`getDataDirectory()` lança sem cubo),
+  e o checkout limpo não tem Parquet — o frescor saía "nenhum sidecar" e o
+  `decide` caía. Corrigido: sem cubo, o sidecar é lido da pasta configurada
+  (`configuredDataDirectory()`); o sidecar é o registro de safra e vale por
+  si. A verificação local sobre árvore suja não pegou isso (data/ tem os
+  Parquet) — o smoke com uma pasta só de sidecar é o teste que faltava.
 - **Ano nacional**: medido, não decidido. Se o usuário pedir, o caminho é
   dispatch `years=<ano> ufs=all` e olhar o tempo do run.
 
