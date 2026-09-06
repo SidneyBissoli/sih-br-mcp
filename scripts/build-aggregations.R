@@ -60,7 +60,7 @@ if (!requireNamespace("healthbR", quietly = TRUE) ||
 OUTPUT_DIR <- here::here("data")
 dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
-BUILDER_VERSION <- "2.3.0"
+BUILDER_VERSION <- "2.3.1"
 
 # Meses de Y+1 lidos para fechar as internações de Y (ver cabeçalho)
 MESES_SEGUINTES <- 4L
@@ -625,6 +625,15 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     )
     write_parquet(cubo_causas, file.path(output_dir, sprintf("sih_causas_%d.parquet", ano)))
     cli_alert_success("  sih_causas_{ano}.parquet: {.val {format(nrow(cubo_causas), big.mark='.')}} linhas")
+    # 2.3.1: o maior objeto do ano (6,5 M linhas) e os lotes de causas não são
+    # mais necessários — soltar ANTES do cubo ICSAP. Em 2025 (14,6 M
+    # internações) o passo ICSAP estourou os 16 GB do runner com tudo isso
+    # ainda na memória (run 34062485932, "The operation was canceled").
+    records_in_cube <- sum(cubo_causas$n)
+    causas_rows <- nrow(cubo_causas)
+    rm(cubo_causas)
+    lotes <- lapply(lotes, function(l) { l$causas <- NULL; l })
+    gc()
 
     # =========================================================================
     # CUBO 2: sih_series_{ano}.parquet
@@ -670,8 +679,8 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
         records_read = n_lidos,
         records_invalid_dt_inter = n_invalidos,
         records_other_year = n_outros_anos,
-        records_in_cube = sum(cubo_causas$n),
-        causas_rows = nrow(cubo_causas),
+        records_in_cube = records_in_cube,
+        causas_rows = causas_rows,
         series_rows = nrow(cubo_series),
         icsap_rows = nrow(cubo_icsap)
       ),
@@ -679,7 +688,7 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     )
 
     # Limpa memoria
-    rm(lotes, registro, cubo_causas, cubo_series, totais, icsap, cubo_icsap)
+    rm(lotes, registro, cubo_series, totais, icsap, cubo_icsap)
     gc()
 
     cli_alert_success("Ano {ano} concluido!")
