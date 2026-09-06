@@ -338,8 +338,8 @@ export function populationProvenance(): CanonicalProvenance {
       terms_url: null,
       verified_at: null,
     },
-    dataset: { id: "sidra-7358", version: null, name: "Projeção da população por UF, 2000–2024" },
-    data_vintage: "Projeções 2000–2024 baixadas por scripts/build-population.R (pop_uf.parquet)",
+    dataset: { id: "sidra-7358", version: null, name: "Projeção da população por UF, sexo e idade simples (SIDRA 7358, revisão 2018)" },
+    data_vintage: "Projeções por UF baixadas por scripts/build-population.R até o último ano de cubo FECHADO do SIH (pop_uf.parquet; intervalo em get_available_years.population_years)",
     retrieved_at: POPULATION_BUILT_AT,
     citation:
       "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade. SIDRA, tabela 7358.",

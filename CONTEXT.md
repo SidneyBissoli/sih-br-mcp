@@ -62,7 +62,11 @@ Desenvolver um **MCP Server** para análise de dados do Sistema de Informações
 
 ### Proibições absolutas
 - ❌ **PROIBIDO interpolar** dados entre anos
-- ❌ **PROIBIDO incluir projeções futuras** (após 2024)
+- ❌ **PROIBIDO incluir projeções futuras**: o último ano de população é o
+  último ano de CUBO FECHADO do SIH (janela de competências completa), nunca
+  além. Regra reescrita em 2026-09-06 com o sim do usuário (antes dizia
+  "após 2024"): com o cubo de 2025 fechado, a população vai até 2025; 2026
+  só quando o cubo de 2026 fechar (competência 2027-04 publicada).
 - ❌ **PROIBIDO inventar** valores não existentes nas fontes
 
 ### Operações permitidas

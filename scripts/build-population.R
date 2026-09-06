@@ -5,11 +5,11 @@
 #
 # FONTES DE DADOS:
 #   1. DATASUS FTP - Dados municipais 1991-2024 (via csapAIH::ler_popbr)
-#   2. SIDRA IBGE - Projecoes UF 2000-2024 (Tabela 7358, via API HTTP)
+#   2. SIDRA IBGE - Projecoes UF 2000-2025 (Tabela 7358, via API HTTP)
 #
 # REGRAS CRITICAS:
 #   - NAO interpolar dados
-#   - NAO incluir anos futuros (2025+)
+#   - NAO incluir ano alem do ultimo cubo FECHADO do SIH (hoje 2025); ver CONTEXT.md
 #   - APENAS baixar dados existentes nas fontes
 #   - Agregar municipios para UF e permitido (soma)
 #
@@ -177,7 +177,7 @@ build_pop_municipios <- function() {
 
 # =============================================================================
 # FUNCAO 2: build_pop_uf()
-# Projecoes UF 2000-2024 via API HTTP do SIDRA (Tabela 7358)
+# Projecoes UF 2000-2025 via API HTTP do SIDRA (Tabela 7358)
 #
 # NOTA TECNICA:
 #   Na API SIDRA, Tabela 7358 usa:
@@ -197,7 +197,7 @@ ANO_CATEGORIA_SIDRA <- c(
   "2012" = "13242",  "2013" = "49029",  "2014" = "49030", "2015" = "49031",
   "2016" = "49032",  "2017" = "49033",  "2018" = "49034", "2019" = "49035",
   "2020" = "49036",  "2021" = "49037",  "2022" = "49038", "2023" = "49039",
-  "2024" = "49040"
+  "2024" = "49040", "2025" = "49041"
 )
 
 # Codigos das categorias de idades individuais em c287
@@ -208,7 +208,7 @@ IDADES_INDIVIDUAIS_PATTERN <- "^(\\d+) (ano|anos)( ou mais)?$"
 
 #' Baixa dados do SIDRA Tabela 7358 via API HTTP
 #'
-#' @param ano Ano projetado a baixar (2000-2024)
+#' @param ano Ano projetado a baixar (2000-2025)
 #' @return Data frame com os dados ou NULL se falhar
 baixar_sidra_7358 <- function(ano) {
 
@@ -261,7 +261,7 @@ baixar_sidra_7358 <- function(ano) {
 #'
 #' Baixa projecoes populacionais por UF do SIDRA/IBGE
 #' Tabela 7358, via API HTTP direta
-#' Periodo: 2000-2024 (NAO inclui projecoes futuras)
+#' Periodo: 2000-2025 (ate o ultimo ano de cubo FECHADO do SIH; nunca alem — CONTEXT.md)
 #' Granularidade: UF, sexo, idade simples (0-90+)
 #'
 #' @return Invisivel. Salva pop_uf.parquet no diretorio data/
@@ -269,12 +269,12 @@ build_pop_uf <- function() {
 
   cli_h1("Gerando pop_uf.parquet (via API HTTP)")
   cli_alert_info("Fonte: SIDRA/IBGE - Tabela 7358 (Projecoes)")
-  cli_alert_info("Periodo: 2000-2024 (SEM projecoes futuras)")
+  cli_alert_info("Periodo: 2000-2025 (ate o ultimo cubo fechado do SIH)")
   cli_alert_info("Parametros: p/2018, c287/all, c1933/[codigo_ano]")
 
   dados_todos <- list()
 
-  for (ano in 2000:2024) {
+  for (ano in 2000:2025) {
     cli_alert_info("  Baixando ano {ano}...")
 
     df <- baixar_sidra_7358(ano)
@@ -508,4 +508,4 @@ cli_bullets(c(
   " " = "build_pop_uf_agregado()  # pop_uf_agregado.parquet (derivado)"
 ))
 cli_rule()
-cli_alert_warning("LEMBRETE: NAO interpolar. NAO incluir anos > 2024.")
+cli_alert_warning("LEMBRETE: NAO interpolar. NAO incluir ano alem do ultimo cubo FECHADO do SIH (hoje 2025).")

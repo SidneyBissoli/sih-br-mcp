@@ -15,6 +15,7 @@ import {
 
 import {
   getAvailableYears,
+  getPopulationYearRange,
   closeDatabase,
   queryCausas,
   queryIcsap,
@@ -391,7 +392,7 @@ const tools: Tool[] = [
     name: "get_hospitalization_rates",
     description:
       "Calcula taxas de internação por população (por 100.000 habitantes, configurável). " +
-      "Requer dados populacionais (pop_uf.parquet). Anos válidos: 2000-2024.",
+      "Requer dados populacionais (pop_uf.parquet). Anos válidos: os cobertos por pop_uf.parquet, informados em get_available_years.population_years.",
     inputSchema: {
       type: "object",
       properties: {
@@ -452,7 +453,7 @@ const tools: Tool[] = [
     name: "compare_icsap_trends",
     description:
       "Análise temporal comparativa de ICSAP entre UFs ou grupos CSAP. " +
-      "Calcula tendências, variação anual e identifica melhores/piores desempenhos. Anos válidos: 2000-2024.",
+      "Calcula tendências, variação anual e identifica melhores/piores desempenhos. Anos válidos: os cobertos por pop_uf.parquet, informados em get_available_years.population_years.",
     inputSchema: {
       type: "object",
       properties: {
@@ -547,6 +548,9 @@ async function handleGetAvailableYears() {
         total_years: years.length,
       },
       note: "Anos com dados Parquet disponíveis",
+      // Intervalo de pop_uf.parquet, lido do arquivo: é o que as ferramentas de
+      // taxa (get_hospitalization_rates, compare_icsap_trends) aceitam.
+      population_years: await getPopulationYearRange(),
       // Frescor dos cubos frente ao espelho healthbr-data (src/freshness.ts):
       // checado em segundo plano na inicialização, sem bloquear.
       freshness: getFreshness(),
@@ -1010,11 +1014,13 @@ async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) 
     };
   }
 
-  // Valida anos (dados populacionais UF disponíveis apenas para 2000-2024)
-  if (args.year && args.year.some(y => y < 2000 || y > 2024)) {
+  // Valida anos pelo intervalo REAL de pop_uf.parquet (lido do arquivo, não fixado aqui)
+  const popRange = await getPopulationYearRange();
+  if (popRange && args.year && args.year.some(y => y < popRange.first_year || y > popRange.last_year)) {
     return {
-      error: "Anos devem estar entre 2000 e 2024 (intervalo com dados populacionais por UF).",
+      error: `Anos devem estar entre ${popRange.first_year} e ${popRange.last_year} (intervalo com dados populacionais por UF em pop_uf.parquet).`,
       data: [],
+      population_years: popRange,
       available_sih_years: getAvailableYears(),
     };
   }
@@ -1176,11 +1182,13 @@ async function handleCompareIcsapTrends(args: CompareIcsapTrendsArgs) {
   const indicatorType = indicator || "percentage";
   const includeTrend = include_trend_line !== false;
 
-  // Validação de anos (dados populacionais disponíveis para 2000-2024)
-  if (start_year < 2000 || end_year > 2024) {
+  // Validação de anos pelo intervalo REAL de pop_uf.parquet (lido do arquivo, não fixado aqui)
+  const popRange = await getPopulationYearRange();
+  if (popRange && (start_year < popRange.first_year || end_year > popRange.last_year)) {
     return {
-      error: "Anos devem estar entre 2000 e 2024 (intervalo com dados populacionais).",
+      error: `Anos devem estar entre ${popRange.first_year} e ${popRange.last_year} (intervalo com dados populacionais em pop_uf.parquet).`,
       series: [],
+      population_years: popRange,
       available_sih_years: getAvailableYears(),
     };
   }

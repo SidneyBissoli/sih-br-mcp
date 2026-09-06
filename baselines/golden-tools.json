@@ -500,6 +500,10 @@
         "total_years": 1
       },
       "note": "Anos com dados Parquet disponíveis",
+      "population_years": {
+        "first_year": 2000,
+        "last_year": 2024
+      },
       "freshness": {
         "status": "disabled",
         "checked_at": null,
@@ -2509,7 +2513,7 @@
         {
           "source": "IBGE — SIDRA, tabela 7358 (projeção da população por sexo e idade, UF)",
           "source_url": "https://sidra.ibge.gov.br/tabela/7358",
-          "data_vintage": "Projeções 2000–2024 baixadas por scripts/build-population.R (pop_uf.parquet)",
+          "data_vintage": "Projeções por UF baixadas por scripts/build-population.R até o último ano de cubo FECHADO do SIH (pop_uf.parquet; intervalo em get_available_years.population_years)",
           "retrieved_at": "2026-01-23T00:00:00Z",
           "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade. SIDRA, tabela 7358.",
           "license": "Dados abertos do IBGE"
@@ -2641,7 +2645,7 @@
         {
           "source": "IBGE — SIDRA, tabela 7358 (projeção da população por sexo e idade, UF)",
           "source_url": "https://sidra.ibge.gov.br/tabela/7358",
-          "data_vintage": "Projeções 2000–2024 baixadas por scripts/build-population.R (pop_uf.parquet)",
+          "data_vintage": "Projeções por UF baixadas por scripts/build-population.R até o último ano de cubo FECHADO do SIH (pop_uf.parquet; intervalo em get_available_years.population_years)",
           "retrieved_at": "2026-01-23T00:00:00Z",
           "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade. SIDRA, tabela 7358.",
           "license": "Dados abertos do IBGE"
@@ -2711,7 +2715,7 @@
         {
           "source": "IBGE — SIDRA, tabela 7358 (projeção da população por sexo e idade, UF)",
           "source_url": "https://sidra.ibge.gov.br/tabela/7358",
-          "data_vintage": "Projeções 2000–2024 baixadas por scripts/build-population.R (pop_uf.parquet)",
+          "data_vintage": "Projeções por UF baixadas por scripts/build-population.R até o último ano de cubo FECHADO do SIH (pop_uf.parquet; intervalo em get_available_years.population_years)",
           "retrieved_at": "2026-01-23T00:00:00Z",
           "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade. SIDRA, tabela 7358.",
           "license": "Dados abertos do IBGE"

@@ -20,7 +20,7 @@
   },
   {
     "name": "compare_icsap_trends",
-    "description": "Análise temporal comparativa de ICSAP entre UFs ou grupos CSAP. Calcula tendências, variação anual e identifica melhores/piores desempenhos. Anos válidos: 2000-2024.",
+    "description": "Análise temporal comparativa de ICSAP entre UFs ou grupos CSAP. Calcula tendências, variação anual e identifica melhores/piores desempenhos. Anos válidos: os cobertos por pop_uf.parquet, informados em get_available_years.population_years.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -121,7 +121,7 @@
   },
   {
     "name": "get_hospitalization_rates",
-    "description": "Calcula taxas de internação por população (por 100.000 habitantes, configurável). Requer dados populacionais (pop_uf.parquet). Anos válidos: 2000-2024.",
+    "description": "Calcula taxas de internação por população (por 100.000 habitantes, configurável). Requer dados populacionais (pop_uf.parquet). Anos válidos: os cobertos por pop_uf.parquet, informados em get_available_years.population_years.",
     "inputSchema": {
       "type": "object",
       "properties": {

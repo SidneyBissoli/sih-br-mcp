@@ -702,6 +702,34 @@ function hasPopUf(): boolean {
   return existsSync(path);
 }
 
+let popYearRangeCache: { first_year: number; last_year: number } | null | undefined;
+
+/**
+ * Intervalo de anos coberto por pop_uf.parquet (idade simples por UF), lido
+ * do próprio arquivo — nunca fixado no código. É o que decide quais anos as
+ * ferramentas de taxa aceitam: a regra do CONTEXT.md diz que a população vai
+ * até o último ano de cubo FECHADO do SIH, e quem a cumpre é
+ * scripts/build-population.R; o servidor só reflete o que existe.
+ * Devolve null sem pop_uf.parquet.
+ */
+export async function getPopulationYearRange(): Promise<{ first_year: number; last_year: number } | null> {
+  if (popYearRangeCache !== undefined) return popYearRangeCache;
+  if (!hasPopUf()) {
+    popYearRangeCache = null;
+    return null;
+  }
+  const path = join(DATA_DIR, "pop_uf.parquet").replace(/\\/g, "/");
+  const rows = await query<{ first_year: number; last_year: number }>(
+    `SELECT CAST(min(year) AS INTEGER) AS first_year, CAST(max(year) AS INTEGER) AS last_year FROM read_parquet('${path}')`
+  );
+  const r = rows[0];
+  popYearRangeCache =
+    r && r.first_year != null && r.last_year != null
+      ? { first_year: Number(r.first_year), last_year: Number(r.last_year) }
+      : null;
+  return popYearRangeCache;
+}
+
 /**
  * Query população de pop_municipios.parquet agregando por UF
  */
