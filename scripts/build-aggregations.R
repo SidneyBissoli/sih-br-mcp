@@ -60,7 +60,7 @@ if (!requireNamespace("healthbR", quietly = TRUE) ||
 OUTPUT_DIR <- here::here("data")
 dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
-BUILDER_VERSION <- "2.2.0"
+BUILDER_VERSION <- "2.2.1"
 
 # Meses de Y+1 lidos para fechar as internações de Y (ver cabeçalho)
 MESES_SEGUINTES <- 4L
@@ -127,7 +127,11 @@ extrair_capitulo_cid <- function(cid) {
   return(capitulo)
 }
 
-#' Mapa de codigo UF para sigla
+#' Mapa de codigo UF para sigla. `unname()` porque `uf_map[codigo]` devolve
+#' vetor NOMEADO (um nome por linha) e o arrow grava atributos de R nos
+#' metadados do Parquet: o cubo de causas de 5 UFs carregava 5,5 MB de
+#' metadado só de nomes (1,5 MB depois de tirar o Vectorize; ~0 depois disto).
+#' Medido em 2026-09-06. O conteúdo das colunas não muda.
 uf_codigo_para_sigla <- function(codigo) {
   uf_map <- c(
     "11" = "RO", "12" = "AC", "13" = "AM", "14" = "RR", "15" = "PA",
@@ -137,7 +141,7 @@ uf_codigo_para_sigla <- function(codigo) {
     "41" = "PR", "42" = "SC", "43" = "RS", "50" = "MS", "51" = "MT",
     "52" = "GO", "53" = "DF"
   )
-  uf_map[codigo]
+  unname(uf_map[codigo])
 }
 
 #' Classifica codigo CID-10 como CSAP
@@ -241,6 +245,19 @@ classificar_csap <- function(cid) {
 
 #' Classifica vetor de CIDs como CSAP (vetorizado)
 classificar_csap_vec <- Vectorize(classificar_csap)
+
+#' Aplica uma função escalar a um vetor PELOS VALORES ÚNICOS e espalha o
+#' resultado de volta (match). extrair_capitulo_cid() e classificar_csap()
+#' custam milissegundos por chamada (case_when e uma cadeia de %in% por
+#' elemento); linha a linha, 393 mil internações levavam mais de 10 minutos e
+#' um ano nacional (~14 milhões) levaria horas — enquanto os CIDs distintos
+#' num ano são poucos milhares. Medido em 2026-09-06 (build 2.2.1). O
+#' resultado é idêntico ao de map_int/Vectorize: mesma função, mesmos valores.
+por_valor_unico <- function(x, f, tipo) {
+  u <- unique(x)
+  v <- unname(vapply(u, f, tipo, USE.NAMES = FALSE))
+  v[match(x, u)]
+}
 
 # =============================================================================
 # ACESSO AO HEALTHBR-DATA (via healthbR)
@@ -463,7 +480,7 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
         municipio_res = MUNIC_RES,
         cid = substr(DIAG_PRINC, 1, 3),
         cid_4 = substr(DIAG_PRINC, 1, 4),
-        capitulo_cid = map_int(cid, extrair_capitulo_cid),
+        capitulo_cid = por_valor_unico(cid, extrair_capitulo_cid, NA_integer_),
         sexo = dplyr::case_when(
           SEXO == "1" ~ "M",
           SEXO == "3" ~ "F",
@@ -495,7 +512,7 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
 
     dados <- dados %>%
       dplyr::mutate(
-        grupo_csap = classificar_csap_vec(cid_4),
+        grupo_csap = por_valor_unico(cid_4, classificar_csap, NA_character_),
         is_csap = !is.na(grupo_csap)
       )
 
@@ -674,14 +691,20 @@ build_data <- function(years, ufs) {
     }
   }
 
-  # Alerta para processamento completo
+  # Alerta para processamento completo. Só PERGUNTA em sessão interativa:
+  # num runner (scripts/rebuild-cubes.R) o readline() leria EOF e travaria ou
+  # cancelaria em silêncio — lá o aviso fica no log e o build segue.
   if (length(years) > 20 && length(ufs) == 27) {
     cli_alert_warning("Voce solicitou processar {length(years)} anos e TODAS as 27 UFs.")
     cli_alert_warning("Isso le todas as particoes do R2 (colunas projetadas) e pode levar horas.")
-    resposta <- readline(prompt = "Deseja continuar? (S/N): ")
-    if (!toupper(resposta) %in% c("S", "SIM", "Y", "YES")) {
-      cli_alert_info("Operacao cancelada pelo usuario.")
-      return(invisible(NULL))
+    if (interactive()) {
+      resposta <- readline(prompt = "Deseja continuar? (S/N): ")
+      if (!toupper(resposta) %in% c("S", "SIM", "Y", "YES")) {
+        cli_alert_info("Operacao cancelada pelo usuario.")
+        return(invisible(NULL))
+      }
+    } else {
+      cli_alert_info("Sessao nao interativa: seguindo sem confirmacao.")
     }
   }
 

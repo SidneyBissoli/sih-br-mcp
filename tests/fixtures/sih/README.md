@@ -42,6 +42,10 @@ Quem lê daqui:
 
 - `scripts/smoke-stdio.mjs` — superfície das ferramentas + três chamadas.
 - `scripts/freshness-check.mjs --selftest` — sidecar vs `manifest-excerpt.json`.
+- `scripts/cube-delta.mjs --selftest` — o sidecar contra si mesmo (delta zero)
+  e contra cópias adulteradas (partição perdida, queda > 1%, janela regredida,
+  escopo mudado, reedição do MS): é o gate que `rebuild-cubes.yml` aplica a um
+  cubo real recém-gerado, provado aqui offline.
 - `scripts/golden-tools.mjs` — as doze ferramentas com argumentos fixos,
   comparadas byte a byte com `baselines/golden-tools.json`. Os dois cubos de
   população entraram em 05/09/2026 para que as duas ferramentas de taxa
@@ -58,7 +62,11 @@ hierarquia de `getPopulation` e as taxas por UF resolvem em `pop_uf`.
 
 Quando o esquema dos cubos mudar nos scripts R, regenerar `data/` e copiar os
 arquivos (cubos e sidecar) de novo — smoke e golden reprovam sozinhos se eles
-ficarem para trás.
+ficarem para trás. Os `.parquet` daqui são os do build 2.2.0 e carregam nos
+metadados do Parquet os nomes que `uf_map[codigo]` deixava na coluna `uf`
+(598 KB o de causas); o build 2.2.1 (06/09/2026) tira isso (242 KB) sem mudar
+um valor — por isso a fixture não foi trocada. O `builder.version` do
+sidecar aqui fica em 2.2.0 até a próxima regeneração de verdade.
 
 Semântica que o golden grava: `year` é sempre 2023 e `month` vai de 1 a 12,
 com `year`/`month` vindos da data de internação (`DT_INTER`). Os dois casos

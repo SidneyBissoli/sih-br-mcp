@@ -105,3 +105,10 @@ jobs:
       # regravado (`npm run freshness:excerpt`) reprova até o cubo ser
       # regenerado — é o gate certo para o rebuild do item (b).
       - run: npm run freshness:selftest
+
+      # Delta entre sidecars (sih:cubos-frescor (b), 05/09/2026): o gate que o
+      # workflow rebuild-cubes.yml aplica a um cubo REAL recém-gerado — o golden
+      # não vê data/, só a fixture. Aqui só se prova, offline, que a comparação
+      # reprova o que deve (partição perdida, queda > 1% sem retirada no
+      # espelho, janela regredida, escopo mudado) e aprova reedição do MS.
+      - run: npm run cube:delta:selftest

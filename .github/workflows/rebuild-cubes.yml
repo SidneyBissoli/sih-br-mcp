@@ -1,0 +1,288 @@
+name: Rebuild cubes
+
+# O QUE ESTE ARQUIVO FAZ (sih:cubos-frescor (b), 2026-09-06; plano em
+# docs/plan-003-rebuild-cubos.md).
+#
+# O Ministério da Saúde reedita arquivos RD de competências passadas; o
+# sync-check semanal do healthbr-data detecta e republica a partição, e o
+# manifesto do espelho passa a trazer outro MD5 para ela. Os cubos deste
+# servidor (data/sih_*_<ano>.parquet) foram somados a partir do arquivo antigo:
+# estão ATRÁS. `src/freshness.ts` já sabe dizer isso (item (a)); este workflow
+# é quem AGE: decide sozinho quais cubos estão atrás, reconstrói só esses no
+# runner (R + healthbR lendo o espelho, sem segredo nenhum — as credenciais de
+# leitura do R2 são públicas e vivem no pacote), passa cada cubo novo por três
+# gates e publica cubos + sidecar como release do GitHub, commitando o sidecar
+# no master (o sidecar é a memória do frescor: é ele que diz com que manifesto
+# o cubo foi gerado).
+#
+# GATILHO EM DUAS CAMADAS, a barata primeiro:
+#   - schedule: terça 06:00 UTC — o sync-check do healthbr-data roda segunda
+#     03:00 UTC e uma manutenção leva ~20 h; terça de manhã o espelho já
+#     assentou. Sem nada atrás, o job `decide` sai verde em ~1 min e o job
+#     `build` nem nasce. Funciona SEM token cruzado.
+#   - repository_dispatch `healthbr-sih-updated`: o sync-check do healthbr-data
+#     avisa no fim da rodada pós-manutenção (evento push dos CSVs de controle),
+#     com um PAT fine-grained guardado lá (`SIH_DISPATCH_PAT`). É só latência:
+#     o que reconstruir continua sendo decidido AQUI, pelo frescor.
+#   - workflow_dispatch: à mão, com `years` (quais), `ufs` (escopo de arquivo,
+#     só para cubo novo ou para mudar o escopo) e `force` (reconstruir mesmo em
+#     dia — é assim que se valida o workflow: 2023 com force tem de sair
+#     idêntico, delta zero).
+#
+# ESCOPO DOS CUBOS É EXPLÍCITO: só existe cubo para ano que tem
+# `data/sih_provenance_<ano>.json` versionado, e as UFs de arquivo de cada um
+# vêm do próprio sidecar (scripts/rebuild-cubes.R). O frescor só compara anos
+# com sidecar; ano sem cubo nunca fica "atrás". Para criar um cubo novo:
+# dispatch com `years=<ano>` e `ufs=<lista|all>`.
+#
+# GATES (o golden do CI NÃO vê o cubo real — roda sobre a fixture):
+#   1. o build aborta se a contagem lida de qualquer partição difere do
+#      manifesto (scripts/build-aggregations.R);
+#   2. scripts/cube-delta.mjs compara o sidecar novo com o anterior e reprova
+#      partição perdida sem retirada no espelho, queda > 1% de internações sem
+#      retirada, janela regredida e mudança de escopo não pedida;
+#   3. o servidor compilado sobe pelo stdio SOBRE os cubos novos
+#      (SIH_DATA_DIR=data) com a mesma superfície do baseline e responde às
+#      três chamadas do smoke.
+#
+# PUBLICAÇÃO: release com tag `cubes-AAAAMMDD-HHMM`, assets = cubos + sidecars
+# + delta em Markdown; usa o GITHUB_TOKEN (contents: write), zero segredo novo.
+# O repositório é privado, então só o dono baixa (`gh release download`, que
+# exige token). `sih/cubos/` no R2 fica para o item (c), que vai definir o
+# canal público e o cache local.
+
+on:
+  schedule:
+    - cron: "0 6 * * 2"
+  repository_dispatch:
+    types: [healthbr-sih-updated]
+  workflow_dispatch:
+    inputs:
+      years:
+        description: "Anos a reconstruir (ex.: 2023 ou 2023,2024). Vazio = os que o frescor apontar como atrás."
+        required: false
+        default: ""
+      ufs:
+        description: "UFs de arquivo (ex.: RR,AC ou all). Vazio = as do sidecar do ano. Obrigatório para ano sem cubo."
+        required: false
+        default: ""
+      force:
+        description: "Reconstruir todos os cubos existentes mesmo em dia (validação do workflow)."
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+
+# Um rebuild por vez: dois runs concorrentes commitariam o mesmo sidecar e
+# publicariam duas releases da mesma safra. O segundo espera, não cancela.
+concurrency:
+  group: rebuild-cubes
+  cancel-in-progress: false
+
+jobs:
+  decide:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      years: ${{ steps.pick.outputs.years }}
+      reason: ${{ steps.pick.outputs.reason }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+
+      # Ao vivo, contra o espelho: sai 0 (current), 3 (stale) ou 2 (unknown).
+      # O exit code não decide nada aqui — o JSON gravado decide, no passo
+      # seguinte; por isso `|| true`.
+      - name: Frescor dos cubos frente ao espelho
+        run: npm run freshness -- --out freshness.json || true
+
+      - name: Escolher os anos
+        id: pick
+        env:
+          INPUT_YEARS: ${{ github.event.inputs.years }}
+          INPUT_FORCE: ${{ github.event.inputs.force }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          node - <<'EOF'
+          const fs = require("node:fs");
+          const state = JSON.parse(fs.readFileSync("freshness.json", "utf8"));
+          const sidecarYears = fs.readdirSync("data").map((f) => /^sih_provenance_(\d{4})\.json$/.exec(f)?.[1]).filter(Boolean).map(Number).sort();
+          const asked = (process.env.INPUT_YEARS ?? "").split(",").map((s) => s.trim()).filter(Boolean).map(Number);
+          if (asked.some((y) => !Number.isInteger(y))) { console.error(`::error::years inválido: ${process.env.INPUT_YEARS}`); process.exit(1); }
+          let years, reason;
+          if (asked.length) {
+            years = [...new Set(asked)].sort();
+            reason = `pedido à mão (${process.env.EVENT}): ${years.join(", ")}`;
+          } else if (process.env.INPUT_FORCE === "true") {
+            years = sidecarYears;
+            reason = `force: todos os cubos existentes (${years.join(", ") || "nenhum"})`;
+          } else if (state.status === "stale") {
+            years = state.cubes.filter((c) => c.behind).map((c) => c.cube_year).sort();
+            reason = `atrás do espelho (manifesto ${state.manifest_last_updated_remote}): ${years.map((y) => {
+              const c = state.cubes.find((x) => x.cube_year === y);
+              return `${y} [${["reedited", "reprocessed", "removed", "new_in_window"].filter((k) => c[k].length).map((k) => `${k}=${c[k].length}`).join(" ")}]`;
+            }).join("; ")}`;
+          } else if (state.status === "current") {
+            years = [];
+            reason = `em dia (manifesto ${state.manifest_last_updated_remote}, via ${state.method}) — nada a reconstruir`;
+          } else {
+            console.error(`::error::frescor não verificado (${state.status}: ${state.error}) — sem veredito não há rebuild; rode de novo ou use workflow_dispatch com years`);
+            process.exit(1);
+          }
+          console.log(reason);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `years=${years.join(",")}\nreason=${reason}\n`);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Decisão\n\n${reason}\n\n`);
+          EOF
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: freshness
+          path: freshness.json
+          retention-days: 30
+
+  build:
+    needs: decide
+    if: needs.decide.outputs.years != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      YEARS: ${{ needs.decide.outputs.years }}
+      INPUT_UFS: ${{ github.event.inputs.ufs }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # O commit do sidecar volta para o master com o token do job.
+          persist-credentials: true
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: freshness
+          path: .
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+
+      # R com binários do Posit Public Package Manager (arrow do CRAN compila
+      # ~10 min sem isso). healthbR vem do GitHub: a 0.3.1 do CRAN não tem
+      # `sih_status()`, que o build exige. Sem DESCRIPTION no repo, a lista de
+      # pacotes é explícita aqui (é a do cabeçalho de build-aggregations.R).
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            SidneyBissoli/healthbR
+            any::arrow
+            any::dplyr
+            any::tidyr
+            any::purrr
+            any::stringr
+            any::cli
+            any::jsonlite
+            any::here
+          install-pandoc: false
+      - name: healthbR instalado tem sih_status()
+        run: Rscript -e 'stopifnot(exists("sih_status", asNamespace("healthbR"))); cat("healthbR", as.character(packageVersion("healthbR")), "arrow", as.character(packageVersion("arrow")), "\n")'
+
+      - name: Guardar os sidecars anteriores
+        run: |
+          mkdir -p before
+          cp data/sih_provenance_*.json before/ 2>/dev/null || true
+          ls -la before
+
+      - name: Reconstruir os cubos (R, lendo o espelho pelo healthbR)
+        run: |
+          ARGS="--years $YEARS"
+          if [ -n "$INPUT_UFS" ]; then ARGS="$ARGS --ufs $INPUT_UFS"; fi
+          echo "Rscript scripts/rebuild-cubes.R $ARGS"
+          Rscript scripts/rebuild-cubes.R $ARGS
+          ls -la data/
+
+      # Gate 2: o que mudou entre o sidecar anterior e o novo, ano a ano. Um
+      # ano sem sidecar anterior é cubo NOVO: só se relata. Mudança de escopo
+      # só passa quando foi pedida (`ufs` no dispatch).
+      - name: Delta dos cubos (gate)
+        run: |
+          set -e
+          : > delta.md
+          for Y in $(echo "$YEARS" | tr ',' ' '); do
+            if [ -f "before/sih_provenance_$Y.json" ]; then
+              FLAGS=""
+              if [ -n "$INPUT_UFS" ]; then FLAGS="--allow-scope-change"; fi
+              node scripts/cube-delta.mjs --before "before/sih_provenance_$Y.json" --after "data/sih_provenance_$Y.json" \
+                --freshness freshness.json $FLAGS --md "delta-$Y.md"
+            else
+              node - "$Y" <<'EOF' > "delta-$Y.md"
+          const fs = require("node:fs");
+          const y = process.argv[2];
+          const s = JSON.parse(fs.readFileSync(`data/sih_provenance_${y}.json`, "utf8"));
+          console.log(`### Cubo ${y} — NOVO (sem sidecar anterior)\n`);
+          console.log(`UFs de arquivo: ${s.ufs_arquivo.join(" ")}; ${s.partitions.length} partições; janela completa: ${s.window?.complete}; internações: ${s.totals?.records_in_cube?.toLocaleString("pt-BR")}; manifesto do espelho ${s.distributor?.manifest_last_updated}; build ${s.built_at}.\n`);
+          EOF
+            fi
+            cat "delta-$Y.md" >> delta.md
+            echo >> delta.md
+          done
+          cat delta.md >> "$GITHUB_STEP_SUMMARY"
+
+      # Gate 3: o servidor sobe sobre os cubos NOVOS, expõe a superfície do
+      # baseline e responde às três chamadas. O golden fica de fora de
+      # propósito: foi gravado sobre a fixture (2023/RR) e não é regravado
+      # aqui — regravar baseline num workflow seria apagar o gate.
+      - name: Smoke stdio sobre os cubos novos (gate)
+        run: node scripts/smoke-stdio.mjs --fixtures data --baseline baselines/surface-stdio.json
+
+      # O sidecar novo é a memória do frescor: sem commitá-lo, a próxima rodada
+      # acharia os mesmos cubos "atrás" e reconstruiria de novo. Os .parquet
+      # continuam gitignored (vão na release). Push no master dispara o CI da
+      # fixture, que continua verde — a fixture não é tocada aqui.
+      - name: Commitar os sidecars
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/sih_provenance_*.json
+          if git diff --cached --quiet; then
+            echo "sidecars idênticos — nada a commitar"
+            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "data: cubo(s) $YEARS reconstruído(s) pelo rebuild-cubes.yml
+
+          ${{ needs.decide.outputs.reason }}
+          run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          git push origin HEAD:${{ github.ref_name }}
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Publicar release com cubos + sidecars
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="cubes-$(date -u +%Y%m%d-%H%M)"
+          {
+            echo "Cubos SIH reconstruídos pelo workflow rebuild-cubes.yml."
+            echo
+            echo "Anos: $YEARS. Motivo: ${{ needs.decide.outputs.reason }}"
+            echo
+            cat delta.md
+          } > notes.md
+          ASSETS=""
+          for Y in $(echo "$YEARS" | tr ',' ' '); do
+            ASSETS="$ASSETS data/sih_causas_$Y.parquet data/sih_series_$Y.parquet data/sih_icsap_$Y.parquet data/sih_provenance_$Y.json"
+          done
+          gh release create "$TAG" $ASSETS delta.md \
+            --target "${{ steps.commit.outputs.sha }}" \
+            --title "Cubos SIH — $YEARS ($(date -u +%Y-%m-%d))" \
+            --notes-file notes.md
+          echo "release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"

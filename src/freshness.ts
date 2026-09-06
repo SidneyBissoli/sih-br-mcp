@@ -12,20 +12,27 @@
  *     `last_updated` está nos primeiros 256 bytes). Se for igual ao
  *     `distributor.manifest_last_updated` de todos os sidecars, o espelho não
  *     mudou desde o build e os cubos estão em dia — ~0,5 s, 512 bytes.
- *  2. Só se o manifesto mudou: baixa o arquivo inteiro (10,4 MB, ~1 s; o r2.dev
- *     não comprime) e compara partição a partição o que cada cubo usou
- *     (MD5 e tamanho do .dbc = reedição no MS; SHA-256 do Parquet = pipeline
- *     regenerou; partição sumiu) e se apareceu competência nova dentro da
- *     janela de um cubo incompleto (competência AAAA-MM afeta o cubo AAAA e,
- *     se MM <= 04, o cubo AAAA-1 — regra de docs/analise-001).
+ *  2. Só se o manifesto mudou: baixa o índice e compara partição a partição o
+ *     que cada cubo usou (MD5 e tamanho do .dbc = reedição no MS; SHA-256 do
+ *     Parquet = pipeline regenerou; partição sumiu) e se apareceu competência
+ *     nova dentro da janela de um cubo incompleto (competência AAAA-MM afeta o
+ *     cubo AAAA e, se MM <= 04, o cubo AAAA-1 — regra de docs/analise-001).
+ *     O índice preferido é `manifest-summary.json`, ao lado do manifesto
+ *     (mesmo cabeçalho, só os campos que esta comparação lê, ~2 MB; o
+ *     sync-check do healthbr-data o regrava a cada rodada, desde 09/2026). Se
+ *     o resumo não existe ou está atrás do manifesto (`last_updated`
+ *     diferente — o resumo nasce alguns minutos depois da republicação),
+ *     cai no manifesto inteiro (10,4 MB, ~1 s; o r2.dev não comprime).
  *
  * Resultado: `current` | `stale` | `unknown` (rede/timeout) | `pending` |
  * `disabled` (SIH_FRESHNESS_CHECK=off — smoke e golden usam, para que o CI
  * nunca dependa do portal). Quem lê: `sihProvenance()` (marca `data_vintage`
- * e `notices` quando está atrás) e `get_available_years` (campo `freshness`).
+ * e `notices` quando está atrás), `get_available_years` (campo `freshness`)
+ * e o job `decide` de `.github/workflows/rebuild-cubes.yml`, pela CLI
+ * `npm run freshness -- --out`, que reconstrói os cubos `behind` (item (b)).
  *
- * Fora do escopo daqui (itens (b) e (c) de `sih:cubos-frescor`): rebuild
- * automático e cache local de cubos. Isto só AVISA.
+ * Fora do escopo daqui: cache local de cubos (item (c) de `sih:cubos-frescor`).
+ * Isto só AVISA — quem age é o workflow.
  */
 
 import { loadSidecars, type SihSidecar } from "./provenance.js";
@@ -162,11 +169,37 @@ export function evaluateManifest(sidecars: SihSidecar[], manifest: MirrorManifes
 // =============================================================================
 
 const LAST_UPDATED_RE = /"last_updated"\s*:\s*"([^"]+)"/;
+const MANIFEST_FILE = "manifest.json";
+const SUMMARY_FILE = "manifest-summary.json";
+
+/** URL do resumo do manifesto, por convenção de caminho (`.../manifest.json` → `.../manifest-summary.json`); null se a URL não segue a convenção. */
+export function summaryUrl(manifestUrl: string): string | null {
+  return manifestUrl.endsWith(`/${MANIFEST_FILE}`) ? manifestUrl.slice(0, -MANIFEST_FILE.length) + SUMMARY_FILE : null;
+}
 
 async function fetchText(url: string, timeoutMs: number, headers?: Record<string, string>): Promise<{ status: number; text: string }> {
   const res = await fetch(url, { headers, signal: AbortSignal.timeout(timeoutMs) });
   if (!res.ok && res.status !== 206) throw new Error(`HTTP ${res.status} em ${url}`);
   return { status: res.status, text: await res.text() };
+}
+
+/** Baixa o índice de partições: o resumo quando está em dia com o manifesto, senão o manifesto inteiro. */
+async function fetchIndex(manifestUrl: string, remoteLastUpdated: string | null): Promise<MirrorManifest> {
+  const sUrl = summaryUrl(manifestUrl);
+  if (sUrl) {
+    try {
+      const res = await fetchText(sUrl, FULL_TIMEOUT_MS);
+      const summary = JSON.parse(res.text) as MirrorManifest;
+      if (summary.partitions && (!remoteLastUpdated || summary.last_updated === remoteLastUpdated)) {
+        return summary;
+      }
+      console.error(`[frescor] resumo ${summary.last_updated ?? "sem data"} atrás do manifesto ${remoteLastUpdated}; lendo o manifesto inteiro`);
+    } catch (e) {
+      console.error(`[frescor] resumo indisponível (${e instanceof Error ? e.message : String(e)}); lendo o manifesto inteiro`);
+    }
+  }
+  const full = await fetchText(manifestUrl, FULL_TIMEOUT_MS);
+  return JSON.parse(full.text) as MirrorManifest;
 }
 
 async function runCheck(): Promise<FreshnessState> {
@@ -212,9 +245,10 @@ async function runCheck(): Promise<FreshnessState> {
           })),
         };
       }
-      // 2. O manifesto mudou (ou a sonda não deu para ler): baixa inteiro e compara.
-      const full = await fetchText(url, FULL_TIMEOUT_MS);
-      manifest = JSON.parse(full.text) as MirrorManifest;
+      // 2. O manifesto mudou (ou a sonda não deu para ler): baixa o índice e
+      //    compara. Primeiro o resumo (~2 MB), se existir e estiver na mesma
+      //    data que o manifesto; senão o manifesto inteiro (10,4 MB).
+      manifest = await fetchIndex(url, remote);
     }
     return evaluateManifest(sidecars, manifest, "full");
   } catch (e) {

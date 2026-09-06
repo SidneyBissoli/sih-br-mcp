@@ -3,11 +3,13 @@
 // do servidor MCP — para olhar o veredito à mão, para o CI e para regenerar a
 // fixture. Três modos:
 //
-//   node scripts/freshness-check.mjs [--fixtures <dir>]
+//   node scripts/freshness-check.mjs [--fixtures <dir>] [--out <estado.json>]
 //       AO VIVO: mesma checagem que o servidor faz na inicialização (sonda
-//       Range de 512 bytes; baixa o manifesto inteiro só se ele mudou).
-//       Sai 0 em `current`, 3 em `stale`, 2 em `unknown` (rede). Não é gate
-//       de CI: depende do portal.
+//       Range de 512 bytes; baixa o resumo ou o manifesto inteiro só se ele
+//       mudou). Sai 0 em `current`, 3 em `stale`, 2 em `unknown` (rede).
+//       `--out` grava o estado em JSON — é o que o job `decide` de
+//       .github/workflows/rebuild-cubes.yml lê para escolher os anos. Não é
+//       gate de CI: depende do portal.
 //
 //   node scripts/freshness-check.mjs --fixtures tests/fixtures/sih --selftest
 //       OFFLINE, determinístico (é o que o CI roda): compara o sidecar da
@@ -129,5 +131,6 @@ if (has("--selftest")) {
 const t0 = Date.now();
 const state = await startFreshnessCheck();
 console.log(JSON.stringify(state, null, 2));
+if (opt("--out")) writeFileSync(opt("--out"), JSON.stringify(state, null, 2) + "\n");
 console.log(`(${Date.now() - t0} ms)`);
 process.exit(state.status === "current" ? 0 : state.status === "stale" ? 3 : 2);
