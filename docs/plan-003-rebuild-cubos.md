@@ -189,6 +189,17 @@ TAREFAS.md L104 com "(b) FEITO"; memória.
   build. Um dispatch pode ficar pendente atrás do que está rodando (o
   `concurrency` mantém um em execução e um na fila); um terceiro é
   cancelado.
+- **Memória no passo ICSAP** (06/09, runs 34062485932 e 34063289778): 2025
+  (14,6 M internações, o maior ano) foi CANCELADO pelo runner no meio de
+  "Gerando cubo sih_icsap" duas vezes, sem mensagem de erro nem "shutdown
+  signal" — só "The operation was canceled" depois de ~2 min no passo. É
+  estouro dos 16 GB: o builder 2.3.0 ainda segurava `cubo_causas` (6,5 M
+  linhas) e os 27 lotes de causas enquanto fazia `bind_rows` + `summarise`
+  dos totais por município. 2024 (14,1 M) passou por margem. Builder 2.3.1
+  (d768cd6) guarda `sum(n)`/`nrow` do cubo de causas, solta o objeto e os
+  lotes de causas, e chama `gc()` antes do ICSAP; 2025 saiu em 16,5 min
+  (run 34064302700). Sinal para o futuro: "canceled" sem motivo no passo R
+  = memória; não repetir sem mexer no builder.
 
 ## 5. Fora de escopo, de propósito
 

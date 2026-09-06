@@ -50,6 +50,7 @@ Desenvolver um **MCP Server** para análise de dados do Sistema de Informações
 15. **Cubo NACIONAL de 2023 em produção; builder 2.3.0 agrega por UF de arquivo** (2026-09-06, à tarde, decisão do usuário). Dispatch `years=2023 ufs=all`: o 1º run (34038116890) leu as 432 partições em 1,6 min e o runner MORREU na agregação — 13,3 milhões de internações num único data frame não cabem em 16 GB. Builder 2.3.0: `agregar_lote()` processa uma UF de arquivo por vez e `somar_lotes()` soma os agregados nas chaves de grupo; mesmo cubo (colunas inteiras idênticas, `value` igual ao último ulp — medido ≤ 1,5e-11 em 5 UFs; 2023/RR idêntico), pico de memória do maior lote (SP, ~3,5 milhões). 2º run (34038899306) verde: 20 min de build (≈25 s por lote são abertura do dataset no R2), delta relatou a mudança de escopo pedida (RR → 27 UFs), smoke sobre os cubos novos OK, sidecar commitado (ffbf51f), release `cubes-20260906-1444` (causas 50 MB, ICSAP 11 MB, séries 36 KB). Totais: 17.969.863 AIH lidas, 13.324.364 internações de 2023, 587.630 óbitos, R$ 20,67 bi, 6.085.836 linhas de causas, 1.264.234 de ICSAP. A fixture segue 2023/RR (golden e smoke do CI não mudaram). Anos seguintes: um dispatch cada. O push do sidecar pelo GITHUB_TOKEN não dispara o ci.yml (comportamento do GitHub), e não precisa.
 
 16. **Janela nacional completa 2019–2024 em produção** (2026-09-06, 30ª sessão; ordem do usuário dada no fim da 29ª). Três dispatches `ufs=all`, dois anos por run: 2024+2022 (run 34041938255, 31 min 54 s, release `cubes-20260906-1551`, sidecar 165cd3a), 2021+2020 (run 34045123114, build 34 min 38 s, `cubes-20260906-1655`, 3dc0fd3) e 2019 (run 34047810068, build 13 min 55 s, `cubes-20260906-1725`, 2a8de9f). Internações por ano: 2019 12.287.939 · 2020 10.615.141 · 2021 11.654.999 · 2022 12.454.873 · 2023 13.324.364 · 2024 14.128.150 — 74.465.466 no total, 27 UFs e 432 partições cada, `window.complete = true` em todos. Conferência local por ano: soma de `n` em causas e séries = `records_in_cube` do sidecar, linhas = `*_rows`; `npm run freshness` `current` para os seis; smoke stdio sobre `data/` OK; `get_available_years` lista 2019–2024. **Defeito achado e corrigido no caminho** (7f272c9): o `workflow_dispatch` fixa o commit do disparo, e o run de 2019, enfileirado atrás do de 2020+2021, teve o push do sidecar rejeitado porque o master já tinha andado — o passo de commit agora faz fetch + rebase + push (3 tentativas); o run 4 provou o conserto. **2025 não foi construído**: o espelho tem a janela completa (2026-01..04 publicadas) mas `pop_uf.parquet` para em 2024, então as ferramentas de taxa não teriam denominador — decisão do usuário. **2026 não**: janela incompleta no espelho. Cubos locais somam ~370 MB (causas ~50 MB/ano, ICSAP ~11 MB/ano); `data/*.parquet` continua gitignored e vem da release.
+17. **2025 em produção; população até o último cubo FECHADO; intervalo de taxas lido do arquivo** (2026-09-06, noite, 30ª sessão; o usuário "não se opôs" ao 2025 e deu o sim para reescrever a regra). Cubo 2025: 14.644.591 internações (o maior ano), 19.487.763 AIH lidas, 27 UFs, janela completa (2026-01..04 no espelho); release `cubes-20260906-2248`, sidecar d165770, builder **2.3.1**. Dois runs com o builder 2.3.0 (34062485932 e 34063289778) foram CANCELADOS pelo runner no meio do cubo ICSAP, sem mensagem — estouro dos 16 GB: o passo rodava com `cubo_causas` (6,5 M linhas) e os 27 lotes de causas ainda na memória; 2024 (14,1 M) passou por margem. 2.3.1 solta o cubo de causas e os lotes antes do ICSAP (d768cd6); build de 2025 em 16,5 min. **População:** a regra "PROIBIDO projeções futuras (após 2024)" virou "até o último ano de cubo FECHADO do SIH" (seção de regras); `build-population.R` ganhou a categoria 49041 (2025) da SIDRA 7358 e `pop_uf.parquet` foi regenerado 2000–2025 (122.364 linhas; 2000–2024 idênticos ao arquivo anterior, conferido por EXCEPT nos dois sentidos). A SIDRA 7358 também serve 2026 (49042) — só entra quando o cubo de 2026 fechar. **Servidor:** `getPopulationYearRange()` (src/db/duckdb.ts) lê min/max de `pop_uf.parquet` uma vez; `get_hospitalization_rates` e `compare_icsap_trends` validam por ele e as descrições deixaram de fixar "2000-2024"; `get_available_years` devolve `population_years`. Baselines regravados só por esse diff. Verificado ao vivo: taxa de 2025 para RR e SP com denominador de 2025 (RR 5.247,79/100 mil). Nota: o CONTEXT dizia "Revisão 2024" para `pop_uf`, mas o script baixa a revisão 2018 (`p/2018`) da tabela 7358 — corrigido o texto acima; migrar para a Projeção 2024 do IBGE é item futuro, não urgente.
 
 ---
 
@@ -96,17 +97,17 @@ Dados municipais consolidados de todas as fontes (IBGE via DATASUS).
 
 ### Arquivo 2: `pop_uf.parquet` ✅
 
-Projeções/estimativas por UF do IBGE (Revisão 2024), com sexo e idade simples.
+Projeções por UF do IBGE (SIDRA tabela 7358, revisão 2018), com sexo e idade simples. Vai até o último ano de cubo FECHADO do SIH (regra acima); o servidor lê o intervalo do arquivo (`getPopulationYearRange()`), nunca o fixa.
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| year | int | Ano (2000-2024) |
+| year | int | Ano (2000 até o último cubo fechado; 2025 desde 2026-09-06) |
 | uf | string | Sigla UF |
 | sex | string | "M" ou "F" |
 | age | int | Idade simples (0-90, onde 90 = 90+) |
 | population | int | População |
 
-**Estatísticas:** 117.450 registros, 27 UFs, 2000-2024
+**Estatísticas:** 122.364 registros, 27 UFs, 2000-2025 (4.914 linhas por ano)
 
 ### Arquivo 3: `pop_uf_agregado.parquet` ✅
 
