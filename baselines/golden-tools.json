@@ -504,6 +504,41 @@
         "2023": true
       },
       "years_without_race": [],
+      "cid_revision": {
+        "2023": {
+          "10": 48480
+        }
+      },
+      "years_cid9": [],
+      "icsap_available": {
+        "2023": true
+      },
+      "icsap_list_revision": {
+        "2023": {
+          "10": "portaria-221-2008"
+        }
+      },
+      "uf_basis": {
+        "2023": "residencia"
+      },
+      "years_uf_arquivo": [],
+      "municipality_available": {
+        "2023": true
+      },
+      "currency": {
+        "2023": [
+          {
+            "from": "2023-01",
+            "to": "2024-04",
+            "code": "BRL",
+            "symbol": "R$",
+            "name": "real"
+          }
+        ]
+      },
+      "records_date_imputed": {
+        "2023": 0
+      },
       "population_years": {
         "first_year": 2000,
         "last_year": 2024
@@ -530,7 +565,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -656,7 +691,7 @@
         {
           "n_hospitalizations": 48480,
           "total_days": 312432,
-          "total_value": 45996267.09999766,
+          "total_value": 45996267.1,
           "deaths": 1485
         }
       ],
@@ -678,7 +713,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -704,7 +739,7 @@
           "uf": "AM",
           "n_hospitalizations": 117,
           "total_days": 1368,
-          "total_value": 214379.62000000002,
+          "total_value": 214379.62,
           "deaths": 5
         },
         {
@@ -746,7 +781,7 @@
           "uf": "RR",
           "n_hospitalizations": 48349,
           "total_days": 310951,
-          "total_value": 45757964.96999772,
+          "total_value": 45757964.97,
           "deaths": 1479
         },
         {
@@ -779,7 +814,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -835,7 +870,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -863,7 +898,7 @@
           "csap_group": "g01",
           "n_hospitalizations": 584,
           "total_days": 5666,
-          "total_value": 268525.01999999944,
+          "total_value": 268525.02,
           "deaths": 14
         },
         {
@@ -871,7 +906,7 @@
           "csap_group": "g02",
           "n_hospitalizations": 583,
           "total_days": 3145,
-          "total_value": 287110.7999999996,
+          "total_value": 287110.8,
           "deaths": 11
         },
         {
@@ -887,7 +922,7 @@
           "csap_group": "g04",
           "n_hospitalizations": 205,
           "total_days": 2712,
-          "total_value": 221417.0999999998,
+          "total_value": 221417.1,
           "deaths": 16
         },
         {
@@ -895,7 +930,7 @@
           "csap_group": "g05",
           "n_hospitalizations": 231,
           "total_days": 1147,
-          "total_value": 78796.45000000006,
+          "total_value": 78796.45,
           "deaths": 0
         },
         {
@@ -903,7 +938,7 @@
           "csap_group": "g06",
           "n_hospitalizations": 2833,
           "total_days": 30117,
-          "total_value": 4260095.969999986,
+          "total_value": 4260095.97,
           "deaths": 155
         },
         {
@@ -911,7 +946,7 @@
           "csap_group": "g07",
           "n_hospitalizations": 222,
           "total_days": 1179,
-          "total_value": 145572.16000000003,
+          "total_value": 145572.16,
           "deaths": 1
         },
         {
@@ -919,7 +954,7 @@
           "csap_group": "g08",
           "n_hospitalizations": 653,
           "total_days": 4892,
-          "total_value": 584954.9600000004,
+          "total_value": 584954.96,
           "deaths": 21
         },
         {
@@ -927,7 +962,7 @@
           "csap_group": "g09",
           "n_hospitalizations": 110,
           "total_days": 580,
-          "total_value": 30042.569999999985,
+          "total_value": 30042.57,
           "deaths": 0
         },
         {
@@ -935,7 +970,7 @@
           "csap_group": "g10",
           "n_hospitalizations": 152,
           "total_days": 2386,
-          "total_value": 308942.6699999998,
+          "total_value": 308942.67,
           "deaths": 4
         },
         {
@@ -943,7 +978,7 @@
           "csap_group": "g11",
           "n_hospitalizations": 443,
           "total_days": 6333,
-          "total_value": 1206790.9999999984,
+          "total_value": 1206791,
           "deaths": 71
         },
         {
@@ -951,7 +986,7 @@
           "csap_group": "g12",
           "n_hospitalizations": 546,
           "total_days": 6960,
-          "total_value": 665160.0100000012,
+          "total_value": 665160.01,
           "deaths": 55
         },
         {
@@ -959,7 +994,7 @@
           "csap_group": "g13",
           "n_hospitalizations": 660,
           "total_days": 8565,
-          "total_value": 749175.8300000033,
+          "total_value": 749175.83,
           "deaths": 19
         },
         {
@@ -967,7 +1002,7 @@
           "csap_group": "g14",
           "n_hospitalizations": 153,
           "total_days": 1282,
-          "total_value": 156070.43000000005,
+          "total_value": 156070.43,
           "deaths": 8
         },
         {
@@ -975,7 +1010,7 @@
           "csap_group": "g15",
           "n_hospitalizations": 585,
           "total_days": 4785,
-          "total_value": 233322.7299999991,
+          "total_value": 233322.73,
           "deaths": 11
         },
         {
@@ -983,7 +1018,7 @@
           "csap_group": "g16",
           "n_hospitalizations": 916,
           "total_days": 7354,
-          "total_value": 463300.58999999904,
+          "total_value": 463300.59,
           "deaths": 5
         },
         {
@@ -999,7 +1034,7 @@
           "csap_group": "g18",
           "n_hospitalizations": 86,
           "total_days": 671,
-          "total_value": 89150.54999999999,
+          "total_value": 89150.55,
           "deaths": 4
         },
         {
@@ -1007,7 +1042,7 @@
           "csap_group": "g19",
           "n_hospitalizations": 491,
           "total_days": 3531,
-          "total_value": 112837.95000000006,
+          "total_value": 112837.95,
           "deaths": 0
         }
       ],
@@ -1034,7 +1069,214 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+      },
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
+      ]
+    }
+  },
+  {
+    "tool": "get_hospitalizations",
+    "args": {
+      "year": [
+        2023
+      ],
+      "group_by": [
+        "cid_revision",
+        "cid_chapter"
+      ],
+      "limit": 50
+    },
+    "isError": false,
+    "result": {
+      "data": [
+        {
+          "cid_revision": 10,
+          "cid_chapter": 1,
+          "n_hospitalizations": 2647,
+          "total_days": 31550,
+          "total_value": 4176159.84,
+          "deaths": 192
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 2,
+          "n_hospitalizations": 1431,
+          "total_days": 8478,
+          "total_value": 1936755.85,
+          "deaths": 151
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 3,
+          "n_hospitalizations": 322,
+          "total_days": 3662,
+          "total_value": 275819.45,
+          "deaths": 9
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 4,
+          "n_hospitalizations": 953,
+          "total_days": 12124,
+          "total_value": 1069741.28,
+          "deaths": 41
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 5,
+          "n_hospitalizations": 222,
+          "total_days": 3306,
+          "total_value": 32439.92,
+          "deaths": 4
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 6,
+          "n_hospitalizations": 479,
+          "total_days": 4729,
+          "total_value": 834114.82,
+          "deaths": 28
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 7,
+          "n_hospitalizations": 49,
+          "total_days": 226,
+          "total_value": 36435.46,
+          "deaths": 0
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 8,
+          "n_hospitalizations": 85,
+          "total_days": 628,
+          "total_value": 37760.08,
+          "deaths": 1
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 9,
+          "n_hospitalizations": 2100,
+          "total_days": 28710,
+          "total_value": 4086958.65,
+          "deaths": 208
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 10,
+          "n_hospitalizations": 5765,
+          "total_days": 50923,
+          "total_value": 7453035.93,
+          "deaths": 282
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 11,
+          "n_hospitalizations": 3091,
+          "total_days": 20024,
+          "total_value": 2913642.07,
+          "deaths": 92
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 12,
+          "n_hospitalizations": 1071,
+          "total_days": 8223,
+          "total_value": 537100.89,
+          "deaths": 4
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 13,
+          "n_hospitalizations": 969,
+          "total_days": 5323,
+          "total_value": 1353336.1,
+          "deaths": 6
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 14,
+          "n_hospitalizations": 2574,
+          "total_days": 20136,
+          "total_value": 2308800.2,
+          "deaths": 75
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 15,
+          "n_hospitalizations": 13496,
+          "total_days": 45769,
+          "total_value": 7583552.98,
+          "deaths": 4
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 16,
+          "n_hospitalizations": 2275,
+          "total_days": 17066,
+          "total_value": 4980414.47,
+          "deaths": 70
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 17,
+          "n_hospitalizations": 303,
+          "total_days": 2339,
+          "total_value": 703706.14,
+          "deaths": 16
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 18,
+          "n_hospitalizations": 647,
+          "total_days": 2148,
+          "total_value": 899364.45,
+          "deaths": 8
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 19,
+          "n_hospitalizations": 4322,
+          "total_days": 18272,
+          "total_value": 3716336.19,
+          "deaths": 62
+        },
+        {
+          "cid_revision": 10,
+          "cid_chapter": 21,
+          "n_hospitalizations": 5679,
+          "total_days": 28796,
+          "total_value": 1060792.33,
+          "deaths": 232
+        }
+      ],
+      "summary": {
+        "total_hospitalizations": 48480,
+        "total_days": 312432,
+        "total_value": 45996267.1,
+        "deaths": 1485,
+        "hospital_mortality_rate": 3.06,
+        "records_returned": 20
+      },
+      "filters_applied": {
+        "year": [
+          2023
+        ],
+        "group_by": [
+          "cid_revision",
+          "cid_chapter"
+        ],
+        "limit": 50
+      },
+      "provenance": {
+        "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+        "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
+        "retrieved_at": "2026-03-09T04:02:47Z",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -1068,7 +1310,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -1125,7 +1367,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -1215,7 +1457,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -1300,7 +1542,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -1351,7 +1593,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -1395,7 +1637,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -1415,16 +1657,17 @@
       "data": [
         {
           "n_icsap": 9577,
-          "n_total": 260697,
+          "n_total": 48480,
+          "icsap_percentage": 19.75,
           "total_days": 92032,
-          "total_value": 9898751.81999997,
+          "total_value": 9898751.82,
           "deaths": 395
         }
       ],
       "summary": {
         "total_icsap": 9577,
-        "total_hospitalizations": 260697,
-        "icsap_percentage": 3.67,
+        "total_hospitalizations": 48480,
+        "icsap_percentage": 19.75,
         "total_days": 92032,
         "total_value": 9898751.82,
         "deaths": 395,
@@ -1441,7 +1684,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -1475,23 +1718,26 @@
         {
           "csap_group": "g01",
           "n_icsap": 584,
-          "n_total": 24522,
+          "n_total": 48480,
+          "icsap_percentage": 1.2,
           "total_days": 5666,
-          "total_value": 268525.0199999993,
+          "total_value": 268525.02,
           "deaths": 14
         },
         {
           "csap_group": "g02",
           "n_icsap": 583,
-          "n_total": 11599,
+          "n_total": 48480,
+          "icsap_percentage": 1.2,
           "total_days": 3145,
-          "total_value": 287110.80000000005,
+          "total_value": 287110.8,
           "deaths": 11
         },
         {
           "csap_group": "g03",
           "n_icsap": 1,
-          "n_total": 1340,
+          "n_total": 48480,
+          "icsap_percentage": 0,
           "total_days": 1,
           "total_value": 275.93,
           "deaths": 0
@@ -1499,111 +1745,125 @@
         {
           "csap_group": "g04",
           "n_icsap": 205,
-          "n_total": 6866,
+          "n_total": 48480,
+          "icsap_percentage": 0.42,
           "total_days": 2712,
-          "total_value": 221417.09999999983,
+          "total_value": 221417.1,
           "deaths": 16
         },
         {
           "csap_group": "g05",
           "n_icsap": 231,
-          "n_total": 7807,
+          "n_total": 48480,
+          "icsap_percentage": 0.48,
           "total_days": 1147,
-          "total_value": 78796.45000000006,
+          "total_value": 78796.45,
           "deaths": 0
         },
         {
           "csap_group": "g06",
           "n_icsap": 2833,
-          "n_total": 27403,
+          "n_total": 48480,
+          "icsap_percentage": 5.84,
           "total_days": 30117,
-          "total_value": 4260095.969999989,
+          "total_value": 4260095.97,
           "deaths": 155
         },
         {
           "csap_group": "g07",
           "n_icsap": 222,
-          "n_total": 7235,
+          "n_total": 48480,
+          "icsap_percentage": 0.46,
           "total_days": 1179,
-          "total_value": 145572.16000000003,
+          "total_value": 145572.16,
           "deaths": 1
         },
         {
           "csap_group": "g08",
           "n_icsap": 653,
-          "n_total": 11258,
+          "n_total": 48480,
+          "icsap_percentage": 1.35,
           "total_days": 4892,
-          "total_value": 584954.9599999998,
+          "total_value": 584954.96,
           "deaths": 21
         },
         {
           "csap_group": "g09",
           "n_icsap": 110,
-          "n_total": 10611,
+          "n_total": 48480,
+          "icsap_percentage": 0.23,
           "total_days": 580,
-          "total_value": 30042.569999999974,
+          "total_value": 30042.57,
           "deaths": 0
         },
         {
           "csap_group": "g10",
           "n_icsap": 152,
-          "n_total": 6711,
+          "n_total": 48480,
+          "icsap_percentage": 0.31,
           "total_days": 2386,
-          "total_value": 308942.67000000004,
+          "total_value": 308942.67,
           "deaths": 4
         },
         {
           "csap_group": "g11",
           "n_icsap": 443,
-          "n_total": 12468,
+          "n_total": 48480,
+          "icsap_percentage": 0.91,
           "total_days": 6333,
-          "total_value": 1206791.0000000002,
+          "total_value": 1206791,
           "deaths": 71
         },
         {
           "csap_group": "g12",
           "n_icsap": 546,
-          "n_total": 15857,
+          "n_total": 48480,
+          "icsap_percentage": 1.13,
           "total_days": 6960,
-          "total_value": 665160.0099999991,
+          "total_value": 665160.01,
           "deaths": 55
         },
         {
           "csap_group": "g13",
           "n_icsap": 660,
-          "n_total": 15242,
+          "n_total": 48480,
+          "icsap_percentage": 1.36,
           "total_days": 8565,
-          "total_value": 749175.8300000011,
+          "total_value": 749175.83,
           "deaths": 19
         },
         {
           "csap_group": "g14",
           "n_icsap": 153,
-          "n_total": 14022,
+          "n_total": 48480,
+          "icsap_percentage": 0.32,
           "total_days": 1282,
-          "total_value": 156070.42999999996,
+          "total_value": 156070.43,
           "deaths": 8
         },
         {
           "csap_group": "g15",
           "n_icsap": 585,
-          "n_total": 24231,
+          "n_total": 48480,
+          "icsap_percentage": 1.21,
           "total_days": 4785,
-          "total_value": 233322.72999999905,
+          "total_value": 233322.73,
           "deaths": 11
         },
         {
           "csap_group": "g16",
           "n_icsap": 916,
-          "n_total": 28996,
+          "n_total": 48480,
+          "icsap_percentage": 1.89,
           "total_days": 7354,
-          "total_value": 463300.5899999986,
+          "total_value": 463300.59,
           "deaths": 5
         },
         {
           "csap_group": "g17",
           "n_icsap": 123,
-          "n_total": 11784,
+          "n_total": 48480,
+          "icsap_percentage": 0.25,
           "total_days": 726,
           "total_value": 37209.1,
           "deaths": 0
@@ -1611,24 +1871,26 @@
         {
           "csap_group": "g18",
           "n_icsap": 86,
-          "n_total": 4697,
+          "n_total": 48480,
+          "icsap_percentage": 0.18,
           "total_days": 671,
-          "total_value": 89150.54999999997,
+          "total_value": 89150.55,
           "deaths": 4
         },
         {
           "csap_group": "g19",
           "n_icsap": 491,
-          "n_total": 18048,
+          "n_total": 48480,
+          "icsap_percentage": 1.01,
           "total_days": 3531,
-          "total_value": 112837.9500000001,
+          "total_value": 112837.95,
           "deaths": 0
         }
       ],
       "summary": {
         "total_icsap": 9577,
-        "total_hospitalizations": 260697,
-        "icsap_percentage": 3.67,
+        "total_hospitalizations": 48480,
+        "icsap_percentage": 19.75,
         "total_days": 92032,
         "total_value": 9898751.82,
         "deaths": 395,
@@ -1648,7 +1910,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -1683,24 +1945,26 @@
         {
           "sex": "F",
           "n_icsap": 2933,
-          "n_total": 145178,
+          "n_total": 20685,
+          "icsap_percentage": 14.18,
           "total_days": 26907,
-          "total_value": 2802980.910000006,
+          "total_value": 2802980.91,
           "deaths": 106
         },
         {
           "sex": "M",
           "n_icsap": 3163,
-          "n_total": 90486,
+          "n_total": 12892,
+          "icsap_percentage": 24.53,
           "total_days": 34400,
-          "total_value": 3902691.820000002,
+          "total_value": 3902691.82,
           "deaths": 160
         }
       ],
       "summary": {
         "total_icsap": 6096,
-        "total_hospitalizations": 235664,
-        "icsap_percentage": 2.59,
+        "total_hospitalizations": 33577,
+        "icsap_percentage": 18.16,
         "total_days": 61307,
         "total_value": 6705672.73,
         "deaths": 266,
@@ -1721,7 +1985,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -1795,7 +2059,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -1825,10 +2089,10 @@
       "data": [
         {
           "n_icsap": 9577,
-          "n_total": 260697,
-          "icsap_percentage": 3.67,
+          "n_total": 48480,
+          "icsap_percentage": 19.75,
           "total_days": 92032,
-          "total_value": 9898751.81999997,
+          "total_value": 9898751.82,
           "deaths": 395
         }
       ],
@@ -1842,7 +2106,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -1876,29 +2140,74 @@
         {
           "uf": "AM",
           "n_icsap": 63,
-          "n_total": 232,
-          "icsap_percentage": 27.16,
+          "n_total": 117,
+          "icsap_percentage": 53.85,
           "total_days": 904,
-          "total_value": 151605.20999999996,
+          "total_value": 151605.21,
           "deaths": 3
+        },
+        {
+          "uf": "CE",
+          "n_icsap": 0,
+          "n_total": 2,
+          "icsap_percentage": 0,
+          "total_days": 0,
+          "total_value": 0,
+          "deaths": 0
+        },
+        {
+          "uf": "GO",
+          "n_icsap": 0,
+          "n_total": 1,
+          "icsap_percentage": 0,
+          "total_days": 0,
+          "total_value": 0,
+          "deaths": 0
         },
         {
           "uf": "MA",
           "n_icsap": 1,
-          "n_total": 1,
-          "icsap_percentage": 100,
+          "n_total": 2,
+          "icsap_percentage": 50,
           "total_days": 7,
           "total_value": 574,
           "deaths": 0
         },
         {
+          "uf": "MG",
+          "n_icsap": 0,
+          "n_total": 6,
+          "icsap_percentage": 0,
+          "total_days": 0,
+          "total_value": 0,
+          "deaths": 0
+        },
+        {
+          "uf": "PB",
+          "n_icsap": 0,
+          "n_total": 1,
+          "icsap_percentage": 0,
+          "total_days": 0,
+          "total_value": 0,
+          "deaths": 0
+        },
+        {
           "uf": "RR",
           "n_icsap": 9513,
-          "n_total": 260464,
-          "icsap_percentage": 3.65,
+          "n_total": 48349,
+          "icsap_percentage": 19.68,
           "total_days": 91121,
-          "total_value": 9746572.609999979,
+          "total_value": 9746572.61,
           "deaths": 392
+        },
+        {
+          "uf": "SP",
+          "n_icsap": 0,
+          "n_total": 2,
+          "icsap_percentage": 0,
+          "total_days": 0,
+          "total_value": 0,
+          "deaths": 0
         }
       ],
       "indicators_calculated": [
@@ -1911,7 +2220,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -1949,10 +2258,10 @@
         {
           "sex": "M",
           "n_icsap": 4872,
-          "n_total": 101488,
-          "icsap_percentage": 4.8,
+          "n_total": 18268,
+          "icsap_percentage": 26.67,
           "total_days": 49750,
-          "total_value": 5432448.250000003,
+          "total_value": 5432448.25,
           "deaths": 242
         }
       ],
@@ -1966,7 +2275,58 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
+          "source_url": "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html",
+          "data_vintage": "Portaria MS/SAS nº 221/2008, 19 grupos (g01–g19), transcrição em src/data/csap-groups.json",
+          "retrieved_at": "2026-01-21T00:00:00Z",
+          "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
+      ]
+    }
+  },
+  {
+    "tool": "get_icsap_indicators",
+    "args": {
+      "year": [
+        2023
+      ],
+      "group_by": [
+        "cid_revision"
+      ]
+    },
+    "isError": false,
+    "result": {
+      "data": [
+        {
+          "cid_revision": 10,
+          "n_icsap": 9577,
+          "n_total": 48480,
+          "icsap_percentage": 19.75,
+          "total_days": 92032,
+          "total_value": 9898751.82,
+          "deaths": 395
+        }
+      ],
+      "indicators_calculated": [
+        "icsap_percentage"
+      ],
+      "note": "icsap_percentage = (n_icsap / n_total) * 100",
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T04:02:47Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2004,7 +2364,7 @@
           "pct_of_total": 29.58,
           "n_hospitalizations": 2833,
           "total_days": 30117,
-          "total_value": 4260095.969999989,
+          "total_value": 4260095.97,
           "deaths": 155
         },
         {
@@ -2015,7 +2375,7 @@
           "pct_of_total": 9.56,
           "n_hospitalizations": 916,
           "total_days": 7354,
-          "total_value": 463300.5899999986,
+          "total_value": 463300.59,
           "deaths": 5
         },
         {
@@ -2026,7 +2386,7 @@
           "pct_of_total": 6.89,
           "n_hospitalizations": 660,
           "total_days": 8565,
-          "total_value": 749175.8300000011,
+          "total_value": 749175.83,
           "deaths": 19
         },
         {
@@ -2037,7 +2397,7 @@
           "pct_of_total": 6.82,
           "n_hospitalizations": 653,
           "total_days": 4892,
-          "total_value": 584954.9599999998,
+          "total_value": 584954.96,
           "deaths": 21
         },
         {
@@ -2048,7 +2408,7 @@
           "pct_of_total": 6.11,
           "n_hospitalizations": 585,
           "total_days": 4785,
-          "total_value": 233322.72999999905,
+          "total_value": 233322.73,
           "deaths": 11
         },
         {
@@ -2059,7 +2419,7 @@
           "pct_of_total": 6.1,
           "n_hospitalizations": 584,
           "total_days": 5666,
-          "total_value": 268525.0199999993,
+          "total_value": 268525.02,
           "deaths": 14
         },
         {
@@ -2070,7 +2430,7 @@
           "pct_of_total": 6.09,
           "n_hospitalizations": 583,
           "total_days": 3145,
-          "total_value": 287110.80000000005,
+          "total_value": 287110.8,
           "deaths": 11
         },
         {
@@ -2081,7 +2441,7 @@
           "pct_of_total": 5.7,
           "n_hospitalizations": 546,
           "total_days": 6960,
-          "total_value": 665160.0099999991,
+          "total_value": 665160.01,
           "deaths": 55
         },
         {
@@ -2092,7 +2452,7 @@
           "pct_of_total": 5.13,
           "n_hospitalizations": 491,
           "total_days": 3531,
-          "total_value": 112837.9500000001,
+          "total_value": 112837.95,
           "deaths": 0
         },
         {
@@ -2103,7 +2463,7 @@
           "pct_of_total": 4.63,
           "n_hospitalizations": 443,
           "total_days": 6333,
-          "total_value": 1206791.0000000002,
+          "total_value": 1206791,
           "deaths": 71
         },
         {
@@ -2114,7 +2474,7 @@
           "pct_of_total": 2.41,
           "n_hospitalizations": 231,
           "total_days": 1147,
-          "total_value": 78796.45000000006,
+          "total_value": 78796.45,
           "deaths": 0
         },
         {
@@ -2125,7 +2485,7 @@
           "pct_of_total": 2.32,
           "n_hospitalizations": 222,
           "total_days": 1179,
-          "total_value": 145572.16000000003,
+          "total_value": 145572.16,
           "deaths": 1
         },
         {
@@ -2136,7 +2496,7 @@
           "pct_of_total": 2.14,
           "n_hospitalizations": 205,
           "total_days": 2712,
-          "total_value": 221417.09999999983,
+          "total_value": 221417.1,
           "deaths": 16
         },
         {
@@ -2147,7 +2507,7 @@
           "pct_of_total": 1.6,
           "n_hospitalizations": 153,
           "total_days": 1282,
-          "total_value": 156070.42999999996,
+          "total_value": 156070.43,
           "deaths": 8
         },
         {
@@ -2158,7 +2518,7 @@
           "pct_of_total": 1.59,
           "n_hospitalizations": 152,
           "total_days": 2386,
-          "total_value": 308942.67000000004,
+          "total_value": 308942.67,
           "deaths": 4
         },
         {
@@ -2180,7 +2540,7 @@
           "pct_of_total": 1.15,
           "n_hospitalizations": 110,
           "total_days": 580,
-          "total_value": 30042.569999999974,
+          "total_value": 30042.57,
           "deaths": 0
         },
         {
@@ -2191,7 +2551,7 @@
           "pct_of_total": 0.9,
           "n_hospitalizations": 86,
           "total_days": 671,
-          "total_value": 89150.54999999997,
+          "total_value": 89150.55,
           "deaths": 4
         },
         {
@@ -2217,7 +2577,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2261,7 +2621,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2309,55 +2669,55 @@
           "rank": 2,
           "csap_group": "g08",
           "csap_name": "Doenças pulmonares",
-          "metric_value": 225103.32999999993,
+          "metric_value": 225103.33,
           "pct_of_total": 11.94,
           "n_hospitalizations": 220,
           "total_days": 1396,
-          "total_value": 225103.32999999993,
+          "total_value": 225103.33,
           "deaths": 2
         },
         {
           "rank": 3,
           "csap_group": "g02",
           "csap_name": "Gastroenterites infecciosas e complicações",
-          "metric_value": 117343.45999999995,
+          "metric_value": 117343.46,
           "pct_of_total": 6.22,
           "n_hospitalizations": 225,
           "total_days": 1372,
-          "total_value": 117343.45999999995,
+          "total_value": 117343.46,
           "deaths": 1
         },
         {
           "rank": 4,
           "csap_group": "g16",
           "csap_name": "Infecção da pele e tecido subcutâneo",
-          "metric_value": 49626.979999999996,
+          "metric_value": 49626.98,
           "pct_of_total": 2.63,
           "n_hospitalizations": 107,
           "total_days": 730,
-          "total_value": 49626.979999999996,
+          "total_value": 49626.98,
           "deaths": 0
         },
         {
           "rank": 5,
           "csap_group": "g04",
           "csap_name": "Deficiências nutricionais",
-          "metric_value": 46819.51999999999,
+          "metric_value": 46819.52,
           "pct_of_total": 2.48,
           "n_hospitalizations": 53,
           "total_days": 671,
-          "total_value": 46819.51999999999,
+          "total_value": 46819.52,
           "deaths": 3
         },
         {
           "rank": 6,
           "csap_group": "g01",
           "csap_name": "Doenças preveníveis por imunização e condições sensíveis",
-          "metric_value": 32270.929999999997,
+          "metric_value": 32270.93,
           "pct_of_total": 1.71,
           "n_hospitalizations": 41,
           "total_days": 361,
-          "total_value": 32270.929999999997,
+          "total_value": 32270.93,
           "deaths": 1
         },
         {
@@ -2375,44 +2735,44 @@
           "rank": 8,
           "csap_group": "g15",
           "csap_name": "Infecção no rim e trato urinário",
-          "metric_value": 27789.729999999996,
+          "metric_value": 27789.73,
           "pct_of_total": 1.47,
           "n_hospitalizations": 78,
           "total_days": 444,
-          "total_value": 27789.729999999996,
+          "total_value": 27789.73,
           "deaths": 0
         },
         {
           "rank": 9,
           "csap_group": "g19",
           "csap_name": "Doenças relacionadas ao pré-natal e parto",
-          "metric_value": 24649.940000000002,
+          "metric_value": 24649.94,
           "pct_of_total": 1.31,
           "n_hospitalizations": 77,
           "total_days": 746,
-          "total_value": 24649.940000000002,
+          "total_value": 24649.94,
           "deaths": 0
         },
         {
           "rank": 10,
           "csap_group": "g05",
           "csap_name": "Infecções de ouvido, nariz e garganta",
-          "metric_value": 19719.670000000002,
+          "metric_value": 19719.67,
           "pct_of_total": 1.05,
           "n_hospitalizations": 62,
           "total_days": 293,
-          "total_value": 19719.670000000002,
+          "total_value": 19719.67,
           "deaths": 0
         },
         {
           "rank": 11,
           "csap_group": "g14",
           "csap_name": "Epilepsias",
-          "metric_value": 13864.180000000002,
+          "metric_value": 13864.18,
           "pct_of_total": 0.74,
           "n_hospitalizations": 16,
           "total_days": 82,
-          "total_value": 13864.180000000002,
+          "total_value": 13864.18,
           "deaths": 1
         },
         {
@@ -2460,7 +2820,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2518,7 +2878,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2650,7 +3010,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2720,7 +3080,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2760,7 +3120,8 @@
       "compare_by": "uf",
       "series": [
         {
-          "year": 2023
+          "year": 2023,
+          "MG": 0
         }
       ],
       "trends": {},
@@ -2773,7 +3134,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2826,7 +3187,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2865,8 +3226,13 @@
         {
           "year": 2023,
           "AM": 63,
+          "CE": 0,
+          "GO": 0,
           "MA": 1,
-          "RR": 9513
+          "MG": 0,
+          "PB": 0,
+          "RR": 9513,
+          "SP": 0
         }
       ],
       "summary": {},
@@ -2876,7 +3242,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.9.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {

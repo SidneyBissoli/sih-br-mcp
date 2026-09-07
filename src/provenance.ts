@@ -24,9 +24,10 @@ import {
 import { configuredDataDirectory, getDataDirectory } from "./db/duckdb.js";
 import { cubeFreshness, describeBehind, getFreshness } from "./freshness.js";
 import csapGroups from "./data/csap-groups.json" with { type: "json" };
+import csapGroupsCid9 from "./data/csap-groups-cid9.json" with { type: "json" };
 import cidChapters from "./data/cid-chapters.json" with { type: "json" };
 
-export const SERVER_VERSION = "0.8.0";
+export const SERVER_VERSION = "0.9.0";
 
 export const provenance = createProvenanceContext({
   metaNamespace: "br.sbissoli.sih",
@@ -89,8 +90,24 @@ export interface SihSidecar {
   retrieved_at: string;
   partitions: SihSidecarPartition[];
   totals: Record<string, number>;
-  /** Builder >= 2.4.0: colunas cruas que o SIH-RD daquele ano não tem (RACA_COR antes de 2008). */
+  /** Builder >= 2.4.0: colunas cruas que o SIH-RD daquele ano não tem (RACA_COR antes de 2008; MUNIC_RES antes de 1994). */
   columns_missing?: string[];
+  /** Builder >= 2.5.0: internações que entraram com DT_INTER vazio (data = competência do arquivo; 1992-01..04 e 1993-01). */
+  records_date_imputed?: number;
+  /** Builder >= 2.5.0: internações do cubo por revisão da CID ("9" = CID-9 de 6 dígitos, até 1997; "10" = CID-10). */
+  cid_revision?: Record<string, number>;
+  /** Builder >= 2.5.0: lista ICSAP usada por revisão ("9": "cid9-derivada"; "10": "portaria-221-2008"). */
+  icsap_list_revision?: Record<string, string>;
+  /** Builder >= 2.5.0: true quando o cubo tem ICSAP pela lista CID-9 derivada (não oficial). */
+  not_official_icsap?: boolean;
+  /** Builder >= 2.5.0: comparabilidade por grupo da lista CID-9 com a CID-10 (alta/media/baixa), só com CID-9. */
+  icsap_comparability?: Record<string, string>;
+  /** Builder >= 2.5.0: base de `uf` — "residencia" (MUNIC_RES, 1998+) ou "arquivo" (estabelecimento, 1992–1997). */
+  uf_basis?: "residencia" | "arquivo";
+  /** Builder >= 2.5.0: false quando `municipality_code` é nulo em todas as linhas (1992–1997). */
+  municipality_available?: boolean;
+  /** Builder >= 2.5.0: moeda de `value` por competência da janela (Cr$ BRE, CR$ BRR, R$ BRL). */
+  currency?: { from: string; to: string; code: string; symbol: string; name: string }[];
   notes: string[];
 }
 
@@ -161,6 +178,111 @@ export function raceNotes(years: number[] | undefined, loadedYears: number[]): s
   return [
     `Raça/cor não existe no SIH-RD de ${hit.join(", ")} (RACA_COR entrou no leiaute da AIH em 2008): nessas linhas \`race\` é nulo — o filtro \`race\` não as alcança e, no agrupamento por \`race\`, elas formam o grupo null.`,
   ];
+}
+
+// =============================================================================
+// ERA ANTIGA 1992–1997 (builder >= 2.5.0; docs/analise-002 e analise-003)
+// =============================================================================
+
+function sortedYears(pred: (s: SihSidecar) => boolean): number[] {
+  return loadSidecars()
+    .filter(pred)
+    .map((s) => s.cube_year)
+    .sort((a, b) => a - b);
+}
+
+/** Anos cujo cubo tem internações em CID-9 (sidecar `cid_revision["9"] > 0`; 1992–1997). */
+export function yearsCid9(): number[] {
+  return sortedYears((s) => (s.cid_revision?.["9"] ?? 0) > 0);
+}
+
+/** Anos cujo `uf` é a UF do ARQUIVO (estabelecimento), não de residência (sidecar `uf_basis = "arquivo"`; 1992–1997). */
+export function yearsUfArquivo(): number[] {
+  return sortedYears((s) => s.uf_basis === "arquivo");
+}
+
+/** Anos cujo `value` está, em alguma competência, em moeda anterior ao real (Cr$ ou CR$; 1992–1994). */
+export function yearsPreReal(): number[] {
+  return sortedYears((s) => (s.currency ?? []).some((c) => c.code !== "BRL"));
+}
+
+/** Internações que entraram sem DT_INTER (data = competência), por ano (1992 e 1993). */
+export function dateImputedByYear(): Record<number, number> {
+  const out: Record<number, number> = {};
+  for (const s of loadSidecars()) {
+    if ((s.records_date_imputed ?? 0) > 0) out[s.cube_year] = s.records_date_imputed as number;
+  }
+  return out;
+}
+
+/** Anos da lista que a consulta alcança: os pedidos ou, sem pedido, os carregados. */
+function hitYears(list: number[], years: number[] | undefined, loadedYears: number[]): number[] {
+  const asked = years && years.length > 0 ? years : loadedYears;
+  return list.filter((y) => asked.includes(y));
+}
+
+const fmtInt = (n: number): string => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+export interface EraAspects {
+  /** A ferramenta devolve ICSAP (grupo CSAP, is_csap, indicadores). */
+  icsap?: boolean;
+  /** A ferramenta devolve `value` (valor pago). */
+  value?: boolean;
+  /** A ferramenta filtra ou agrupa por município. */
+  municipality?: boolean;
+  /** A ferramenta devolve ou agrupa por mês. */
+  month?: boolean;
+}
+
+/**
+ * Notas para a resposta de uma ferramenta que alcança anos da era antiga
+ * (1992–1997): `uf` do arquivo e diagnóstico em CID-9 sempre que algum ano da
+ * era entra; ICSAP derivada, moeda da época, município nulo e mês imputado só
+ * quando a ferramenta usa a dimensão (`aspects`). Sem `years`, valem os anos
+ * carregados. Vazio para 1998+ — o golden (fixture 2023) não muda.
+ */
+export function eraNotes(years: number[] | undefined, loadedYears: number[], aspects: EraAspects = {}): string[] {
+  const notes: string[] = [];
+  const ufa = hitYears(yearsUfArquivo(), years, loadedYears);
+  if (ufa.length > 0) {
+    notes.push(
+      `Em ${ufa.join(", ")} \`uf\` é a UF do ARQUIVO (estabelecimento), não de residência: MUNIC_RES não existe no SIH-RD de 1992–1993 e é vazio até nov/1994 (sidecar uf_basis = "arquivo"; docs/analise-002-sih-1992-1997.md). Séries por UF não são estritamente comparáveis com 1998+ (a diferença é a internação fora da UF de residência).`,
+    );
+    if (aspects.municipality) {
+      notes.push(
+        `\`municipality_code\` é nulo em ${ufa.join(", ")}: o filtro por município não alcança esses anos e, no agrupamento por município, eles formam o grupo null.`,
+      );
+    }
+  }
+  const c9 = hitYears(yearsCid9(), years, loadedYears);
+  if (c9.length > 0) {
+    notes.push(
+      `Diagnóstico em CID-9 em ${c9.join(", ")} (cid_revision = 9): \`cid_group\` é a categoria CID-9 de 3 dígitos ("466", "E883", "V01"), não o código CID-10, e \`cid_chapter\` é o capítulo CID-10 equivalente (src/data/cid9-chapters.json). Em 1997 convivem linhas em CID-9 e em CID-10 (internações faturadas em 1998), separáveis por \`cid_revision\`.`,
+    );
+    if (aspects.icsap) {
+      notes.push(
+        `ICSAP de ${c9.join(", ")} pela lista CID-9 DERIVADA e NÃO OFICIAL (src/data/csap-groups-cid9.json; docs/analise-003-icsap-cid9.md), validada na fronteira 1997/98 (razão global 1,05): g03 (anemia) e g05 (ouvido, nariz e garganta) NÃO são comparáveis com 1998+. Em 1997, as internações faturadas em jan–fev/1998 (cid_revision = 10) têm ICSAP subestimado (adaptação à CID-10).`,
+      );
+    }
+  }
+  if (aspects.value) {
+    const pr = hitYears(yearsPreReal(), years, loadedYears);
+    if (pr.length > 0) {
+      notes.push(
+        `\`value\` em ${pr.join(", ")} é NOMINAL na moeda da competência de faturamento (Cr$ cruzeiro até 1993-06, CR$ cruzeiro real 1993-07..1994-06, R$ desde 1994-07; sidecar currency): não somar nem comparar entre moedas nem com anos posteriores.`,
+      );
+    }
+  }
+  if (aspects.month) {
+    const di = dateImputedByYear();
+    const hit = hitYears(Object.keys(di).map(Number), years, loadedYears);
+    if (hit.length > 0) {
+      notes.push(
+        `Internações sem DT_INTER na fonte em ${hit.map((y) => `${y} (${fmtInt(di[y])})`).join(", ")} (competências 1992-01..04 e 1993-01) entraram com mês = competência de faturamento (sidecar records_date_imputed).`,
+      );
+    }
+  }
+  return notes;
 }
 
 // =============================================================================
@@ -331,6 +453,45 @@ export function csapProvenance(): CanonicalProvenance {
   });
 }
 
+/**
+ * Lista ICSAP em CID-9 DERIVADA da Portaria 221/2008 para o SIH de 1992–1997
+ * (src/data/csap-groups-cid9.json; docs/analise-003-icsap-cid9.md). Não é ato
+ * normativo: é tabela deste projeto, validada na fronteira 1997/98.
+ */
+export function csapCid9Provenance(): CanonicalProvenance {
+  const m = csapGroupsCid9.metadata;
+  return provenance.build({
+    source: {
+      name: "sih-br-mcp — lista ICSAP em CID-9 derivada da Portaria MS/SAS nº 221/2008 (NÃO oficial)",
+      agency: "sih-br-mcp (Sidney Bissoli)",
+      database: "src/data/csap-groups-cid9.json",
+      endpoint: null,
+    },
+    source_url: "https://github.com/SidneyBissoli/sih-br-mcp/blob/master/docs/analise-003-icsap-cid9.md",
+    license: {
+      id: "MIT",
+      name: "Tabela derivada deste projeto (MIT); listas de origem citadas no JSON: Caminal 2004, AHRQ PQI v6.0 (2016), CIHI 2008, tabelas CID-9 do DATASUS",
+      url: null,
+      terms_url: null,
+      verified_at: null,
+    },
+    dataset: {
+      id: "icsap-cid9-derivada",
+      version: m.generated_at,
+      name: `Lista ICSAP em CID-9 derivada (1992–1997): ${m.total_groups} grupos, ${m.total_rubrics} rubricas, ${m.total_codes6} códigos de 6 dígitos`,
+    },
+    data_vintage: `derivada e validada na fronteira 1997/98 em ${m.generated_at}; razão global de participação 1,05; g03 e g05 com comparabilidade baixa`,
+    retrieved_at: REFERENCE_SNAPSHOT_AT,
+    citation:
+      "BISSOLI, S. Lista ICSAP em CID-9 derivada da Portaria MS/SAS nº 221/2008 para o SIH/SUS de 1992–1997 (docs/analise-003-icsap-cid9.md). sih-br-mcp, 2026. Não oficial.",
+    derived: true,
+    derivation_note:
+      "Correspondência MANUAL por rubrica CID-9 (OMS 1975) ↔ CID-10 para cada um dos 19 grupos da Portaria 221/2008, conferida nos rótulos do DATASUS e nas listas de origem em CID-9 (Caminal 2004, AHRQ PQI v6.0/2016, CIHI 2008; GEMs só em 514); " +
+      "perímetro da Portaria manda (485/486, 482.4, 483, 558, 590.2, 430/431, 410 ficam fora). Validada empiricamente na fronteira 1997/98 (participação por grupo em CID-9 vs CID-10): razão global 1,05; g03 e g05 com comparabilidade baixa por mudança de prática de codificação. Não é ato normativo.",
+    served_from_cache: null,
+  });
+}
+
 /** Capítulos da CID-10 (OMS), transcritos em src/data. */
 export function cidProvenance(): CanonicalProvenance {
   return provenance.build({
@@ -423,8 +584,14 @@ export function provenanceFor(tool: string, args: unknown): CanonicalProvenance 
     case "get_icsap":
     case "get_icsap_indicators":
     case "rank_csap_groups":
-    case "compare_icsap_trends":
-      return [sihProvenance(yearsFromArgs(args)), csapProvenance()];
+    case "compare_icsap_trends": {
+      // 0.9.0: quando a consulta alcança ano em CID-9 (1992–1997), a lista
+      // derivada entra como terceira fonte, marcada como derivada e não oficial
+      const years = yearsFromArgs(args);
+      const blocks = [sihProvenance(years), csapProvenance()];
+      if (yearsCid9().some((y) => years.length === 0 || years.includes(y))) blocks.push(csapCid9Provenance());
+      return blocks;
+    }
     case "get_hospitalization_rates":
       return [sihProvenance(yearsFromArgs(args)), populationProvenance()];
     default:

@@ -198,8 +198,8 @@ jobs:
             any::jsonlite
             any::here
           install-pandoc: false
-      - name: healthbR instalado tem sih_status() e aceita 1998 (SIH desde 1992, >= 0.4.0.9000)
-        run: Rscript -e 'stopifnot(exists("sih_status", asNamespace("healthbR")), 1998L %in% healthbR::sih_years("all")); cat("healthbR", as.character(packageVersion("healthbR")), "arrow", as.character(packageVersion("arrow")), "\n")'
+      - name: healthbR instalado tem sih_status() e aceita 1992 (SIH desde 1992, >= 0.4.0.9000)
+        run: Rscript -e 'stopifnot(exists("sih_status", asNamespace("healthbR")), 1992L %in% healthbR::sih_years("all")); cat("healthbR", as.character(packageVersion("healthbR")), "arrow", as.character(packageVersion("arrow")), "\n")'
 
       - name: Guardar os sidecars anteriores
         run: |

@@ -1,7 +1,7 @@
 [
   {
     "name": "classify_as_csap",
-    "description": "Classifica um ou mais códigos CID-10 como CSAP ou não. Retorna o grupo CSAP correspondente se aplicável.",
+    "description": "Classifica um ou mais códigos CID-10 como CSAP ou não. Retorna o grupo CSAP correspondente se aplicável. Só CID-10: os códigos CID-9 de 6 dígitos do SIH de 1992–1997 são classificados no build pela lista derivada (src/data/csap-groups-cid9.json), não por esta ferramenta.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -20,7 +20,7 @@
   },
   {
     "name": "compare_icsap_trends",
-    "description": "Análise temporal comparativa de ICSAP entre UFs ou grupos CSAP. Calcula tendências, variação anual e identifica melhores/piores desempenhos. Anos válidos: os cobertos por pop_uf.parquet, informados em get_available_years.population_years.",
+    "description": "Análise temporal comparativa de ICSAP entre UFs ou grupos CSAP. Calcula tendências, variação anual e identifica melhores/piores desempenhos. Para `percentage` e `count` valem todos os anos do SIH (desde 1992); `rate_per_10k` exige população e aceita só os anos de get_available_years.population_years. Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `uf` é a UF do arquivo — ver as `notes`.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -69,7 +69,7 @@
   },
   {
     "name": "compare_regions",
-    "description": "Compara internações entre UFs ou regiões do Brasil. Gera rankings e identifica variações regionais.",
+    "description": "Compara internações entre UFs ou regiões do Brasil. Gera rankings e identifica variações regionais. Em 1992–1997 `uf` é a UF do arquivo (estabelecimento), não de residência — ver get_available_years.uf_basis e as `notes`.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -113,7 +113,7 @@
   },
   {
     "name": "get_available_years",
-    "description": "Retorna os anos disponíveis nos dados do SIH-SUS carregados e o frescor dos cubos em relação ao espelho healthbr-data (`freshness.status`: current, stale, unknown, pending ou disabled; quando stale, lista por ano as partições reeditadas pelo MS, regeneradas, retiradas ou novas na janela).",
+    "description": "Retorna os anos disponíveis nos dados do SIH-SUS carregados e o frescor dos cubos em relação ao espelho healthbr-data (`freshness.status`: current, stale, unknown, pending ou disabled; quando stale, lista por ano as partições reeditadas pelo MS, regeneradas, retiradas ou novas na janela). Por ano, o que muda entre as eras do SIH: `race_available` (raça/cor só de 2008), `cid_revision` (9 = CID-9 de 6 dígitos em 1992–1997, 10 = CID-10; 1997 tem as duas), `icsap_list_revision` (cid9-derivada, não oficial, em 1992–1997), `uf_basis` (arquivo em 1992–1997, residencia de 1998), `municipality_available`, `currency` e `records_date_imputed`.",
     "inputSchema": {
       "type": "object",
       "properties": {}
@@ -200,7 +200,7 @@
   },
   {
     "name": "get_hospitalization_trends",
-    "description": "Retorna séries temporais de internações (mensal ou anual). Útil para análise de tendências e sazonalidade.",
+    "description": "Retorna séries temporais de internações (mensal ou anual). Útil para análise de tendências e sazonalidade. Série desde 1992; em 1992–1997 `uf` é a UF do arquivo (estabelecimento) e as internações sem data na fonte (1992-01..04 e 1993-01) entram no mês de faturamento — ver get_available_years e as `notes`.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -240,7 +240,7 @@
   },
   {
     "name": "get_hospitalizations",
-    "description": "Consulta dados de internações hospitalares do SUS com filtros flexíveis. Permite agregar por múltiplas dimensões (UF, CID, sexo, idade, raça, ano/mês). Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available).",
+    "description": "Consulta dados de internações hospitalares do SUS com filtros flexíveis. Permite agregar por múltiplas dimensões (UF, CID, sexo, idade, raça, ano/mês). Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). Série desde 1992: em 1992–1997 o diagnóstico é CID-9 decodificado por tabela (`cid_group` = categoria de 3 dígitos, `cid_chapter` = capítulo CID-10 equivalente; agrupar por `cid_revision` separa 9 e 10 — 1997 tem os dois), `uf` é a UF do ARQUIVO (estabelecimento), não de residência, e `value` é nominal na moeda da época — ver get_available_years (uf_basis, currency) e as `notes` da resposta.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -249,7 +249,7 @@
           "items": {
             "type": "integer"
           },
-          "description": "Anos para consultar (ex: [2023, 2024])"
+          "description": "Anos para consultar (ex: [2023, 2024]); série de 1992 em diante"
         },
         "month": {
           "type": "array",
@@ -308,6 +308,7 @@
               "month",
               "uf",
               "cid_chapter",
+              "cid_revision",
               "cid_group",
               "sex",
               "age",
@@ -327,7 +328,7 @@
   },
   {
     "name": "get_icsap",
-    "description": "Consulta internações por Condições Sensíveis à Atenção Primária (ICSAP). Permite filtros por grupo CSAP, UF, município, sexo, idade e raça. Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available).",
+    "description": "Consulta internações por Condições Sensíveis à Atenção Primária (ICSAP). Permite filtros por grupo CSAP, UF, município, sexo, idade e raça. Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). Série desde 1992: em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+), `uf` é a UF do arquivo e `municipality_code` é nulo — ver get_available_years (icsap_list_revision, uf_basis) e as `notes`.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -387,6 +388,7 @@
               "year",
               "uf",
               "municipality_code",
+              "cid_revision",
               "csap_group",
               "sex",
               "age",
@@ -400,7 +402,7 @@
   },
   {
     "name": "get_icsap_indicators",
-    "description": "Calcula indicadores de ICSAP: percentual (ICSAP/Total×100). Métricas-chave para avaliar a Atenção Primária. Agrupar por raça só faz sentido de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available).",
+    "description": "Calcula indicadores de ICSAP: percentual (ICSAP/Total×100). Métricas-chave para avaliar a Atenção Primária. Agrupar por raça só faz sentido de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `uf` é a UF do arquivo — ver as `notes`.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -445,6 +447,7 @@
             "enum": [
               "year",
               "uf",
+              "cid_revision",
               "sex",
               "race"
             ]
@@ -456,7 +459,7 @@
   },
   {
     "name": "list_cid_chapters",
-    "description": "Lista os 22 capítulos da CID-10 com seus códigos e faixas de diagnóstico.",
+    "description": "Lista os 22 capítulos da CID-10 com seus códigos e faixas de diagnóstico. Os cubos de 1992–1997 (diagnóstico em CID-9) trazem `cid_chapter` como o capítulo CID-10 equivalente (mapa por categoria em src/data/cid9-chapters.json).",
     "inputSchema": {
       "type": "object",
       "properties": {}
@@ -481,7 +484,7 @@
   },
   {
     "name": "rank_csap_groups",
-    "description": "Gera ranking dos 19 grupos CSAP por número de internações, dias de internação ou valor. Identifica principais causas evitáveis.",
+    "description": "Gera ranking dos 19 grupos CSAP por número de internações, dias de internação ou valor. Identifica principais causas evitáveis. Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `value` é nominal na moeda da época — ver as `notes`.",
     "inputSchema": {
       "type": "object",
       "properties": {

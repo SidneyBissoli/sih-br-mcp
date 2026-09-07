@@ -17,7 +17,8 @@
 #   build_data(years = "all", ufs = "all")         # TUDO (demorado)
 #
 # `ufs` é a UF do ARQUIVO (estabelecimento), como no FTP; a coluna `uf` dos
-# cubos é a UF de RESIDÊNCIA (MUNIC_RES).
+# cubos é a UF de RESIDÊNCIA (MUNIC_RES) de 1998 em diante e a UF do ARQUIVO
+# até 1997 (ver ERA ANTIGA abaixo).
 #
 # JANELA DE COMPETÊNCIAS (decidida nos dados em 2026-09-05, ver
 # docs/analise-001-janela-competencia.md): o cubo do ano Y contém as
@@ -44,6 +45,43 @@
 # 1998+1999) não vê a coluna e o de 2007 (lê 2007+2008) a vê com NA nas linhas
 # de 2007 — os dois caminhos têm de dar o mesmo cubo (ver ler_particoes()).
 # Exige healthbR >= 0.4.0.9000 (sih_years() desde 1992).
+#
+# ERA ANTIGA 1992–1997 (v2.5.0, 2026-09-07; docs/analise-002 e analise-003,
+# CONTEXT decisões 21–23). O SIH-RD de 1992–1997 difere do de 1998+ e o builder
+# trata as diferenças por linha, sem ramo separado:
+#   - DIAG_PRINC em CID-9 (6 dígitos: prefixo + categoria + subcategoria + DV),
+#     decodificado por TABELA (src/data/cid9-codes.json; a tabela tem 2
+#     exceções à fórmula do DV). `cid_revision` (9/10) é CHAVE nos três cubos
+#     em TODOS os anos (constante 10 em 1998+); em 1997 a janela traz as
+#     competências 1998-01..04, já em CID-10 — as duas revisões convivem no
+#     mesmo cubo e a coluna as separa. `cid_group` em CID-9 = categoria de 3
+#     dígitos ("466", "E883", "V01"); `cid_chapter` = capítulo CID-10
+#     equivalente (src/data/cid9-chapters.json). Código fora da tabela (os da
+#     CID9XINV.CNV, que o DATASUS marca inválidos — ~0,1 % das AIH — e os 3
+#     com DV errado) sai com cid_group e cid_chapter NULOS, como hoje o CID-10
+#     inválido; conta em records_in_cube e nas séries.
+#   - ICSAP por tabela nas duas revisões: CID-9 pela lista DERIVADA e não
+#     oficial de src/data/csap-groups-cid9.json (analise-003; g03 e g05 não
+#     comparáveis com 1998+); CID-10 pela Portaria 221/2008.
+#   - DT_INTER tem 6 dígitos (AAMMDD) até 1997 e 8 (AAAAMMDD) de 1998; é
+#     lido pelo comprimento. Vazio (1992-01..04 e 1993-01, 6,3 M AIH) → data =
+#     competência do arquivo (dia 1), contado em `records_date_imputed`.
+#   - MUNIC_RES não existe em 1992–93 e é vazio até nov/1994: nos anos
+#     <= 1997 `uf` é a UF DO ARQUIVO (estabelecimento) e `municipality_code`
+#     é nulo (sidecar `uf_basis = "arquivo"`, `municipality_available = false`).
+#     De 1998 em diante nada muda (uf de residência).
+#   - `value` é NOMINAL na moeda da competência (Cr$ até 1993-06, CR$
+#     1993-07..1994-06, R$ desde 1994-07); o sidecar registra `currency`.
+#   - SEXO "2" (feminino no CNV da era; <= 616 AIH/ano) → "F".
+#   - COD_IDADE: 2 = DIAS, 3 = MESES (as versões < 2.5.0 invertiam os dois e
+#     davam idade 1–2 anos a neonatos de 12–30 dias — sih:cod-idade). Ambos
+#     dão 0 anos; por isso os 28 anos de 1998+ foram reconstruídos.
+#   - CUBO ICSAP com TODOS os estratos: além de uma linha por (estrato × grupo
+#     CSAP), uma linha por estrato SEM ICSAP (csap_group nulo, n = 0), ambas
+#     com n_total = total do estrato. O denominador do % ICSAP é n_total
+#     somado sobre estratos DISTINTOS (servidor >= 0.9.0); somar linha a
+#     linha multiplica pelo número de grupos e omite os estratos sem ICSAP
+#     (defeito do servidor <= 0.8.0: 2023/RR dava 3,65 % em vez de 19,75 %).
 # =============================================================================
 
 library(dplyr)
@@ -69,7 +107,7 @@ if (!requireNamespace("healthbR", quietly = TRUE) ||
 OUTPUT_DIR <- here::here("data")
 dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
-BUILDER_VERSION <- "2.4.0"
+BUILDER_VERSION <- "2.5.0"
 
 # Meses de Y+1 lidos para fechar as internações de Y (ver cabeçalho)
 MESES_SEGUINTES <- 4L
@@ -85,19 +123,72 @@ DATASUS_FTP_DIR <- "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Da
 
 # Colunas cruas do SIH-RD que os cubos usam (projeção na leitura do R2).
 # As OPCIONAIS podem faltar no Parquet de um ano (RACA_COR: só de 2008 em
-# diante); saem nulas no cubo e registradas em `columns_missing` no sidecar.
-COLUNAS_OBRIGATORIAS <- c("DT_INTER", "MUNIC_RES", "DIAG_PRINC", "SEXO", "IDADE",
+# diante; MUNIC_RES: só de 1994); saem nulas no cubo e registradas em
+# `columns_missing` no sidecar.
+COLUNAS_OBRIGATORIAS <- c("DT_INTER", "DIAG_PRINC", "SEXO", "IDADE",
                           "COD_IDADE", "DIAS_PERM", "VAL_TOT", "MORTE")
-COLUNAS_OPCIONAIS <- c("RACA_COR")
+COLUNAS_OPCIONAIS <- c("MUNIC_RES", "RACA_COR")
 COLUNAS_SIH <- c(COLUNAS_OBRIGATORIAS, COLUNAS_OPCIONAIS)
+
+# Até este ano `uf` dos cubos é a UF DO ARQUIVO e `municipality_code` é nulo
+# (MUNIC_RES ausente em 1992–93 e vazio até nov/1994; decisão iv da analise-002
+# §5: um critério só para os seis anos, bem documentado, em vez de um cubo com
+# base de eixo diferente a cada ano).
+UF_ARQUIVO_ATE_ANO <- 1997L
 
 # Todas as UFs brasileiras
 ALL_UFS <- c("AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
              "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
              "RS", "RO", "RR", "SC", "SP", "SE", "TO")
 
-# Ano inicial (CID-10 implementado em jan/1998)
-FIRST_YEAR <- 1998
+# Ano inicial: primeiro ano do SIH-RD no espelho (CID-9 até 1997, ver cabeçalho)
+FIRST_YEAR <- 1992
+
+# =============================================================================
+# TABELAS CID / ICSAP (2.5.0) — as mesmas de src/data/ que o servidor usa
+# =============================================================================
+
+TABELAS_DIR <- here::here("src", "data")
+
+#' Carrega, uma vez por sessão, as tabelas versionadas em src/data/:
+#'   cid9   — 8.240 códigos de 6 dígitos → categoria e capítulo CID-10
+#'            equivalente (cid9-codes.json; gerado por scripts/cid9-tables.py)
+#'   csap9  — código de 6 dígitos → grupo ICSAP (csap-groups-cid9.json; lista
+#'            derivada, não oficial)
+#'   csap10 — código CID-10 (3 ou 4 caracteres, sem ponto) → grupo ICSAP
+#'            (csap-groups.json, Portaria 221/2008); classificar_csap() fica
+#'            como referência da prova provar_csap_cid10_tabela()
+carregar_tabelas <- function() {
+  cid9 <- jsonlite::fromJSON(file.path(TABELAS_DIR, "cid9-codes.json"))$codes
+  if (anyDuplicated(cid9$code6)) cli_abort("cid9-codes.json: code6 repetido")
+
+  csap9_json <- jsonlite::fromJSON(file.path(TABELAS_DIR, "csap-groups-cid9.json"),
+                                   simplifyVector = FALSE)
+  csap9 <- dplyr::bind_rows(lapply(csap9_json$groups, function(g) {
+    codes <- unique(unlist(lapply(g$diagnoses, function(d) d$codes6)))
+    data.frame(code6 = codes, csap_group = g$code, stringsAsFactors = FALSE)
+  }))
+  if (anyDuplicated(csap9$code6)) cli_abort("csap-groups-cid9.json: código em mais de um grupo")
+  comparabilidade <- setNames(
+    lapply(csap9_json$groups, function(g) g$comparability),
+    vapply(csap9_json$groups, function(g) g$code, "")
+  )
+
+  csap10_json <- jsonlite::fromJSON(file.path(TABELAS_DIR, "csap-groups.json"),
+                                    simplifyVector = FALSE)
+  csap10 <- dplyr::bind_rows(lapply(csap10_json$groups, function(g) {
+    codes <- unique(unlist(lapply(g$diagnoses, function(d) d$cid10)))
+    data.frame(code = gsub(".", "", toupper(codes), fixed = TRUE), csap_group = g$code,
+               stringsAsFactors = FALSE)
+  }))
+
+  list(cid9 = cid9, csap9 = csap9, csap10 = csap10,
+       icsap9_comparability = comparabilidade,
+       icsap9_list_revision = csap9_json$metadata$icsap_list_revision)
+}
+TABELAS <- carregar_tabelas()
+
+ICSAP_LIST_REVISION <- c("9" = TABELAS$icsap9_list_revision, "10" = "portaria-221-2008")
 
 # =============================================================================
 # FUNCOES AUXILIARES
@@ -272,6 +363,83 @@ por_valor_unico <- function(x, f, tipo) {
   v[match(x, u)]
 }
 
+#' Classifica CID-10 como CSAP pela TABELA src/data/csap-groups.json (código de
+#' 4 caracteres exato tem precedência sobre o de 3). Serve à prova
+#' provar_csap_cid10_tabela(); a produção usa classificar_csap().
+classificar_csap_cid10_tabela <- function(cid4) {
+  cid4 <- toupper(trimws(cid4))
+  t3 <- TABELAS$csap10[nchar(TABELAS$csap10$code) == 3L, ]
+  t4 <- TABELAS$csap10[nchar(TABELAS$csap10$code) == 4L, ]
+  g4 <- t4$csap_group[match(cid4, t4$code)]
+  g3 <- t3$csap_group[match(substr(cid4, 1, 3), t3$code)]
+  ifelse(is.na(g4), g3, g4)
+}
+
+#' PROVA: a tabela e a função hardcoded dão o mesmo grupo para todos os códigos
+#' de `cids`. Devolve os que divergem (data.frame vazio = prova passou).
+provar_csap_cid10_tabela <- function(cids) {
+  cids <- unique(toupper(trimws(cids)))
+  funcao <- unname(vapply(cids, classificar_csap, NA_character_, USE.NAMES = FALSE))
+  tabela <- classificar_csap_cid10_tabela(cids)
+  dif <- !(is.na(funcao) & is.na(tabela)) & (is.na(funcao) | is.na(tabela) | funcao != tabela)
+  data.frame(cid = cids[dif], funcao = funcao[dif], tabela = tabela[dif], stringsAsFactors = FALSE)
+}
+
+#' Deriva, de DIAG_PRINC, tudo o que os cubos precisam — pelos valores únicos
+#' (ver por_valor_unico) e por revisão da CID:
+#'   revisao  9 se o código tem 6 dígitos (SIH até 1997), 10 caso contrário
+#'   grupo    CID-10: 3 caracteres; CID-9: categoria de 3 dígitos da tabela
+#'   capitulo CID-10: extrair_capitulo_cid(); CID-9: capítulo CID-10 equivalente
+#'            da tabela (código fora da tabela, p.ex. DV errado → NA)
+#'   csap     CID-10: classificar_csap(); CID-9: lista derivada (csap9)
+derivar_diagnostico <- function(diag) {
+  u <- unique(diag)
+  u_chr <- ifelse(is.na(u), "", u)
+  revisao <- ifelse(grepl("^[0-9]{6}$", u_chr), 9L, 10L)
+
+  cid3 <- substr(u_chr, 1, 3)
+  cid4 <- substr(u_chr, 1, 4)
+  grupo <- ifelse(nzchar(cid3), cid3, NA_character_)
+  capitulo <- unname(vapply(cid3, extrair_capitulo_cid, NA_integer_, USE.NAMES = FALSE))
+  # ICSAP CID-10 pela TABELA (csap-groups.json): provado idêntico a
+  # classificar_csap() nos 11.757 códigos das CID10_*.CNV do DATASUS em
+  # 2026-09-07 (provar_csap_cid10_tabela; 0 divergências) — a função fica
+  # como referência da prova.
+  csap <- classificar_csap_cid10_tabela(cid4)
+  csap[!nzchar(cid4)] <- NA_character_
+
+  i9 <- which(revisao == 9L)
+  if (length(i9) > 0) {
+    m <- match(u_chr[i9], TABELAS$cid9$code6)
+    grupo[i9] <- TABELAS$cid9$category[m]
+    capitulo[i9] <- as.integer(TABELAS$cid9$chapter[m])
+    csap[i9] <- TABELAS$csap9$csap_group[match(u_chr[i9], TABELAS$csap9$code6)]
+  }
+
+  idx <- match(diag, u)
+  list(revisao = revisao[idx], grupo = grupo[idx], capitulo = capitulo[idx], csap = csap[idx])
+}
+
+#' Moedas das competências da janela do ano (por MÊS DE FATURAMENTO, medido em
+#' VAL_TOT — analise-002 §3): Cr$ cruzeiro até 1993-06, CR$ cruzeiro real
+#' 1993-07..1994-06, R$ real desde 1994-07. `value` dos cubos é nominal.
+moedas_do_ano <- function(ano) {
+  periodos <- list(
+    list(from = "1992-01", to = "1993-06", code = "BRE", symbol = "Cr$", name = "cruzeiro"),
+    list(from = "1993-07", to = "1994-06", code = "BRR", symbol = "CR$", name = "cruzeiro real"),
+    list(from = "1994-07", to = "9999-12", code = "BRL", symbol = "R$", name = "real")
+  )
+  janela <- janela_competencias(ano)
+  ini <- min(janela)
+  fim <- max(janela)
+  dentro <- Filter(function(p) p$from <= fim && p$to >= ini, periodos)
+  lapply(dentro, function(p) {
+    p$from <- max(p$from, ini)
+    p$to <- min(p$to, fim)
+    p
+  })
+}
+
 # =============================================================================
 # ACESSO AO HEALTHBR-DATA (via healthbR)
 # =============================================================================
@@ -335,7 +503,8 @@ ler_particoes <- function(ano, ufs, particoes) {
   # para o de 2007 (lê 2007+2008) está, mas toda linha da competência de 2007
   # vem NA. Os dois têm de dar o mesmo cubo: a coluna conta como AUSENTE no ano
   # quando nenhuma linha das competências do ano a traz, e sai nula em TODAS as
-  # linhas do lote (inclusive nas de Y+1 que já a trazem).
+  # linhas do lote (inclusive nas de Y+1 que já a trazem). O mesmo vale para
+  # MUNIC_RES em 1992 (lê 1993, sem a coluna) e 1993 (lê 1994, com ela e NA).
   presentes <- intersect(COLUNAS_OPCIONAIS, names(ds))
   dados <- ds %>%
     dplyr::filter(year == ano | (year == ano + 1L & month <= MESES_SEGUINTES)) %>%
@@ -364,7 +533,9 @@ ler_particoes <- function(ano, ufs, particoes) {
                        format(divergentes$linhas, big.mark = "."))
     cli_abort(c("Partições com contagem diferente do manifesto:", setNames(detalhe, rep("x", length(detalhe)))))
   }
-  dados <- dados %>% dplyr::select(-year, -month, -uf_source)
+  # 2.5.0: a competência do arquivo fica (imputa DT_INTER vazio) e uf_source
+  # também (é o `uf` dos cubos até UF_ARQUIVO_ATE_ANO)
+  dados <- dados %>% dplyr::rename(comp_year = year, comp_month = month)
 
   registro <- lapply(seq_len(nrow(particoes)), function(i) {
     p <- particoes[i, ]
@@ -393,7 +564,14 @@ iso_utc <- function(ts) {
 
 #' Escreve data/sih_provenance_<ano>.json — o registro de safra do cubo
 escrever_sidecar <- function(ano, chaves, particoes, manifest_last_updated, janela_completa, totais, output_dir,
-                             columns_missing = character()) {
+                             columns_missing = character(), records_date_imputed = 0L,
+                             cid_revision = list()) {
+  # 2.5.0: base do eixo `uf`, revisões da CID presentes, moedas da janela
+  uf_arquivo <- ano <= UF_ARQUIVO_ATE_ANO
+  uf_basis <- if (uf_arquivo) "arquivo" else "residencia"
+  tem_cid9 <- "9" %in% names(cid_revision) && cid_revision[["9"]] > 0
+  moedas <- moedas_do_ano(ano)
+  varias_moedas <- length(moedas) > 1 || any(vapply(moedas, function(m) m$code != "BRL", logical(1)))
   git_commit <- tryCatch(
     trimws(system2("git", c("-C", shQuote(here::here()), "rev-parse", "HEAD"), stdout = TRUE, stderr = FALSE)),
     error = function(e) NA_character_, warning = function(w) NA_character_
@@ -404,7 +582,7 @@ escrever_sidecar <- function(ano, chaves, particoes, manifest_last_updated, jane
   # segundo (o pipeline do healthbr-data grava os dois no mesmo instante)
   processados_em <- iso_utc(vapply(particoes, function(p) p$processing_timestamp, ""))
   sidecar <- list(
-    manifest_version = "1.0.0",
+    manifest_version = "1.1.0",
     dataset = HEALTHBR_PREFIX,
     cube_year = ano,
     window = list(
@@ -442,18 +620,42 @@ escrever_sidecar <- function(ano, chaves, particoes, manifest_last_updated, jane
     retrieved_at = max(processados_em),
     partitions = particoes,
     totals = totais,
+    # 2.5.0: AIH que entraram com DT_INTER vazio (data = competência do arquivo)
+    records_date_imputed = as.integer(records_date_imputed),
+    # 2.5.0: internações do cubo por revisão da CID de DIAG_PRINC (9 = CID-9 de
+    # 6 dígitos, até 1997; 10 = CID-10); `cid_revision` é chave nos três cubos
+    cid_revision = cid_revision,
+    icsap_list_revision = as.list(ICSAP_LIST_REVISION[names(cid_revision)]),
+    not_official_icsap = tem_cid9,
+    icsap_comparability = if (tem_cid9) TABELAS$icsap9_comparability else NULL,
+    uf_basis = uf_basis,
+    municipality_available = !uf_arquivo,
+    currency = moedas,
     # 2.4.0: colunas cruas que este ano do SIH-RD não tem (RACA_COR antes de
-    # 2008). O servidor lê daqui se `race` existe no ano (get_available_years).
+    # 2008; MUNIC_RES antes de 1994). O servidor lê daqui se `race` existe.
     columns_missing = I(columns_missing),
     notes = I(c(
       "Cubo por ANO DE INTERNAÇÃO (DT_INTER): lê as competências do ano e os meses seguintes de Y+1 (window.months_after) e descarta internações de outros anos. Com 4 meses, 99,7-99,9% das internações do ano (dezembro 99,3-99,7%); o restante é reapresentação tardia difusa.",
-      "uf dos cubos = UF de residência (MUNIC_RES); ufs_arquivo = UF do estabelecimento (nome do arquivo RD no FTP).",
+      if (uf_arquivo)
+        "uf dos cubos = UF DO ARQUIVO (estabelecimento, ufs_arquivo), NÃO de residência: MUNIC_RES não existe no SIH-RD de 1992-1993 e é vazio até nov/1994; para dar aos seis anos 1992-1997 um eixo só, `uf` é a UF do arquivo e `municipality_code` é nulo em todas as linhas (uf_basis = 'arquivo'; decisão iv de docs/analise-002-sih-1992-1997.md §5). De 1998 em diante uf é a de residência: séries por UF não são estritamente comparáveis na fronteira 1997/98 (a diferença é a internação fora da UF de residência)."
+      else "uf dos cubos = UF de residência (MUNIC_RES); ufs_arquivo = UF do estabelecimento (nome do arquivo RD no FTP).",
       "retrieved_at = processing_timestamp mais recente, no manifesto do healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream; igual, ao segundo, ao download_date do rodapé do Parquet). Lido por healthbR::sih_status().",
       if (length(columns_missing) > 0) sprintf(
-        "Coluna(s) %s não existe(m) no SIH-RD de %d (RACA_COR só entra no leiaute da AIH em 2008): `race` é nulo em todas as linhas deste cubo, inclusive nas internações faturadas nas competências seguintes de %d, que já trazem a coluna.",
-        paste(columns_missing, collapse = ", "), ano, ano + 1L)
+        "Coluna(s) %s não existe(m) no SIH-RD de %d (RACA_COR só entra no leiaute da AIH em 2008; MUNIC_RES só em dez/1994): a coluna derivada (`race` de RACA_COR) é nula em todas as linhas deste cubo, inclusive nas internações faturadas nas competências seguintes de %d, que já trazem a coluna.",
+        paste(columns_missing, collapse = ", "), ano, ano + 1L),
+      if (records_date_imputed > 0) sprintf(
+        "%s internações entraram com DT_INTER VAZIO (o SIH-RD de 1992-01..04 e 1993-01 não traz a data): data de internação = dia 1 da competência do arquivo (decisão ii da analise-002 §5); nelas `month` é o mês de faturamento, não o de internação.",
+        format(records_date_imputed, big.mark = ".")),
+      if (tem_cid9)
+        "DIAG_PRINC em CID-9 (cid_revision = 9): código de 6 dígitos decodificado por tabela (src/data/cid9-codes.json); cid_group = categoria de 3 dígitos ('466', 'E883', 'V01'); cid_chapter = capítulo CID-10 equivalente (src/data/cid9-chapters.json). ICSAP pela lista DERIVADA e NÃO OFICIAL de src/data/csap-groups-cid9.json (docs/analise-003-icsap-cid9.md): g03 (anemia) e g05 (ouvido, nariz e garganta) não são comparáveis com 1998+ (icsap_comparability). Linhas com cid_revision = 10 no mesmo cubo são internações já faturadas em CID-10 (competências de 1998).",
+      if (ano == 1997L)
+        "As internações de 1997 faturadas em 1998-01 e 1998-02 (cid_revision = 10) têm ICSAP subestimado: a proporção ICSAP caiu para 19-20% nesses dois meses de adaptação à CID-10 e voltou a 24,5% em março (analise-003 §3.4). Efeito da fonte, não corrigido.",
+      if (varias_moedas)
+        "value é NOMINAL na moeda da competência de faturamento (currency): Cr$ cruzeiro até 1993-06, CR$ cruzeiro real 1993-07..1994-06, R$ real desde 1994-07. Não somar nem comparar valores entre moedas; não comparável com anos posteriores antes de 1994-07 (decisão v da analise-002 §5).",
+      "age: COD_IDADE 2 (dias) e 3 (meses) valem 0 anos. As versões < 2.5.0 do builder trocavam os dois (neonatos de 12-30 dias saíam com 1-2 anos); corrigido em 2.5.0 (sih:cod-idade) e os cubos de 1998+ reconstruídos."
     ))
   )
+  if (!tem_cid9) sidecar$icsap_comparability <- NULL
   destino <- file.path(output_dir, sprintf("sih_provenance_%d.json", ano))
   jsonlite::write_json(sidecar, destino, auto_unbox = TRUE, pretty = TRUE, null = "null", digits = NA)
   cli_alert_success("  sih_provenance_{ano}.json: {.val {length(particoes)}} partições, retrieved_at {.val {sidecar$retrieved_at}}")
@@ -470,8 +672,23 @@ escrever_sidecar <- function(ano, chaves, particoes, manifest_last_updated, jane
 #' contagens/inteiros (exatos); value é soma de doubles, igual ao último ulp.
 agregar_lote <- function(dados, ano, colunas_ausentes = character()) {
   n_lidos <- nrow(dados)
-  dados <- dados %>%
-    dplyr::mutate(dt_inter = as.Date(DT_INTER, format = "%Y%m%d"))
+  uf_arquivo <- ano <= UF_ARQUIVO_ATE_ANO
+
+  # DT_INTER (2.5.0): AAAAMMDD (8 dígitos, 1998+) ou AAMMDD (6, até 1997),
+  # lido pelo comprimento. VAZIO → dia 1 da competência do arquivo (contado em
+  # records_date_imputed; decisão ii). Qualquer outro conteúdo é inválido e
+  # fica fora, como antes. O filtro de ano de internação roda DEPOIS da
+  # imputação: AIH sem data de 1993-01 vão para o cubo de 1993.
+  dt_chr <- trimws(dplyr::coalesce(as.character(dados$DT_INTER), ""))
+  vazio <- !nzchar(dt_chr)
+  dt <- rep(as.Date(NA), n_lidos)
+  i8 <- nchar(dt_chr) == 8L
+  i6 <- nchar(dt_chr) == 6L
+  dt[i8] <- as.Date(dt_chr[i8], format = "%Y%m%d")
+  dt[i6] <- as.Date(dt_chr[i6], format = "%y%m%d")
+  dt[vazio] <- as.Date(sprintf("%04d-%02d-01", dados$comp_year[vazio], dados$comp_month[vazio]))
+  dados$dt_inter <- dt
+  dados$dt_imputada <- vazio
   n_invalidos <- sum(is.na(dados$dt_inter))
   if (n_invalidos > 0) {
     cli_alert_warning("{n_invalidos} registros com DT_INTER inválido ficam fora dos cubos")
@@ -482,27 +699,39 @@ agregar_lote <- function(dados, ano, colunas_ausentes = character()) {
   ano_inter <- as.integer(format(dados$dt_inter, "%Y"))
   n_outros_anos <- sum(ano_inter != ano)
   dados <- dados[ano_inter == ano, , drop = FALSE]
+  # Imputadas que FICARAM no cubo (as de 1993-01 lidas na janela de 1992 caem
+  # no filtro acima e contam no cubo de 1993)
+  n_imputados <- sum(dados$dt_imputada)
+  if (n_imputados > 0) {
+    cli_alert_info("  {format(n_imputados, big.mark='.')} internações de {ano} com DT_INTER vazio: data = competência do arquivo")
+  }
+
+  # Diagnóstico pelos valores únicos e por revisão da CID (2.5.0)
+  diag <- derivar_diagnostico(dados$DIAG_PRINC)
 
   dados <- dados %>%
     dplyr::mutate(
       ano = as.integer(format(dt_inter, "%Y")),
       mes = as.integer(format(dt_inter, "%m")),
       ano_mes = sprintf("%04d-%02d", ano, mes),
-      uf_codigo = substr(MUNIC_RES, 1, 2),
-      uf = uf_codigo_para_sigla(uf_codigo),
-      municipio_res = MUNIC_RES,
-      cid = substr(DIAG_PRINC, 1, 3),
-      cid_4 = substr(DIAG_PRINC, 1, 4),
-      capitulo_cid = por_valor_unico(cid, extrair_capitulo_cid, NA_integer_),
+      # uf: residência (MUNIC_RES) de 1998 em diante; UF DO ARQUIVO até 1997,
+      # com município nulo (ver cabeçalho e UF_ARQUIVO_ATE_ANO)
+      uf = if (uf_arquivo) uf_source else uf_codigo_para_sigla(substr(MUNIC_RES, 1, 2)),
+      municipio_res = if (uf_arquivo) NA_character_ else MUNIC_RES,
+      cid_revisao = diag$revisao,
+      cid = diag$grupo,
+      capitulo_cid = diag$capitulo,
       sexo = dplyr::case_when(
         SEXO == "1" ~ "M",
-        SEXO == "3" ~ "F",
+        SEXO %in% c("2", "3") ~ "F",  # "2" = feminino no CNV de 1992-1997 (<= 616 AIH/ano)
         TRUE ~ "I"
       ),
-      # IDADE SIMPLES (em anos completos)
+      # IDADE SIMPLES (em anos completos). COD_IDADE: 2 = dias (0-30), 3 = meses
+      # (1-11), 4 = anos, 5 = 100 + anos, 0/1 = ignorado. As versões < 2.5.0
+      # trocavam 2 e 3 (sih:cod-idade); os dois valem 0 anos.
       idade = dplyr::case_when(
-        COD_IDADE == "2" ~ as.integer(floor(as.numeric(IDADE) / 12)),
-        COD_IDADE == "3" ~ 0L,  # dias -> 0 anos
+        COD_IDADE == "2" ~ 0L,  # dias -> 0 anos
+        COD_IDADE == "3" ~ 0L,  # meses (< 12) -> 0 anos
         COD_IDADE == "4" ~ as.integer(IDADE),
         COD_IDADE == "5" ~ as.integer(as.numeric(IDADE) + 100),
         TRUE ~ NA_integer_
@@ -519,7 +748,7 @@ agregar_lote <- function(dados, ano, colunas_ausentes = character()) {
       dias = as.numeric(DIAS_PERM),
       valor = as.numeric(VAL_TOT),
       obito = as.integer(MORTE == "1"),
-      grupo_csap = por_valor_unico(cid_4, classificar_csap, NA_character_),
+      grupo_csap = diag$csap,
       is_csap = !is.na(grupo_csap)
     )
 
@@ -529,6 +758,7 @@ agregar_lote <- function(dados, ano, colunas_ausentes = character()) {
       month = mes,
       uf,
       cid_chapter = capitulo_cid,
+      cid_revision = cid_revisao,
       cid_group = cid,
       sex = sexo,
       age = idade,
@@ -548,7 +778,8 @@ agregar_lote <- function(dados, ano, colunas_ausentes = character()) {
     dplyr::group_by(
       year_month = ano_mes,
       uf,
-      cid_chapter = capitulo_cid
+      cid_chapter = capitulo_cid,
+      cid_revision = cid_revisao
     ) %>%
     dplyr::summarise(
       n = dplyr::n(),
@@ -562,6 +793,7 @@ agregar_lote <- function(dados, ano, colunas_ausentes = character()) {
       year = ano,
       uf,
       municipality_code = municipio_res,
+      cid_revision = cid_revisao,
       sex = sexo,
       age = idade,
       race = raca
@@ -578,6 +810,7 @@ agregar_lote <- function(dados, ano, colunas_ausentes = character()) {
       year = ano,
       uf,
       municipality_code = municipio_res,
+      cid_revision = cid_revisao,
       csap_group = grupo_csap,
       sex = sexo,
       age = idade,
@@ -594,7 +827,7 @@ agregar_lote <- function(dados, ano, colunas_ausentes = character()) {
   list(
     causas = causas, series = series, totais = totais, icsap = icsap,
     n_lidos = n_lidos, n_invalidos = n_invalidos, n_outros_anos = n_outros_anos,
-    n_cubo = nrow(dados)
+    n_imputados = n_imputados, n_cubo = nrow(dados)
   )
 }
 
@@ -646,7 +879,7 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     }
     colunas_ausentes <- sort(unique(unlist(ausentes_por_lote)))
     if (length(colunas_ausentes) > 0) {
-      cli_alert_warning("Coluna(s) ausente(s) no SIH-RD de {ano}: {paste(colunas_ausentes, collapse = ', ')} — `race` sai NULO neste cubo (sidecar: columns_missing)")
+      cli_alert_warning("Coluna(s) ausente(s) no SIH-RD de {ano}: {paste(colunas_ausentes, collapse = ', ')} — a coluna derivada sai NULA neste cubo (sidecar: columns_missing)")
       lotes_diferentes <- names(ausentes_por_lote)[!vapply(ausentes_por_lote, identical, logical(1), colunas_ausentes)]
       if (length(lotes_diferentes) > 0) {
         cli_alert_warning("Lotes com colunas ausentes DIFERENTES do conjunto do ano: {paste(lotes_diferentes, collapse = ', ')} — o cubo mistura NULO e valor; investigar")
@@ -655,8 +888,9 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     n_lidos <- sum(vapply(lotes, function(l) l$n_lidos, numeric(1)))
     n_invalidos <- sum(vapply(lotes, function(l) l$n_invalidos, numeric(1)))
     n_outros_anos <- sum(vapply(lotes, function(l) l$n_outros_anos, numeric(1)))
+    n_imputados <- sum(vapply(lotes, function(l) l$n_imputados, numeric(1)))
     cli_alert_success("{.val {format(n_lidos, big.mark='.')}} registros lidos em {format(round(Sys.time() - t0, 1))}")
-    cli_alert_info("{format(n_outros_anos, big.mark='.')} registros de outros anos de internação descartados; {format(n_lidos - n_invalidos - n_outros_anos, big.mark='.')} internações de {ano}")
+    cli_alert_info("{format(n_outros_anos, big.mark='.')} registros de outros anos de internação descartados; {format(n_lidos - n_invalidos - n_outros_anos, big.mark='.')} internações de {ano}; {format(n_imputados, big.mark='.')} com DT_INTER vazio (data = competência)")
 
     # =========================================================================
     # CUBO 1: sih_causas_{ano}.parquet
@@ -665,10 +899,14 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     cli_alert_info("Gerando cubo sih_causas_{ano}.parquet...")
     cubo_causas <- somar_lotes(
       lapply(lotes, function(l) l$causas),
-      c("year", "month", "uf", "cid_chapter", "cid_group", "sex", "age", "race", "is_csap", "csap_group")
+      c("year", "month", "uf", "cid_chapter", "cid_revision", "cid_group", "sex", "age", "race", "is_csap", "csap_group")
     )
     write_parquet(cubo_causas, file.path(output_dir, sprintf("sih_causas_%d.parquet", ano)))
     cli_alert_success("  sih_causas_{ano}.parquet: {.val {format(nrow(cubo_causas), big.mark='.')}} linhas")
+    # 2.5.0: internações por revisão da CID (sidecar cid_revision)
+    por_revisao <- tapply(cubo_causas$n, cubo_causas$cid_revision, sum)
+    cid_revision_counts <- as.list(setNames(as.integer(por_revisao), names(por_revisao)))
+    cli_alert_info("  por revisão da CID: {paste(sprintf('CID-%s %s', names(por_revisao), format(as.integer(por_revisao), big.mark='.')), collapse = '; ')}")
     # 2.3.1: o maior objeto do ano (6,5 M linhas) e os lotes de causas não são
     # mais necessários — soltar ANTES do cubo ICSAP. Em 2025 (14,6 M
     # internações) o passo ICSAP estourou os 16 GB do runner com tudo isso
@@ -686,7 +924,7 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     cli_alert_info("Gerando cubo sih_series_{ano}.parquet...")
     cubo_series <- somar_lotes(
       lapply(lotes, function(l) l$series),
-      c("year_month", "uf", "cid_chapter")
+      c("year_month", "uf", "cid_chapter", "cid_revision")
     )
     write_parquet(cubo_series, file.path(output_dir, sprintf("sih_series_%d.parquet", ano)))
     cli_alert_success("  sih_series_{ano}.parquet: {.val {format(nrow(cubo_series), big.mark='.')}} linhas")
@@ -698,20 +936,33 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     cli_alert_info("Gerando cubo sih_icsap_{ano}.parquet...")
     totais <- somar_lotes(
       lapply(lotes, function(l) l$totais),
-      c("year", "uf", "municipality_code", "sex", "age", "race")
+      c("year", "uf", "municipality_code", "cid_revision", "sex", "age", "race")
     )
     icsap <- somar_lotes(
       lapply(lotes, function(l) l$icsap),
-      c("year", "uf", "municipality_code", "csap_group", "sex", "age", "race")
+      c("year", "uf", "municipality_code", "cid_revision", "csap_group", "sex", "age", "race")
     )
-    # Junta com totais
+    # Junta com totais. 2.5.0: TODOS os estratos entram — os sem ICSAP saem com
+    # csap_group NULO e n = 0, carregando n_total. Antes só os estratos com
+    # alguma ICSAP existiam no cubo, e o servidor somava n_total (repetido por
+    # grupo) linha a linha: o denominador ficava multiplicado pelo número de
+    # grupos do estrato e faltavam os estratos sem ICSAP (2023/RR: 3,65 % em
+    # vez de 19,75 %). O denominador certo é n_total somado sobre os estratos
+    # DISTINTOS (year, uf, municipality_code, cid_revision, sex, age, race);
+    # o servidor >= 0.9.0 calcula assim.
+    chaves_estrato <- c("year", "uf", "municipality_code", "cid_revision", "sex", "age", "race")
     cubo_icsap <- icsap %>%
-      dplyr::left_join(
-        totais,
-        by = c("year", "uf", "municipality_code", "sex", "age", "race")
-      )
+      dplyr::full_join(totais, by = chaves_estrato) %>%
+      dplyr::mutate(
+        n = dplyr::coalesce(n, 0L),
+        days = dplyr::coalesce(days, 0),
+        value = dplyr::coalesce(value, 0),
+        deaths = dplyr::coalesce(deaths, 0L)
+      ) %>%
+      dplyr::arrange(dplyr::across(dplyr::all_of(c(chaves_estrato, "csap_group"))))
+    estratos_sem_icsap <- sum(is.na(cubo_icsap$csap_group))
     write_parquet(cubo_icsap, file.path(output_dir, sprintf("sih_icsap_%d.parquet", ano)))
-    cli_alert_success("  sih_icsap_{ano}.parquet: {.val {format(nrow(cubo_icsap), big.mark='.')}} linhas")
+    cli_alert_success("  sih_icsap_{ano}.parquet: {.val {format(nrow(cubo_icsap), big.mark='.')}} linhas ({format(estratos_sem_icsap, big.mark='.')} estratos sem ICSAP, csap_group nulo)")
 
     # =========================================================================
     # SIDECAR DE PROVENIÊNCIA
@@ -726,10 +977,13 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
         records_in_cube = records_in_cube,
         causas_rows = causas_rows,
         series_rows = nrow(cubo_series),
-        icsap_rows = nrow(cubo_icsap)
+        icsap_rows = nrow(cubo_icsap),
+        icsap_rows_without_csap = estratos_sem_icsap
       ),
       output_dir = output_dir,
-      columns_missing = colunas_ausentes
+      columns_missing = colunas_ausentes,
+      records_date_imputed = n_imputados,
+      cid_revision = cid_revision_counts
     )
 
     # Limpa memoria
@@ -756,7 +1010,7 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
 #'   - Um ano: 2023
 #'   - Vetor de anos: c(2020, 2022, 2024)
 #'   - Sequencia: 2020:2024
-#'   - "all" para todos os anos (1998 ate ano atual)
+#'   - "all" para todos os anos (1992 ate ano atual)
 #'
 #' @param ufs UFs para processar. Pode ser:
 #'   - Uma UF: "SP"

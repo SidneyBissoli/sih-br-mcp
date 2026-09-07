@@ -339,6 +339,27 @@ function buildWhereClause(filters: CausasFilters | IcsapFilters): string {
 }
 
 /**
+ * Expressão de uma coluna de agrupamento no SELECT e no GROUP BY. `cid_revision`
+ * só existe nos cubos do builder >= 2.5.0: os cubos são abertos por glob com
+ * `union_by_name`, então um cubo anterior (cache local misto) a traz NULA — e
+ * nula significa CID-10 (a coluna é constante 10 em 1998+). A defesa vale só
+ * para caches mistos; a série publicada é toda 2.5.0.
+ */
+/**
+ * Soma de `value` como DECIMAL(18,2) e não como DOUBLE: o SUM paralelo de
+ * doubles do DuckDB muda o último dígito conforme a ordem em que as threads
+ * terminam (golden de 07/09/2026: 9746572.610000005 numa execução,
+ * 9746572.61000001 na seguinte); em decimal a soma é exata e determinística.
+ * `value` é dinheiro com 2 casas — nada se perde.
+ */
+function groupSelect(column: string): string {
+  return column === "cid_revision" ? "COALESCE(cid_revision, 10) AS cid_revision" : column;
+}
+function groupKey(column: string): string {
+  return column === "cid_revision" ? "COALESCE(cid_revision, 10)" : column;
+}
+
+/**
  * ORDER BY determinístico para consultas agrupadas.
  *
  * Sem isto, duas chamadas iguais devolvem respostas diferentes: GROUP BY sem
@@ -380,7 +401,7 @@ export async function queryCausas<T = Record<string, unknown>>(options: {
   const metricsMap: Record<string, string> = {
     n: "SUM(n) as n_hospitalizations",
     days: "SUM(days) as total_days",
-    value: "SUM(value) as total_value",
+    value: "SUM(CAST(value AS DECIMAL(18,2))) as total_value",
     deaths: "SUM(deaths) as deaths",
   };
 
@@ -389,12 +410,12 @@ export async function queryCausas<T = Record<string, unknown>>(options: {
 
   // Group by
   const groupBy = options.groupBy || [];
-  const selectGroups = groupBy.length > 0 ? groupBy.join(", ") + ", " : "";
-  const groupByClause = groupBy.length > 0 ? `GROUP BY ${groupBy.join(", ")}` : "";
+  const selectGroups = groupBy.length > 0 ? groupBy.map(groupSelect).join(", ") + ", " : "";
+  const groupByClause = groupBy.length > 0 ? `GROUP BY ${groupBy.map(groupKey).join(", ")}` : "";
 
   let sql = `
     SELECT ${selectGroups}${selectMetrics}
-    FROM read_parquet('${pattern}')
+    FROM read_parquet('${pattern}', union_by_name = true)
     WHERE ${whereClause}
     ${groupByClause}
   `;
@@ -418,40 +439,84 @@ export async function queryIcsap<T = Record<string, unknown>>(options: {
   orderBy?: string;
   limit?: number;
 }): Promise<T[]> {
+  // 0.9.0: toda agregação do cubo ICSAP passa por icsapAggregateSql (o
+  // denominador por estratos distintos); `metrics` fica só pela assinatura —
+  // as seis medidas saem sempre.
+  return query<T>(icsapAggregateSql(options));
+}
+
+/** Chaves do ESTRATO do cubo ICSAP: `n_total` é o total do estrato, repetido em cada linha dele. */
+const ICSAP_STRATUM_KEYS = ["year", "uf", "municipality_code", "cid_revision", "sex", "age", "race"];
+
+/**
+ * SQL de agregação do cubo ICSAP com o denominador CERTO.
+ *
+ * O cubo tem uma linha por (estrato × grupo CSAP) e, desde o builder 2.5.0,
+ * uma linha por estrato SEM ICSAP (csap_group nulo, n = 0); em todas,
+ * `n_total` é o total de internações do estrato (year, uf, municipality_code,
+ * cid_revision, sex, age, race). Até a 0.8.0 o servidor somava n_total linha
+ * a linha: o denominador saía multiplicado pelo número de grupos CSAP de cada
+ * estrato e sem os estratos que não tinham ICSAP nenhuma — 2023/RR dava
+ * icsap_percentage 3,65 % quando 9.577/48.480 = 19,75 % (defeito desde a
+ * primeira versão do cubo; achado em 07/09/2026 ao provar a era antiga e
+ * corrigido aqui, no funil, antes do rebuild dos 34 anos). O denominador é
+ * n_total somado sobre os estratos DISTINTOS; o numerador ignora as linhas de
+ * grupo nulo; o filtro por grupo CSAP só vale para o numerador (a fração é
+ * "internações do grupo / todas as internações do estrato").
+ */
+function icsapAggregateSql(options: {
+  filters?: IcsapFilters;
+  groupBy?: string[];
+  orderBy?: string;
+  limit?: number;
+}): string {
   const pattern = getParquetPattern("icsap");
-  const whereClause = buildWhereClause(options.filters || {});
-
-  // Métricas a calcular
-  const metricsMap: Record<string, string> = {
-    n: "SUM(n) as n_icsap",
-    n_total: "SUM(n_total) as n_total",
-    days: "SUM(days) as total_days",
-    value: "SUM(value) as total_value",
-    deaths: "SUM(deaths) as deaths",
-  };
-
-  const metrics = options.metrics || ["n", "n_total"];
-  const selectMetrics = metrics.map((m) => metricsMap[m]).join(", ");
-
-  // Group by
-  const groupBy = options.groupBy || [];
-  const selectGroups = groupBy.length > 0 ? groupBy.join(", ") + ", " : "";
-  const groupByClause = groupBy.length > 0 ? `GROUP BY ${groupBy.join(", ")}` : "";
+  const { csapGroups, ...strataFilters } = options.filters ?? {};
+  const whereStrata = buildWhereClause(strataFilters);
+  const csapCond =
+    csapGroups && csapGroups.length > 0 ? `AND csap_group IN (${csapGroups.map((g) => `'${g}'`).join(", ")})` : "";
+  const groupBy = options.groupBy ?? [];
+  const byGroup = groupBy.includes("csap_group");
+  const strataGroup = groupBy.filter((g) => g !== "csap_group");
+  const groupClause = (cols: string[]) => (cols.length > 0 ? `GROUP BY ${cols.join(", ")}` : "");
+  const joinOn =
+    strataGroup.length > 0 ? strataGroup.map((k) => `icsap.${k} IS NOT DISTINCT FROM total.${k}`).join(" AND ") : "TRUE";
+  // Sem csap_group no agrupamento, a linha-mestre é a de total: um grupo com
+  // estratos mas sem ICSAP ainda aparece, com 0. Com csap_group, é a de ICSAP.
+  const fromClause = byGroup ? `icsap JOIN total ON ${joinOn}` : `total LEFT JOIN icsap ON ${joinOn}`;
+  const selectCols = groupBy
+    .map((g) => (byGroup || g === "csap_group" ? `icsap.${g} AS ${g}` : `total.${g} AS ${g}`))
+    .join(", ");
+  const strataKeys = ICSAP_STRATUM_KEYS.map(groupSelect);
 
   let sql = `
-    SELECT ${selectGroups}${selectMetrics}
-    FROM read_parquet('${pattern}')
-    WHERE ${whereClause}
-    ${groupByClause}
+    WITH linhas AS (
+      SELECT * FROM read_parquet('${pattern}', union_by_name = true)
+      WHERE ${whereStrata}
+    ),
+    estratos AS (SELECT DISTINCT ${strataKeys.join(", ")}, n_total FROM linhas),
+    total AS (
+      SELECT ${strataGroup.length > 0 ? strataGroup.join(", ") + ", " : ""}SUM(n_total) AS n_total
+      FROM estratos ${groupClause(strataGroup)}
+    ),
+    icsap AS (
+      SELECT ${groupBy.length > 0 ? groupBy.map(groupSelect).join(", ") + ", " : ""}SUM(n) AS n_icsap, SUM(days) AS total_days, SUM(CAST(value AS DECIMAL(18,2))) AS total_value, SUM(deaths) AS deaths
+      FROM linhas
+      WHERE csap_group IS NOT NULL ${csapCond}
+      ${groupClause(groupBy.map(groupKey))}
+    )
+    SELECT ${selectCols}${groupBy.length > 0 ? ", " : ""}
+      COALESCE(icsap.n_icsap, 0) AS n_icsap,
+      total.n_total AS n_total,
+      ROUND(COALESCE(icsap.n_icsap, 0) * 100.0 / NULLIF(total.n_total, 0), 2) AS icsap_percentage,
+      COALESCE(icsap.total_days, 0) AS total_days,
+      COALESCE(icsap.total_value, 0) AS total_value,
+      COALESCE(icsap.deaths, 0) AS deaths
+    FROM ${fromClause}
   `;
-
   sql += buildOrderBy(options.orderBy, groupBy);
-
-  if (options.limit) {
-    sql += ` LIMIT ${options.limit}`;
-  }
-
-  return query<T>(sql);
+  if (options.limit) sql += ` LIMIT ${options.limit}`;
+  return sql;
 }
 
 /**
@@ -485,12 +550,12 @@ export async function querySeries<T = Record<string, unknown>>(options: {
 
   // Group by
   const groupBy = options.groupBy || [];
-  const selectGroups = groupBy.length > 0 ? groupBy.join(", ") + ", " : "";
-  const groupByClause = groupBy.length > 0 ? `GROUP BY ${groupBy.join(", ")}` : "";
+  const selectGroups = groupBy.length > 0 ? groupBy.map(groupSelect).join(", ") + ", " : "";
+  const groupByClause = groupBy.length > 0 ? `GROUP BY ${groupBy.map(groupKey).join(", ")}` : "";
 
   let sql = `
     SELECT ${selectGroups}SUM(n) as n, SUM(deaths) as deaths
-    FROM read_parquet('${pattern}')
+    FROM read_parquet('${pattern}', union_by_name = true)
     WHERE ${whereClause}
     ${groupByClause}
   `;
@@ -515,7 +580,7 @@ export async function rankCsapGroups<T = Record<string, unknown>>(options: {
   const metricsMap: Record<string, string> = {
     n: "SUM(n)",
     days: "SUM(days)",
-    value: "SUM(value)",
+    value: "SUM(CAST(value AS DECIMAL(18,2)))",
     deaths: "SUM(deaths)",
   };
 
@@ -525,10 +590,10 @@ export async function rankCsapGroups<T = Record<string, unknown>>(options: {
       ${metricsMap[metric]} as metric_value,
       SUM(n) as n_hospitalizations,
       SUM(days) as total_days,
-      SUM(value) as total_value,
+      SUM(CAST(value AS DECIMAL(18,2))) as total_value,
       SUM(deaths) as deaths
-    FROM read_parquet('${pattern}')
-    WHERE ${whereClause}
+    FROM read_parquet('${pattern}', union_by_name = true)
+    WHERE ${whereClause} AND csap_group IS NOT NULL
     GROUP BY csap_group
     ORDER BY metric_value DESC, csap_group
     ${options.limit ? `LIMIT ${options.limit}` : ""}
@@ -544,28 +609,8 @@ export async function calculateIcsapIndicators<T = Record<string, unknown>>(opti
   filters?: IcsapFilters;
   groupBy?: string[];
 }): Promise<T[]> {
-  const pattern = getParquetPattern("icsap");
-  const whereClause = buildWhereClause(options.filters || {});
-
-  const groupBy = options.groupBy || [];
-  const selectGroups = groupBy.length > 0 ? groupBy.join(", ") + ", " : "";
-  const groupByClause = groupBy.length > 0 ? `GROUP BY ${groupBy.join(", ")}` : "";
-
-  const sql = `
-    SELECT
-      ${selectGroups}
-      SUM(n) as n_icsap,
-      SUM(n_total) as n_total,
-      ROUND(SUM(n) * 100.0 / NULLIF(SUM(n_total), 0), 2) as icsap_percentage,
-      SUM(days) as total_days,
-      SUM(value) as total_value,
-      SUM(deaths) as deaths
-    FROM read_parquet('${pattern}')
-    WHERE ${whereClause}
-    ${groupByClause}${buildOrderBy(undefined, groupBy)}
-  `;
-
-  return query<T>(sql);
+  // 0.9.0: denominador por estratos distintos (ver icsapAggregateSql)
+  return query<T>(icsapAggregateSql({ filters: options.filters, groupBy: options.groupBy }));
 }
 
 // =============================================================================
@@ -649,14 +694,14 @@ export async function queryPopulationUf<T = Record<string, unknown>>(options: {
   const whereClause = buildPopulationWhereClause(options.filters || {});
 
   const groupBy = options.groupBy || [];
-  const selectGroups = groupBy.length > 0 ? groupBy.join(", ") + ", " : "";
-  const groupByClause = groupBy.length > 0 ? `GROUP BY ${groupBy.join(", ")}` : "";
+  const selectGroups = groupBy.length > 0 ? groupBy.map(groupSelect).join(", ") + ", " : "";
+  const groupByClause = groupBy.length > 0 ? `GROUP BY ${groupBy.map(groupKey).join(", ")}` : "";
 
   const sql = `
     SELECT
       ${selectGroups}
       SUM(population) as population
-    FROM read_parquet('${pattern}')
+    FROM read_parquet('${pattern}', union_by_name = true)
     WHERE ${whereClause}
     ${groupByClause}${buildOrderBy(undefined, groupBy)}
   `;
@@ -692,14 +737,14 @@ export async function queryPopulationUfAgregado<T = Record<string, unknown>>(opt
   const whereClause = conditions.length > 0 ? conditions.join(" AND ") : "1=1";
 
   const groupBy = options.groupBy || [];
-  const selectGroups = groupBy.length > 0 ? groupBy.join(", ") + ", " : "";
-  const groupByClause = groupBy.length > 0 ? `GROUP BY ${groupBy.join(", ")}` : "";
+  const selectGroups = groupBy.length > 0 ? groupBy.map(groupSelect).join(", ") + ", " : "";
+  const groupByClause = groupBy.length > 0 ? `GROUP BY ${groupBy.map(groupKey).join(", ")}` : "";
 
   const sql = `
     SELECT
       ${selectGroups}
       SUM(population) as population
-    FROM read_parquet('${pattern}')
+    FROM read_parquet('${pattern}', union_by_name = true)
     WHERE ${whereClause}
     ${groupByClause}${buildOrderBy(undefined, groupBy)}
   `;
@@ -771,14 +816,14 @@ async function queryPopulationFromMunicipios<T = Record<string, unknown>>(option
   const whereClause = conditions.length > 0 ? conditions.join(" AND ") : "1=1";
 
   const groupBy = options.groupBy || [];
-  const selectGroups = groupBy.length > 0 ? groupBy.join(", ") + ", " : "";
-  const groupByClause = groupBy.length > 0 ? `GROUP BY ${groupBy.join(", ")}` : "";
+  const selectGroups = groupBy.length > 0 ? groupBy.map(groupSelect).join(", ") + ", " : "";
+  const groupByClause = groupBy.length > 0 ? `GROUP BY ${groupBy.map(groupKey).join(", ")}` : "";
 
   const sql = `
     SELECT
       ${selectGroups}
       SUM(population) as population
-    FROM read_parquet('${pattern}')
+    FROM read_parquet('${pattern}', union_by_name = true)
     WHERE ${whereClause}
     ${groupByClause}${buildOrderBy(undefined, groupBy)}
   `;

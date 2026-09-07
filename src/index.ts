@@ -34,7 +34,18 @@ import {
 import csapGroups from "./data/csap-groups.json" with { type: "json" };
 import cidChapters from "./data/cid-chapters.json" with { type: "json" };
 import brazilRegions from "./data/brazil-regions.json" with { type: "json" };
-import { SERVER_VERSION, provenanceFor, raceNotes, withProvenance, yearsWithoutRace } from "./provenance.js";
+import {
+  SERVER_VERSION,
+  eraNotes,
+  loadSidecars,
+  provenanceFor,
+  raceNotes,
+  withProvenance,
+  yearsCid9,
+  yearsUfArquivo,
+  yearsWithoutRace,
+  type EraAspects,
+} from "./provenance.js";
 import { getFreshness, startFreshnessCheck } from "./freshness.js";
 import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cubesCacheDir, ensureYears, loadCubesManifest, publishedYears, yearsFromArgs } from "./cache.js";
 
@@ -66,7 +77,8 @@ const tools: Tool[] = [
   {
     name: "list_cid_chapters",
     description:
-      "Lista os 22 capítulos da CID-10 com seus códigos e faixas de diagnóstico.",
+      "Lista os 22 capítulos da CID-10 com seus códigos e faixas de diagnóstico. " +
+      "Os cubos de 1992–1997 (diagnóstico em CID-9) trazem `cid_chapter` como o capítulo CID-10 equivalente (mapa por categoria em src/data/cid9-chapters.json).",
     inputSchema: {
       type: "object",
       properties: {},
@@ -77,7 +89,9 @@ const tools: Tool[] = [
     description:
       "Retorna os anos disponíveis nos dados do SIH-SUS carregados e o frescor dos cubos em relação ao " +
       "espelho healthbr-data (`freshness.status`: current, stale, unknown, pending ou disabled; " +
-      "quando stale, lista por ano as partições reeditadas pelo MS, regeneradas, retiradas ou novas na janela).",
+      "quando stale, lista por ano as partições reeditadas pelo MS, regeneradas, retiradas ou novas na janela). " +
+      "Por ano, o que muda entre as eras do SIH: `race_available` (raça/cor só de 2008), `cid_revision` (9 = CID-9 de 6 dígitos em 1992–1997, 10 = CID-10; 1997 tem as duas), " +
+      "`icsap_list_revision` (cid9-derivada, não oficial, em 1992–1997), `uf_basis` (arquivo em 1992–1997, residencia de 1998), `municipality_available`, `currency` e `records_date_imputed`.",
     inputSchema: {
       type: "object",
       properties: {},
@@ -90,14 +104,16 @@ const tools: Tool[] = [
     description:
       "Consulta dados de internações hospitalares do SUS com filtros flexíveis. " +
       "Permite agregar por múltiplas dimensões (UF, CID, sexo, idade, raça, ano/mês). " +
-      "Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available).",
+      "Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). " +
+      "Série desde 1992: em 1992–1997 o diagnóstico é CID-9 decodificado por tabela (`cid_group` = categoria de 3 dígitos, `cid_chapter` = capítulo CID-10 equivalente; agrupar por `cid_revision` separa 9 e 10 — 1997 tem os dois), " +
+      "`uf` é a UF do ARQUIVO (estabelecimento), não de residência, e `value` é nominal na moeda da época — ver get_available_years (uf_basis, currency) e as `notes` da resposta.",
     inputSchema: {
       type: "object",
       properties: {
         year: {
           type: "array",
           items: { type: "integer" },
-          description: "Anos para consultar (ex: [2023, 2024])",
+          description: "Anos para consultar (ex: [2023, 2024]); série de 1992 em diante",
         },
         month: {
           type: "array",
@@ -140,7 +156,7 @@ const tools: Tool[] = [
           type: "array",
           items: {
             type: "string",
-            enum: ["year", "month", "uf", "cid_chapter", "cid_group", "sex", "age", "race", "is_csap", "csap_group"],
+            enum: ["year", "month", "uf", "cid_chapter", "cid_revision", "cid_group", "sex", "age", "race", "is_csap", "csap_group"],
           },
           description: "Dimensões para agrupamento",
         },
@@ -155,7 +171,8 @@ const tools: Tool[] = [
     name: "get_hospitalization_trends",
     description:
       "Retorna séries temporais de internações (mensal ou anual). " +
-      "Útil para análise de tendências e sazonalidade.",
+      "Útil para análise de tendências e sazonalidade. Série desde 1992; em 1992–1997 `uf` é a UF do arquivo (estabelecimento) " +
+      "e as internações sem data na fonte (1992-01..04 e 1993-01) entram no mês de faturamento — ver get_available_years e as `notes`.",
     inputSchema: {
       type: "object",
       properties: {
@@ -189,7 +206,7 @@ const tools: Tool[] = [
     name: "compare_regions",
     description:
       "Compara internações entre UFs ou regiões do Brasil. " +
-      "Gera rankings e identifica variações regionais.",
+      "Gera rankings e identifica variações regionais. Em 1992–1997 `uf` é a UF do arquivo (estabelecimento), não de residência — ver get_available_years.uf_basis e as `notes`.",
     inputSchema: {
       type: "object",
       properties: {
@@ -230,7 +247,9 @@ const tools: Tool[] = [
     description:
       "Consulta internações por Condições Sensíveis à Atenção Primária (ICSAP). " +
       "Permite filtros por grupo CSAP, UF, município, sexo, idade e raça. " +
-      "Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available).",
+      "Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). " +
+      "Série desde 1992: em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+), " +
+      "`uf` é a UF do arquivo e `municipality_code` é nulo — ver get_available_years (icsap_list_revision, uf_basis) e as `notes`.",
     inputSchema: {
       type: "object",
       properties: {
@@ -275,7 +294,7 @@ const tools: Tool[] = [
           type: "array",
           items: {
             type: "string",
-            enum: ["year", "uf", "municipality_code", "csap_group", "sex", "age", "race"],
+            enum: ["year", "uf", "municipality_code", "cid_revision", "csap_group", "sex", "age", "race"],
           },
           description: "Dimensões para agrupamento",
         },
@@ -287,7 +306,8 @@ const tools: Tool[] = [
     description:
       "Calcula indicadores de ICSAP: percentual (ICSAP/Total×100). " +
       "Métricas-chave para avaliar a Atenção Primária. " +
-      "Agrupar por raça só faz sentido de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available).",
+      "Agrupar por raça só faz sentido de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). " +
+      "Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `uf` é a UF do arquivo — ver as `notes`.",
     inputSchema: {
       type: "object",
       properties: {
@@ -322,7 +342,7 @@ const tools: Tool[] = [
           type: "array",
           items: {
             type: "string",
-            enum: ["year", "uf", "sex", "race"],
+            enum: ["year", "uf", "cid_revision", "sex", "race"],
           },
           description: "Dimensões para agrupamento",
         },
@@ -333,7 +353,8 @@ const tools: Tool[] = [
     name: "rank_csap_groups",
     description:
       "Gera ranking dos 19 grupos CSAP por número de internações, " +
-      "dias de internação ou valor. Identifica principais causas evitáveis.",
+      "dias de internação ou valor. Identifica principais causas evitáveis. " +
+      "Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `value` é nominal na moeda da época — ver as `notes`.",
     inputSchema: {
       type: "object",
       properties: {
@@ -378,7 +399,8 @@ const tools: Tool[] = [
     name: "classify_as_csap",
     description:
       "Classifica um ou mais códigos CID-10 como CSAP ou não. " +
-      "Retorna o grupo CSAP correspondente se aplicável.",
+      "Retorna o grupo CSAP correspondente se aplicável. Só CID-10: os códigos CID-9 de 6 dígitos do SIH de 1992–1997 " +
+      "são classificados no build pela lista derivada (src/data/csap-groups-cid9.json), não por esta ferramenta.",
     inputSchema: {
       type: "object",
       properties: {
@@ -458,7 +480,9 @@ const tools: Tool[] = [
     name: "compare_icsap_trends",
     description:
       "Análise temporal comparativa de ICSAP entre UFs ou grupos CSAP. " +
-      "Calcula tendências, variação anual e identifica melhores/piores desempenhos. Anos válidos: os cobertos por pop_uf.parquet, informados em get_available_years.population_years.",
+      "Calcula tendências, variação anual e identifica melhores/piores desempenhos. Para `percentage` e `count` valem todos os anos do SIH (desde 1992); " +
+      "`rate_per_10k` exige população e aceita só os anos de get_available_years.population_years. " +
+      "Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `uf` é a UF do arquivo — ver as `notes`.",
     inputSchema: {
       type: "object",
       properties: {
@@ -498,6 +522,16 @@ const tools: Tool[] = [
 // =============================================================================
 // HANDLERS DAS FERRAMENTAS
 // =============================================================================
+
+/**
+ * Campo `notes` da era antiga (1992–1997) já no formato de spread: vazio
+ * quando a consulta não alcança nenhum ano da era (a fixture 2023 do golden
+ * nunca o produz). `extra` são notas de outra origem (raça/cor).
+ */
+function notesField(years: number[] | undefined, aspects: EraAspects = {}, extra: string[] = []): { notes?: string[] } {
+  const notes = [...extra, ...eraNotes(years, getAvailableYears(), aspects)];
+  return notes.length > 0 ? { notes } : {};
+}
 
 // --- Metadados ---
 
@@ -562,6 +596,11 @@ async function handleGetAvailableYears() {
   try {
     const years = getAvailableYears();
     const noRace = yearsWithoutRace();
+    // Sidecars dos anos carregados (builder >= 2.5.0 traz os campos da era
+    // antiga; um sidecar anterior cai nos valores de 1998+).
+    const sidecars = loadSidecars().filter((s) => years.includes(s.cube_year));
+    const byYear = <T,>(f: (s: (typeof sidecars)[number]) => T): Record<string, T> =>
+      Object.fromEntries(sidecars.map((s) => [String(s.cube_year), f(s)]));
     return {
       years,
       data_range: {
@@ -574,6 +613,19 @@ async function handleGetAvailableYears() {
       // só entra no leiaute da AIH em 2008; em 1998–2007 `race` é nulo.
       race_available: Object.fromEntries(years.map((y) => [String(y), !noRace.includes(y)])),
       years_without_race: noRace,
+      // Era antiga 1992–1997 (sidecar do builder >= 2.5.0; docs/analise-002 e
+      // analise-003): revisão da CID por ano (internações por revisão; 1997 tem
+      // as duas), lista ICSAP por revisão, base do eixo `uf`, município,
+      // moeda de `value` e internações sem data na fonte.
+      cid_revision: byYear((s) => s.cid_revision ?? { "10": s.totals?.records_in_cube ?? null }),
+      years_cid9: yearsCid9(),
+      icsap_available: byYear(() => true),
+      icsap_list_revision: byYear((s) => s.icsap_list_revision ?? { "10": "portaria-221-2008" }),
+      uf_basis: byYear((s) => s.uf_basis ?? "residencia"),
+      years_uf_arquivo: yearsUfArquivo(),
+      municipality_available: byYear((s) => s.municipality_available ?? true),
+      currency: byYear((s) => s.currency ?? null),
+      records_date_imputed: byYear((s) => s.records_date_imputed ?? 0),
       // Intervalo de pop_uf.parquet, lido do arquivo: é o que as ferramentas de
       // taxa (get_hospitalization_rates, compare_icsap_trends) aceitam.
       population_years: await getPopulationYearRange(),
@@ -702,10 +754,10 @@ async function handleGetHospitalizations(args: GetHospitalizationsArgs) {
       { n: 0, days: 0, value: 0, deaths: 0 }
     );
 
-    const notes = args.race?.length || args.group_by?.includes("race") ? raceNotes(args.year, getAvailableYears()) : [];
+    const raceN = args.race?.length || args.group_by?.includes("race") ? raceNotes(args.year, getAvailableYears()) : [];
     return {
       data,
-      ...(notes.length > 0 ? { notes } : {}),
+      ...notesField(args.year, { value: true, month: !!args.month?.length || !!args.group_by?.includes("month") }, raceN),
       summary: {
         total_hospitalizations: totals.n,
         total_days: totals.days,
@@ -754,6 +806,7 @@ async function handleGetHospitalizationTrends(args: GetTrendsArgs) {
         granularity: "monthly",
         series: data,
         period: { start: `${year_start}-01`, end: `${year_end}-12` },
+        ...notesField(yearsFromArgs(args) ?? undefined, { month: true }),
       };
     } else {
       // Agregação anual do cubo de causas
@@ -777,6 +830,7 @@ async function handleGetHospitalizationTrends(args: GetTrendsArgs) {
         granularity: "yearly",
         series: data,
         period: { start: year_start, end: year_end },
+        ...notesField(yearsFromArgs(args) ?? undefined, { month: args.granularity === "monthly" }),
       };
     }
   } catch (error) {
@@ -831,6 +885,7 @@ async function handleCompareRegions(args: CompareRegionsArgs) {
       metric,
       ranking,
       total_locations: data.length,
+      ...notesField(args.year, {}),
     };
   } catch (error) {
     return {
@@ -876,23 +931,26 @@ async function handleGetIcsap(args: GetIcsapArgs) {
         : args.group_by?.[0] || "n_icsap DESC",
     });
 
-    // Calcula totais
-    type IcsapTotals = { icsap: number; total: number; days: number; value: number; deaths: number };
-    const totals = data.reduce<IcsapTotals>(
-      (acc, row: Record<string, unknown>) => ({
-        icsap: acc.icsap + (Number(row.n_icsap) || 0),
-        total: acc.total + (Number(row.n_total) || 0),
-        days: acc.days + (Number(row.total_days) || 0),
-        value: acc.value + (Number(row.total_value) || 0),
-        deaths: acc.deaths + (Number(row.deaths) || 0),
-      }),
-      { icsap: 0, total: 0, days: 0, value: 0, deaths: 0 }
-    );
+    // Totais do filtro inteiro, numa consulta sem agrupamento (0.9.0): somar
+    // as linhas de `data` repetiria n_total sempre que o agrupamento divide o
+    // estrato (por grupo CSAP) — o denominador vem dos estratos distintos.
+    const [whole] = await calculateIcsapIndicators<Record<string, unknown>>({ filters, groupBy: [] });
+    const totals = {
+      icsap: Number(whole?.n_icsap) || 0,
+      total: Number(whole?.n_total) || 0,
+      days: Number(whole?.total_days) || 0,
+      value: Number(whole?.total_value) || 0,
+      deaths: Number(whole?.deaths) || 0,
+    };
 
-    const notes = args.race?.length || args.group_by?.includes("race") ? raceNotes(args.year, getAvailableYears()) : [];
+    const raceN = args.race?.length || args.group_by?.includes("race") ? raceNotes(args.year, getAvailableYears()) : [];
     return {
       data,
-      ...(notes.length > 0 ? { notes } : {}),
+      ...notesField(
+        args.year,
+        { icsap: true, value: true, municipality: !!args.municipality_code || !!args.group_by?.includes("municipality_code") },
+        raceN,
+      ),
       summary: {
         total_icsap: totals.icsap,
         total_hospitalizations: totals.total,
@@ -941,10 +999,10 @@ async function handleGetIcsapIndicators(args: GetIcsapIndicatorsArgs) {
       groupBy: args.group_by,
     });
 
-    const notes = args.group_by?.includes("race") ? raceNotes(args.year, getAvailableYears()) : [];
+    const raceN = args.group_by?.includes("race") ? raceNotes(args.year, getAvailableYears()) : [];
     return {
       data,
-      ...(notes.length > 0 ? { notes } : {}),
+      ...notesField(args.year, { icsap: true, value: true }, raceN),
       indicators_calculated: ["icsap_percentage"],
       note: "icsap_percentage = (n_icsap / n_total) * 100",
     };
@@ -1012,6 +1070,7 @@ async function handleRankCsapGroups(args: RankCsapGroupsArgs) {
     return {
       metric: args.metric || "n",
       ranking,
+      ...notesField(args.year, { icsap: true, value: true }),
       concentration: {
         top_3_percentage: Math.round(top3Pct * 100) / 100,
         top_5_percentage: Math.round(top5Pct * 100) / 100,
@@ -1219,11 +1278,14 @@ async function handleCompareIcsapTrends(args: CompareIcsapTrendsArgs) {
   const indicatorType = indicator || "percentage";
   const includeTrend = include_trend_line !== false;
 
-  // Validação de anos pelo intervalo REAL de pop_uf.parquet (lido do arquivo, não fixado aqui)
+  // Validação de anos pelo intervalo REAL de pop_uf.parquet (lido do arquivo,
+  // não fixado aqui) — só quando o indicador usa denominador populacional:
+  // `percentage` e `count` valem para qualquer ano do SIH (0.9.0; antes a
+  // checagem barrava 1998–1999 sem motivo).
   const popRange = await getPopulationYearRange();
-  if (popRange && (start_year < popRange.first_year || end_year > popRange.last_year)) {
+  if (indicatorType === "rate_per_10k" && popRange && (start_year < popRange.first_year || end_year > popRange.last_year)) {
     return {
-      error: `Anos devem estar entre ${popRange.first_year} e ${popRange.last_year} (intervalo com dados populacionais em pop_uf.parquet).`,
+      error: `Para rate_per_10k os anos devem estar entre ${popRange.first_year} e ${popRange.last_year} (intervalo com dados populacionais em pop_uf.parquet); percentage e count aceitam qualquer ano do SIH.`,
       series: [],
       population_years: popRange,
       available_sih_years: getAvailableYears(),
@@ -1406,6 +1468,7 @@ async function handleCompareIcsapTrends(args: CompareIcsapTrendsArgs) {
       period: { start: start_year, end: end_year },
       compare_by: compare_by || "total",
       series,
+      ...notesField(years, { icsap: true }),
       trends: includeTrend ? trends : undefined,
       summary: {
         best_performer: bestPerformer,

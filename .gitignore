@@ -43,3 +43,9 @@ data/*.parquet
 _ul
 _ul-*
 *-Sidney-desktop*
+
+# tabelas CNV do DATASUS extraídas por scripts/estudo-1992-1997-cnv.py (o que vale é src/data/cid9-*.json)
+scripts/tab/
+scripts/cid9_codes.csv
+scripts/cid9_cats.csv
+scripts/cid9_xinv.txt
