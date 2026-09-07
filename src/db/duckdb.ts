@@ -13,7 +13,8 @@
 import { DuckDBConnection, DuckDBInstance } from "@duckdb/node-api";
 import { fileURLToPath } from "url";
 import { dirname, join, resolve } from "path";
-import { existsSync, readdirSync } from "fs";
+import { existsSync, mkdirSync, readdirSync } from "fs";
+import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cubesCacheDir } from "../cache.js";
 
 // Obtém diretório do projeto
 const __filename = fileURLToPath(import.meta.url);
@@ -79,8 +80,20 @@ export function getDataDirectory(): string {
     }
   }
 
+  // Sem cubo na pasta do projeto (instalação pelo npm, que não embarca cubo):
+  // a pasta passa a ser o cache local, que `src/cache.ts` enche sob demanda a
+  // partir do canal público (data.sidneybissoli.com/sih/cubos/). A pasta pode
+  // estar vazia agora; os handlers chamam ensureYears() antes de consultar.
+  if (CUBES_CACHE_ENABLED) {
+    const cacheDir = cubesCacheDir();
+    mkdirSync(cacheDir, { recursive: true });
+    console.error(`[DuckDB] Sem cubos em ${DATA_DIR}; usando o cache ${cacheDir} (baixa de ${CUBES_BASE_URL} sob demanda)`);
+    dataDirectory = cacheDir;
+    return dataDirectory;
+  }
+
   throw new Error(
-    `Nenhum arquivo SIH Parquet encontrado em ${DATA_DIR}. Execute os scripts R de agregação primeiro.`
+    `Nenhum arquivo SIH Parquet encontrado em ${DATA_DIR} e o cache está desligado (SIH_CUBES_CACHE=off). Execute os scripts R de agregação ou baixe os cubos de ${CUBES_BASE_URL}.`
   );
 }
 

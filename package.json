@@ -1,6 +1,6 @@
 {
   "name": "sih-br-mcp",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "description": "MCP Server para análise de dados do SIH-SUS com foco em ICSAP",
   "repository": {
@@ -25,7 +25,9 @@
     "freshness:selftest": "node scripts/freshness-check.mjs --fixtures tests/fixtures/sih --selftest",
     "freshness:excerpt": "node scripts/freshness-check.mjs --fixtures tests/fixtures/sih --write-excerpt",
     "cube:delta": "node scripts/cube-delta.mjs",
-    "cube:delta:selftest": "node scripts/cube-delta.mjs --selftest --fixtures tests/fixtures/sih"
+    "cube:delta:selftest": "node scripts/cube-delta.mjs --selftest --fixtures tests/fixtures/sih",
+    "cache:selftest": "node scripts/cache-selftest.mjs",
+    "cubes:manifest": "node scripts/cubes-manifest.mjs --data data --years all --verify --out cubes-manifest.json"
   },
   "keywords": [
     "mcp",

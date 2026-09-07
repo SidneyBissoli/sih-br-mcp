@@ -112,3 +112,8 @@ jobs:
       # reprova o que deve (partição perdida, queda > 1% sem retirada no
       # espelho, janela regredida, escopo mudado) e aprova reedição do MS.
       - run: npm run cube:delta:selftest
+      # Cache local dos cubos (src/cache.ts) provado OFFLINE: servidor HTTP
+      # local com manifesto e arquivos de mentira — download íntegro aceito,
+      # adulterado recusado pelo SHA-256, manifesto do disco sem rede. Nunca
+      # toca em data.sidneybissoli.com.
+      - run: npm run cache:selftest

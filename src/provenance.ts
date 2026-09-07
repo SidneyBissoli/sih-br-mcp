@@ -26,7 +26,7 @@ import { cubeFreshness, describeBehind, getFreshness } from "./freshness.js";
 import csapGroups from "./data/csap-groups.json" with { type: "json" };
 import cidChapters from "./data/cid-chapters.json" with { type: "json" };
 
-export const SERVER_VERSION = "0.5.0";
+export const SERVER_VERSION = "0.7.0";
 
 export const provenance = createProvenanceContext({
   metaNamespace: "br.sbissoli.sih",

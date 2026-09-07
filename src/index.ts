@@ -15,6 +15,7 @@ import {
 
 import {
   getAvailableYears,
+  getDataDirectory,
   getPopulationYearRange,
   closeDatabase,
   queryCausas,
@@ -35,6 +36,7 @@ import cidChapters from "./data/cid-chapters.json" with { type: "json" };
 import brazilRegions from "./data/brazil-regions.json" with { type: "json" };
 import { SERVER_VERSION, provenanceFor, withProvenance } from "./provenance.js";
 import { getFreshness, startFreshnessCheck } from "./freshness.js";
+import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cubesCacheDir, ensureYears, loadCubesManifest, publishedYears, yearsFromArgs } from "./cache.js";
 
 // =============================================================================
 // DEFINIÇÃO DAS FERRAMENTAS
@@ -537,6 +539,22 @@ async function handleListCidChapters() {
   };
 }
 
+async function describeCubesChannel() {
+  if (!CUBES_CACHE_ENABLED) {
+    return { enabled: false, base_url: CUBES_BASE_URL, published_years: [] as number[], cache_dir: null as string | null, manifest_source: "disabled" };
+  }
+  const { manifest, source } = await loadCubesManifest();
+  return {
+    enabled: true,
+    base_url: CUBES_BASE_URL,
+    published_years: publishedYears(manifest),
+    manifest_generated_at: manifest?.generated_at ?? null,
+    manifest_source: source,
+    cache_dir: cubesCacheDir(),
+    note: "Ferramentas que leem cubo baixam sob demanda, do canal para o cache, os anos que a chamada pede (SHA-256 conferido); sem ano na chamada, a série publicada inteira.",
+  };
+}
+
 async function handleGetAvailableYears() {
   try {
     const years = getAvailableYears();
@@ -551,6 +569,11 @@ async function handleGetAvailableYears() {
       // Intervalo de pop_uf.parquet, lido do arquivo: é o que as ferramentas de
       // taxa (get_hospitalization_rates, compare_icsap_trends) aceitam.
       population_years: await getPopulationYearRange(),
+      // Canal público dos cubos (src/cache.ts): o que existe para baixar e onde
+      // o cache local vive. `published_years` vem do manifest.json do canal
+      // (timeout curto; cópia em disco quando a rede falha); `years` acima são
+      // os cubos já presentes localmente.
+      cubes_channel: await describeCubesChannel(),
       // Frescor dos cubos frente ao espelho healthbr-data (src/freshness.ts):
       // checado em segundo plano na inicialização, sem bloquear.
       freshness: getFreshness(),
@@ -1407,12 +1430,35 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   return { tools };
 });
 
+// Ferramentas que não leem cubo (só tabelas de referência, metadados ou
+// população): não disparam download do cache.
+const TOOLS_WITHOUT_CUBES = new Set(["list_csap_groups", "list_cid_chapters", "get_available_years", "classify_as_csap"]);
+
 // Handler: Executa ferramenta
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   try {
     let result: unknown;
+
+    // Cache local dos cubos (src/cache.ts): ferramentas que leem cubo garantem
+    // antes os anos pedidos — ou a série publicada inteira, quando a chamada
+    // não diz ano. Só entra em ação quando a pasta de dados não tem cubos
+    // (instalação pelo npm); com data/ cheio, ensureYears() não baixa nada.
+    if (CUBES_CACHE_ENABLED && !TOOLS_WITHOUT_CUBES.has(name)) {
+      const dir = getDataDirectory();
+      const { downloaded, unavailable } = await ensureYears(dir, yearsFromArgs(args), (m) => console.error(`[cache] ${m}`));
+      if (downloaded.length) console.error(`[cache] ano(s) ${downloaded.join(", ")} baixado(s) para ${dir}`);
+      if (unavailable.length && downloaded.length === 0 && getAvailableYears().length === 0) {
+        return {
+          content: [{ type: "text", text: JSON.stringify({
+            error: `Ano(s) ${unavailable.join(", ")} não publicado(s) no canal de cubos (${CUBES_BASE_URL}) e nenhum cubo local.`,
+            published_years: publishedYears((await loadCubesManifest()).manifest),
+          }, null, 2) }],
+          isError: true,
+        };
+      }
+    }
 
     switch (name) {
       // Metadados

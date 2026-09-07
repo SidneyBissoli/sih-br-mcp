@@ -70,6 +70,8 @@ const transport = new StdioClientTransport({
   env: {
     ...getDefaultEnvironment(),
     SIH_FRESHNESS_CHECK: "off",
+    // SIH_CUBES_CACHE=off: o golden lê só a fixture, nunca o canal público.
+    SIH_CUBES_CACHE: "off",
     ...(fixtures ? { SIH_DATA_DIR: resolve(fixtures) } : {}),
   },
   stderr: "pipe",

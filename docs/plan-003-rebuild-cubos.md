@@ -203,7 +203,12 @@ TAREFAS.md L104 com "(b) FEITO"; memória.
 
 ## 5. Fora de escopo, de propósito
 
-- Cache local de cubos e canal público (`sih/cubos/` no R2) — item (c).
+- ~~Cache local de cubos e canal público (`sih/cubos/` no R2) — item (c).~~
+  FEITO em 07/09/2026 (0.7.0): `scripts/cubes-manifest.mjs`,
+  `scripts/publish-cubes.sh`, `publish-cubes.yml`, passo de publicação no
+  `rebuild-cubes.yml`, `src/cache.ts` + `npm run cache:selftest`. Canal em
+  https://data.sidneybissoli.com/sih/cubos/manifest.json. Ver CONTEXT.md
+  decisão 18.
 - Regravar golden/baseline no workflow.
 - Cubo nacional — entrou depois: 2023 em 06/09 à tarde e 2019–2024 na 30ª
   sessão (mesmo dia); ver decisões 15 e 16 do CONTEXT.md.

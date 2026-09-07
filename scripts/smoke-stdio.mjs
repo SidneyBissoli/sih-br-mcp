@@ -48,6 +48,9 @@ const transport = new StdioClientTransport({
   env: {
     ...getDefaultEnvironment(),
     SIH_FRESHNESS_CHECK: "off",
+    // SIH_CUBES_CACHE=off: nem manifesto nem download do canal público — a
+    // fixture é a única fonte; o smoke não pode depender de rede.
+    SIH_CUBES_CACHE: "off",
     ...(fixtures ? { SIH_DATA_DIR: resolve(fixtures) } : {}),
   },
   stderr: "pipe",
