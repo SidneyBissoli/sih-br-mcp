@@ -111,6 +111,12 @@ jobs:
         run: |
           node - <<'EOF'
           const fs = require("node:fs");
+          // Sem o arquivo (o script morreu antes de gravar), o veredito é
+          // `unknown` e fica registrado — o pedido à mão com `years` segue,
+          // o schedule para (run 34071934742 caiu com ENOENT aqui).
+          if (!fs.existsSync("freshness.json")) {
+            fs.writeFileSync("freshness.json", JSON.stringify({ status: "unknown", error: "freshness.json não foi gravado pelo passo anterior" }, null, 2) + "\n");
+          }
           const state = JSON.parse(fs.readFileSync("freshness.json", "utf8"));
           const sidecarYears = fs.readdirSync("data").map((f) => /^sih_provenance_(\d{4})\.json$/.exec(f)?.[1]).filter(Boolean).map(Number).sort();
           const asked = (process.env.INPUT_YEARS ?? "").split(",").map((s) => s.trim()).filter(Boolean).map(Number);

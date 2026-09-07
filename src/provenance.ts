@@ -99,23 +99,28 @@ let sidecars: SihSidecar[] | null = null;
 /** Lê os sidecars da pasta de cubos em uso (uma vez por processo). */
 export function loadSidecars(): SihSidecar[] {
   if (sidecars) return sidecars;
-  // Sem Parquet na pasta (checkout limpo: o workflow rebuild-cubes.yml decide
-  // o que reconstruir lendo SÓ os sidecars versionados), o sidecar ainda vale:
-  // é o registro de safra, e é dele que o frescor parte.
-  let dir: string;
-  try {
-    dir = getDataDirectory();
-  } catch {
-    dir = configuredDataDirectory();
+  // Sem Parquet na pasta configurada (checkout limpo: o workflow
+  // rebuild-cubes.yml decide o que reconstruir lendo SÓ os sidecars
+  // versionados em data/), o sidecar ainda vale: é o registro de safra, e é
+  // dele que o frescor parte. Por isso a pasta CONFIGURADA tem precedência
+  // sempre que tiver sidecar; só sem nenhum (instalação pelo npm, sem data/)
+  // é que vale a pasta em uso — o cache local, que ensureYears() enche com o
+  // sidecar junto do Parquet. Desde a 0.7.0 getDataDirectory() não lança mais
+  // erro quando data/ está sem cubo (devolve o cache, possivelmente vazio),
+  // então cair no catch não servia mais de critério (run 34071934742).
+  const listIn = (dir: string): string[] =>
+    existsSync(dir) ? readdirSync(dir).filter((f) => SIDECAR_RE.test(f)).sort() : [];
+  let dir = configuredDataDirectory();
+  let files = listIn(dir);
+  if (files.length === 0) {
+    try {
+      dir = getDataDirectory();
+      files = listIn(dir);
+    } catch {
+      files = [];
+    }
   }
-  if (!existsSync(dir)) {
-    sidecars = [];
-    return sidecars;
-  }
-  sidecars = readdirSync(dir)
-    .filter((f) => SIDECAR_RE.test(f))
-    .sort()
-    .map((f) => JSON.parse(readFileSync(join(dir, f), "utf8")) as SihSidecar);
+  sidecars = files.map((f) => JSON.parse(readFileSync(join(dir, f), "utf8")) as SihSidecar);
   return sidecars;
 }
 

@@ -43,6 +43,12 @@ delete process.env.SIH_FRESHNESS_CHECK;
 
 const fail = (msg) => {
   console.error(`FRESCOR FALHOU: ${msg}`);
+  // Com `--out`, quem lê o estado (o job `decide`) precisa de um veredito
+  // mesmo quando a checagem nem chegou a rodar: grava `unknown` com o motivo
+  // em vez de deixar o arquivo por nascer (run 34071934742 caiu com ENOENT).
+  if (opt("--out")) {
+    writeFileSync(opt("--out"), JSON.stringify({ status: "unknown", error: msg, checked_at: new Date().toISOString() }, null, 2) + "\n");
+  }
   process.exit(1);
 };
 
