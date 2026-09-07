@@ -11,11 +11,11 @@
   },
   "competencias": ["1992-01", "1992-02", "1992-03", "1992-04", "1992-05", "1992-06", "1992-07", "1992-08", "1992-09", "1992-10", "1992-11", "1992-12", "1993-01", "1993-02", "1993-03", "1993-04"],
   "ufs_arquivo": ["AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO"],
-  "built_at": "2026-09-07T21:25:19Z",
+  "built_at": "2026-09-07T22:20:55Z",
   "builder": {
     "script": "scripts/build-aggregations.R",
-    "version": "2.5.0",
-    "git_commit": "7b336f645afbb79c931fcb3c1fbb305457803be3",
+    "version": "2.6.0",
+    "git_commit": "73dccbaea4aa368b797bcd301a8fe98591492a4f",
     "r_version": "R version 4.6.1 (2026-06-24)",
     "arrow_version": "25.0.1",
     "healthbr_version": "0.4.0.9000"
@@ -5658,10 +5658,10 @@
     "records_invalid_dt_inter": 0,
     "records_other_year": 5032067,
     "records_in_cube": 15659152,
-    "causas_rows": 3788629,
+    "causas_rows": 3822301,
     "series_rows": 7074,
-    "icsap_rows": 79582,
-    "icsap_rows_without_csap": 58
+    "icsap_rows": 84470,
+    "icsap_rows_without_csap": 4401
   },
   "records_date_imputed": 5076557,
   "cid_revision": {
@@ -5703,6 +5703,29 @@
       "name": "cruzeiro"
     }
   ],
+  "csap_universe": {
+    "method": "csapAIH",
+    "method_source": {
+      "name": "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R)",
+      "author": "Fúlvio Borges Nedel",
+      "version": "0.0.4.8 (2026-01-16)",
+      "url": "https://github.com/fulvionedel/csapAIH",
+      "license": "GPL-3",
+      "functions": [
+        "csapAIH()",
+        "proc.obst()",
+        "partos()"
+      ]
+    },
+    "rules": ["procedimento_obstetrico", "parto", "longa_permanencia"],
+    "tables": "src/data/csap-universe.json",
+    "records_in_universe": 11724086,
+    "excluded": {
+      "longa_permanencia": 884742,
+      "parto": 4046,
+      "procedimento_obstetrico": 3046278
+    }
+  },
   "columns_missing": ["MUNIC_RES", "RACA_COR"],
-  "notes": ["Cubo por ANO DE INTERNAÇÃO (DT_INTER): lê as competências do ano e os meses seguintes de Y+1 (window.months_after) e descarta internações de outros anos. Com 4 meses, 99,7-99,9% das internações do ano (dezembro 99,3-99,7%); o restante é reapresentação tardia difusa.", "uf dos cubos = UF DO ARQUIVO (estabelecimento, ufs_arquivo), NÃO de residência: MUNIC_RES não existe no SIH-RD de 1992-1993 e é vazio até nov/1994; para dar aos seis anos 1992-1997 um eixo só, `uf` é a UF do arquivo e `municipality_code` é nulo em todas as linhas (uf_basis = 'arquivo'; decisão iv de docs/analise-002-sih-1992-1997.md §5). De 1998 em diante uf é a de residência: séries por UF não são estritamente comparáveis na fronteira 1997/98 (a diferença é a internação fora da UF de residência).", "retrieved_at = processing_timestamp mais recente, no manifesto do healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream; igual, ao segundo, ao download_date do rodapé do Parquet). Lido por healthbR::sih_status().", "Coluna(s) MUNIC_RES, RACA_COR não existe(m) no SIH-RD de 1992 (RACA_COR só entra no leiaute da AIH em 2008; MUNIC_RES só em dez/1994): a coluna derivada (`race` de RACA_COR) é nula em todas as linhas deste cubo, inclusive nas internações faturadas nas competências seguintes de 1993, que já trazem a coluna.", "5.076.557 internações entraram com DT_INTER VAZIO (o SIH-RD de 1992-01..04 e 1993-01 não traz a data): data de internação = dia 1 da competência do arquivo (decisão ii da analise-002 §5); nelas `month` é o mês de faturamento, não o de internação.", "DIAG_PRINC em CID-9 (cid_revision = 9): código de 6 dígitos decodificado por tabela (src/data/cid9-codes.json); cid_group = categoria de 3 dígitos ('466', 'E883', 'V01'); cid_chapter = capítulo CID-10 equivalente (src/data/cid9-chapters.json). ICSAP pela lista DERIVADA e NÃO OFICIAL de src/data/csap-groups-cid9.json (docs/analise-003-icsap-cid9.md): g03 (anemia) e g05 (ouvido, nariz e garganta) não são comparáveis com 1998+ (icsap_comparability). Linhas com cid_revision = 10 no mesmo cubo são internações já faturadas em CID-10 (competências de 1998).", "value é NOMINAL na moeda da competência de faturamento (currency): Cr$ cruzeiro até 1993-06, CR$ cruzeiro real 1993-07..1994-06, R$ real desde 1994-07. Não somar nem comparar valores entre moedas; não comparável com anos posteriores antes de 1994-07 (decisão v da analise-002 §5).", "age: COD_IDADE 2 (dias) e 3 (meses) valem 0 anos. As versões < 2.5.0 do builder trocavam os dois (neonatos de 12-30 dias saíam com 1-2 anos); corrigido em 2.5.0 (sih:cod-idade) e os cubos de 1998+ reconstruídos."]
+  "notes": ["Cubo por ANO DE INTERNAÇÃO (DT_INTER): lê as competências do ano e os meses seguintes de Y+1 (window.months_after) e descarta internações de outros anos. Com 4 meses, 99,7-99,9% das internações do ano (dezembro 99,3-99,7%); o restante é reapresentação tardia difusa.", "uf dos cubos = UF DO ARQUIVO (estabelecimento, ufs_arquivo), NÃO de residência: MUNIC_RES não existe no SIH-RD de 1992-1993 e é vazio até nov/1994; para dar aos seis anos 1992-1997 um eixo só, `uf` é a UF do arquivo e `municipality_code` é nulo em todas as linhas (uf_basis = 'arquivo'; decisão iv de docs/analise-002-sih-1992-1997.md §5). De 1998 em diante uf é a de residência: séries por UF não são estritamente comparáveis na fronteira 1997/98 (a diferença é a internação fora da UF de residência).", "retrieved_at = processing_timestamp mais recente, no manifesto do healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream; igual, ao segundo, ao download_date do rodapé do Parquet). Lido por healthbR::sih_status().", "Coluna(s) MUNIC_RES, RACA_COR não existe(m) no SIH-RD de 1992 (RACA_COR só entra no leiaute da AIH em 2008; MUNIC_RES só em dez/1994): a coluna derivada (`race` de RACA_COR) é nula em todas as linhas deste cubo, inclusive nas internações faturadas nas competências seguintes de 1993, que já trazem a coluna.", "5.076.557 internações entraram com DT_INTER VAZIO (o SIH-RD de 1992-01..04 e 1993-01 não traz a data): data de internação = dia 1 da competência do arquivo (decisão ii da analise-002 §5); nelas `month` é o mês de faturamento, não o de internação.", "DIAG_PRINC em CID-9 (cid_revision = 9): código de 6 dígitos decodificado por tabela (src/data/cid9-codes.json); cid_group = categoria de 3 dígitos ('466', 'E883', 'V01'); cid_chapter = capítulo CID-10 equivalente (src/data/cid9-chapters.json). ICSAP pela lista DERIVADA e NÃO OFICIAL de src/data/csap-groups-cid9.json (docs/analise-003-icsap-cid9.md): g03 (anemia) e g05 (ouvido, nariz e garganta) não são comparáveis com 1998+ (icsap_comparability). Linhas com cid_revision = 10 no mesmo cubo são internações já faturadas em CID-10 (competências de 1998).", "value é NOMINAL na moeda da competência de faturamento (currency): Cr$ cruzeiro até 1993-06, CR$ cruzeiro real 1993-07..1994-06, R$ real desde 1994-07. Não somar nem comparar valores entre moedas; não comparável com anos posteriores antes de 1994-07 (decisão v da analise-002 §5).", "% ICSAP como o pacote R csapAIH (Nedel): a lista de diagnósticos é a da Portaria 221/2008 para TODAS as internações, mas o percentual da literatura exclui do numerador e do denominador as internações por procedimento obstétrico (PROC_REA na lista SIGTAP do csapAIH, ou nos grupos partos/cesáreas/abortamentos da tabela antiga até 2007), as com diagnóstico de parto (O80-O84; em CID-9 650 e 669.5-669.7) e as AIH de longa permanência (IDENT = 5). A coluna `exclusion` (chave nos cubos de causas e ICSAP) marca o motivo; nula = entra no universo (csap_universe.records_in_universe). O servidor usa o universo por padrão e pode incluir tudo a pedido.", "age: COD_IDADE 2 (dias) e 3 (meses) valem 0 anos. As versões < 2.5.0 do builder trocavam os dois (neonatos de 12-30 dias saíam com 1-2 anos); corrigido em 2.5.0 (sih:cod-idade) e os cubos de 1998+ reconstruídos."]
 }
