@@ -308,3 +308,20 @@ jobs:
             --title "Cubos SIH — $YEARS ($(date -u +%Y-%m-%d))" \
             --notes-file notes.md
           echo "release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"
+
+      # Canal público (item (c) de sih:cubos-frescor, 06/09/2026): os mesmos
+      # arquivos da release vão para sih/cubos/ do bucket healthbr-data, servido
+      # em https://data.sidneybissoli.com/sih/cubos/, com manifest.json (SHA-256
+      # e tamanho por arquivo). É de lá que o servidor baixa um ano para o cache
+      # local. Sem os secrets (fork, ou token expirado) o passo avisa e não
+      # falha: a release continua sendo o registro.
+      - name: Publicar cubos no R2 (sih/cubos/)
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          if [ -z "$R2_ACCESS_KEY_ID" ] || [ -z "$R2_SECRET_ACCESS_KEY" ]; then
+            echo "::notice::R2_ACCESS_KEY_ID/R2_SECRET_ACCESS_KEY ausentes — cubos só na release, não em sih/cubos/"
+            exit 0
+          fi
+          bash scripts/publish-cubes.sh "$YEARS" data
