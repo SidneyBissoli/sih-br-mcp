@@ -551,10 +551,10 @@
       },
       "population_years": {
         "first_year": 1991,
-        "last_year": 2024,
+        "last_year": 2025,
         "detailed": {
           "first_year": 2000,
-          "last_year": 2024,
+          "last_year": 2025,
           "source": "pop_uf.parquet",
           "age": "idade simples"
         },
@@ -3024,8 +3024,8 @@
         {
           "n_hospitalizations": 48480,
           "deaths": 1485,
-          "population": 221272301,
-          "rate_per_100k": 21.91,
+          "population": 211695158,
+          "rate_per_100k": 22.9,
           "rate_per": 100000,
           "population_source": "detailed",
           "mortality_rate": 3.06
@@ -3033,8 +3033,8 @@
       ],
       "summary": {
         "total_hospitalizations": 48480,
-        "total_population": 221272301,
-        "overall_rate": 21.91,
+        "total_population": 211695158,
+        "overall_rate": 22.9,
         "rate_per": 100000,
         "rate_type": "crude"
       },
@@ -3092,8 +3092,8 @@
           "uf": "AM",
           "n_hospitalizations": 117,
           "deaths": 5,
-          "population": 4435886,
-          "rate_per_100k": 2.64,
+          "population": 4240571,
+          "rate_per_100k": 2.76,
           "rate_per": 100000,
           "population_source": "detailed",
           "mortality_rate": 4.27
@@ -3102,7 +3102,7 @@
           "uf": "CE",
           "n_hospitalizations": 2,
           "deaths": 1,
-          "population": 9548607,
+          "population": 9196672,
           "rate_per_100k": 0.02,
           "rate_per": 100000,
           "population_source": "detailed",
@@ -3112,7 +3112,7 @@
           "uf": "GO",
           "n_hospitalizations": 1,
           "deaths": 0,
-          "population": 7515888,
+          "population": 7274463,
           "rate_per_100k": 0.01,
           "rate_per": 100000,
           "population_source": "detailed",
@@ -3122,7 +3122,7 @@
           "uf": "MA",
           "n_hospitalizations": 2,
           "deaths": 0,
-          "population": 7353346,
+          "population": 7003234,
           "rate_per_100k": 0.03,
           "rate_per": 100000,
           "population_source": "detailed",
@@ -3132,7 +3132,7 @@
           "uf": "MG",
           "n_hospitalizations": 6,
           "deaths": 0,
-          "population": 22231863,
+          "population": 21247401,
           "rate_per_100k": 0.03,
           "rate_per": 100000,
           "population_source": "detailed",
@@ -3142,7 +3142,7 @@
           "uf": "PB",
           "n_hospitalizations": 1,
           "deaths": 0,
-          "population": 4198939,
+          "population": 4124468,
           "rate_per_100k": 0.02,
           "rate_per": 100000,
           "population_source": "detailed",
@@ -3152,8 +3152,8 @@
           "uf": "RR",
           "n_hospitalizations": 48349,
           "deaths": 1479,
-          "population": 688474,
-          "rate_per_100k": 7022.63,
+          "population": 695270,
+          "rate_per_100k": 6953.99,
           "rate_per": 100000,
           "population_source": "detailed",
           "mortality_rate": 3.06
@@ -3162,7 +3162,7 @@
           "uf": "SP",
           "n_hospitalizations": 2,
           "deaths": 0,
-          "population": 48549278,
+          "population": 45850570,
           "rate_per_100k": 0,
           "rate_per": 100000,
           "population_source": "detailed",
@@ -3171,8 +3171,8 @@
       ],
       "summary": {
         "total_hospitalizations": 48480,
-        "total_population": 104522281,
-        "overall_rate": 46.38,
+        "total_population": 99632649,
+        "overall_rate": 48.66,
         "rate_per": 100000,
         "rate_type": "specific"
       },
@@ -3235,8 +3235,8 @@
         {
           "n_hospitalizations": 1151,
           "deaths": 145,
-          "population": 16729471,
-          "rate_per_100k": 6.88,
+          "population": 14552605,
+          "rate_per_100k": 7.91,
           "rate_per": 100000,
           "population_source": "detailed",
           "mortality_rate": 12.6
@@ -3244,8 +3244,8 @@
       ],
       "summary": {
         "total_hospitalizations": 1151,
-        "total_population": 16729471,
-        "overall_rate": 6.88,
+        "total_population": 14552605,
+        "overall_rate": 7.91,
         "rate_per": 100000,
         "rate_type": "crude"
       },
@@ -3305,10 +3305,10 @@
       "data": [],
       "population_years": {
         "first_year": 1991,
-        "last_year": 2024,
+        "last_year": 2025,
         "detailed": {
           "first_year": 2000,
-          "last_year": 2024,
+          "last_year": 2025,
           "source": "pop_uf.parquet",
           "age": "idade simples"
         },

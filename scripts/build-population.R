@@ -5,7 +5,11 @@
 #
 # FONTES DE DADOS:
 #   1. DATASUS FTP - Dados municipais 1991-2024 (via csapAIH::ler_popbr)
-#   2. SIDRA IBGE - Projecoes UF 2000-2025 (Tabela 7358, via API HTTP)
+#   2. IBGE - Projecoes da Populacao, REVISAO 2024 (planilha oficial
+#      projecoes_2024_tab1_idade_simples.xlsx do FTP do IBGE: UF x sexo x idade
+#      simples x ano 2000-2070). Desde 2026-09-07 (sih:canal-acabamento);
+#      antes vinha da SIDRA 7358, que so tem a revisao 2018 (a 2024 nao foi
+#      carregada na SIDRA) — build_pop_uf_sidra2018() fica como legado.
 #
 # REGRAS CRITICAS:
 #   - NAO interpolar dados
@@ -17,7 +21,7 @@
 #   source("scripts/build-population.R")
 #   build_population()             # Gera todos os 3 arquivos
 #   build_pop_municipios()         # Apenas pop_municipios.parquet
-#   build_pop_uf()                 # Apenas pop_uf.parquet (SIDRA HTTP)
+#   build_pop_uf()                 # Apenas pop_uf.parquet (planilha IBGE, Revisao 2024)
 #   build_pop_uf_agregado()        # Apenas pop_uf_agregado.parquet
 # =============================================================================
 
@@ -257,17 +261,104 @@ baixar_sidra_7358 <- function(ano) {
   })
 }
 
-#' Gera pop_uf.parquet
+# Planilha oficial da Projecao da Populacao, Revisao 2024 (IBGE): uma linha por
+# IDADE (0..90, 90 = 90+) x SEXO (Ambos/Homens/Mulheres) x LOCAL (BR, regioes e
+# UFs, com SIGLA), colunas 2000..2070. Cabecalho na 6a linha.
+IBGE_PROJECAO_2024_URL <- "https://ftp.ibge.gov.br/Projecao_da_Populacao/Projecao_da_Populacao_2024/projecoes_2024_tab1_idade_simples.xlsx"
+
+# Ultimo ano de populacao a gravar = ultimo ano de cubo FECHADO do SIH (CONTEXT.md)
+POP_UF_ULTIMO_ANO <- 2025L
+
+#' Gera pop_uf.parquet a partir da Projecao da Populacao 2024 do IBGE
 #'
-#' Baixa projecoes populacionais por UF do SIDRA/IBGE
-#' Tabela 7358, via API HTTP direta
+#' Le a planilha oficial (idade simples) do FTP do IBGE, filtra as 27 UFs,
+#' Homens/Mulheres e os anos 2000..POP_UF_ULTIMO_ANO, e grava o mesmo esquema
+#' de antes (year, uf, sex, age, population; 90 = 90+). Nada e interpolado.
+#' Conferencia embutida: a soma Homens + Mulheres tem de bater com "Ambos"
+#' em cada UF x ano, e o Brasil de 2024 com 212.583.750 (valor da planilha).
+#'
+#' @param arquivo Caminho local da planilha; se NULL, baixa do FTP do IBGE
+#'   para tempdir().
+#' @return Invisivel. Salva pop_uf.parquet no diretorio data/
+build_pop_uf <- function(arquivo = NULL) {
+  if (!requireNamespace("readxl", quietly = TRUE)) {
+    cli_abort("Instale o pacote readxl: install.packages('readxl')")
+  }
+  cli_h1("Gerando pop_uf.parquet (Projecao da Populacao 2024, IBGE)")
+  cli_alert_info("Fonte: {IBGE_PROJECAO_2024_URL}")
+  cli_alert_info("Periodo: 2000-{POP_UF_ULTIMO_ANO} (ate o ultimo cubo fechado do SIH)")
+
+  if (is.null(arquivo)) {
+    arquivo <- file.path(tempdir(), basename(IBGE_PROJECAO_2024_URL))
+    cli_alert_info("Baixando a planilha...")
+    utils::download.file(IBGE_PROJECAO_2024_URL, arquivo, mode = "wb", quiet = TRUE)
+  }
+
+  bruto <- suppressMessages(readxl::read_excel(arquivo, sheet = 1, skip = 5))
+  esperadas <- c("IDADE", "SEXO", "SIGLA", "LOCAL")
+  if (!all(esperadas %in% names(bruto))) {
+    cli_abort("Planilha fora do leiaute esperado; colunas: {paste(names(bruto), collapse = ', ')}")
+  }
+  anos <- as.character(2000:POP_UF_ULTIMO_ANO)
+  faltam <- setdiff(anos, names(bruto))
+  if (length(faltam) > 0) cli_abort("Planilha sem os anos {paste(faltam, collapse = ', ')}")
+
+  ufs <- unname(UF_CODIGO_SIGLA)
+  longo <- bruto %>%
+    dplyr::filter(SIGLA %in% ufs, SEXO %in% c("Homens", "Mulheres", "Ambos")) %>%
+    dplyr::select(IDADE, SEXO, uf = SIGLA, dplyr::all_of(anos)) %>%
+    tidyr::pivot_longer(dplyr::all_of(anos), names_to = "year", values_to = "population") %>%
+    dplyr::mutate(
+      year = as.integer(year),
+      age = pmin(as.integer(IDADE), 90L),
+      population = as.integer(round(population))
+    )
+
+  # Conferencia: Homens + Mulheres == Ambos, por UF x ano
+  ambos <- longo %>% dplyr::filter(SEXO == "Ambos") %>% dplyr::group_by(uf, year) %>%
+    dplyr::summarise(ambos = sum(population), .groups = "drop")
+  soma <- longo %>% dplyr::filter(SEXO != "Ambos") %>% dplyr::group_by(uf, year) %>%
+    dplyr::summarise(soma = sum(population), .groups = "drop")
+  conf <- dplyr::full_join(ambos, soma, by = c("uf", "year")) %>% dplyr::filter(abs(ambos - soma) > 1)
+  if (nrow(conf) > 0) {
+    cli_abort("Homens + Mulheres != Ambos em {nrow(conf)} UF x ano (ex.: {conf$uf[1]} {conf$year[1]})")
+  }
+  br_2024 <- bruto %>% dplyr::filter(SIGLA == "BR", SEXO == "Ambos") %>% dplyr::pull("2024") %>% sum()
+  if (br_2024 != 212583750) cli_abort("Brasil 2024 na planilha = {br_2024}, esperado 212.583.750")
+
+  dados_final <- longo %>%
+    dplyr::filter(SEXO != "Ambos") %>%
+    dplyr::mutate(sex = ifelse(SEXO == "Homens", "M", "F")) %>%
+    dplyr::group_by(year, uf, sex, age) %>%
+    dplyr::summarise(population = sum(population), .groups = "drop") %>%
+    dplyr::arrange(year, uf, sex, age) %>%
+    as.data.frame()
+
+  stopifnot(length(unique(dados_final$uf)) == 27, all(0:90 %in% dados_final$age))
+
+  arquivo_saida <- file.path(OUTPUT_DIR, "pop_uf.parquet")
+  arrow::write_parquet(dados_final, arquivo_saida)
+  cli_h2("Resumo pop_uf.parquet")
+  cli_alert_success("Arquivo: {.path {arquivo_saida}}")
+  cli_alert_success("Registros: {.val {format(nrow(dados_final), big.mark='.')}}")
+  cli_alert_success("Anos: {.val {min(dados_final$year)}} a {.val {max(dados_final$year)}}")
+  cli_alert_success("UFs: {.val {length(unique(dados_final$uf))}}; idades 0 a 90+")
+  cli_alert_success("Brasil {POP_UF_ULTIMO_ANO}: {.val {format(sum(dados_final$population[dados_final$year == POP_UF_ULTIMO_ANO]), big.mark='.')}}")
+  return(invisible(dados_final))
+}
+
+#' LEGADO (ate 2026-09-07): pop_uf.parquet pela SIDRA 7358, revisao 2018
+#'
+#' A SIDRA so carregou a revisao 2018 da projecao (p/2018); a Revisao 2024 esta
+#' apenas na planilha do FTP do IBGE (build_pop_uf acima). Mantida para
+#' reproduzir os cubos de populacao anteriores.
 #' Periodo: 2000-2025 (ate o ultimo ano de cubo FECHADO do SIH; nunca alem — CONTEXT.md)
 #' Granularidade: UF, sexo, idade simples (0-90+)
 #'
 #' @return Invisivel. Salva pop_uf.parquet no diretorio data/
-build_pop_uf <- function() {
+build_pop_uf_sidra2018 <- function() {
 
-  cli_h1("Gerando pop_uf.parquet (via API HTTP)")
+  cli_h1("Gerando pop_uf.parquet (via API HTTP, SIDRA 7358 revisao 2018 — LEGADO)")
   cli_alert_info("Fonte: SIDRA/IBGE - Tabela 7358 (Projecoes)")
   cli_alert_info("Periodo: 2000-2025 (ate o ultimo cubo fechado do SIH)")
   cli_alert_info("Parametros: p/2018, c287/all, c1933/[codigo_ano]")
