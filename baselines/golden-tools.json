@@ -500,6 +500,10 @@
         "total_years": 1
       },
       "note": "Anos com dados Parquet disponíveis",
+      "race_available": {
+        "2023": true
+      },
+      "years_without_race": [],
       "population_years": {
         "first_year": 2000,
         "last_year": 2024
@@ -526,7 +530,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -674,7 +678,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -775,7 +779,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -831,7 +835,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -1030,7 +1034,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -1064,7 +1068,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -1121,7 +1125,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -1211,7 +1215,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -1296,7 +1300,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -1347,7 +1351,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -1391,7 +1395,7 @@
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T04:02:47Z",
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
         "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
       },
       "attribution": [
@@ -1437,7 +1441,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -1644,7 +1648,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -1717,7 +1721,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -1791,7 +1795,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -1838,7 +1842,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -1907,7 +1911,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -1962,7 +1966,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2213,7 +2217,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2257,7 +2261,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2456,7 +2460,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2514,7 +2518,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2646,7 +2650,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2716,7 +2720,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2769,7 +2773,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2822,7 +2826,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
@@ -2872,7 +2876,7 @@
           "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T04:02:47Z",
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.7.0.",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.8.0.",
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {

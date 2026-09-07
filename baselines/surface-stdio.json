@@ -240,7 +240,7 @@
   },
   {
     "name": "get_hospitalizations",
-    "description": "Consulta dados de internações hospitalares do SUS com filtros flexíveis. Permite agregar por múltiplas dimensões (UF, CID, sexo, idade, raça, ano/mês).",
+    "description": "Consulta dados de internações hospitalares do SUS com filtros flexíveis. Permite agregar por múltiplas dimensões (UF, CID, sexo, idade, raça, ano/mês). Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available).",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -293,7 +293,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Raça/cor (branca, preta, parda, amarela, indigena, ignorado)"
+          "description": "Raça/cor (branca, preta, parda, amarela, indigena, ignorado). Só existe de 2008 em diante: em 1998–2007 race é nulo e o filtro não alcança esses anos."
         },
         "is_csap": {
           "type": "boolean",
@@ -327,7 +327,7 @@
   },
   {
     "name": "get_icsap",
-    "description": "Consulta internações por Condições Sensíveis à Atenção Primária (ICSAP). Permite filtros por grupo CSAP, UF, município, sexo, idade e raça.",
+    "description": "Consulta internações por Condições Sensíveis à Atenção Primária (ICSAP). Permite filtros por grupo CSAP, UF, município, sexo, idade e raça. Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available).",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -377,7 +377,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Raça/cor"
+          "description": "Raça/cor (branca, preta, parda, amarela, indigena, ignorado). Só existe de 2008 em diante: em 1998–2007 race é nulo e o filtro não alcança esses anos."
         },
         "group_by": {
           "type": "array",
@@ -400,7 +400,7 @@
   },
   {
     "name": "get_icsap_indicators",
-    "description": "Calcula indicadores de ICSAP: percentual (ICSAP/Total×100). Métricas-chave para avaliar a Atenção Primária.",
+    "description": "Calcula indicadores de ICSAP: percentual (ICSAP/Total×100). Métricas-chave para avaliar a Atenção Primária. Agrupar por raça só faz sentido de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available).",
     "inputSchema": {
       "type": "object",
       "properties": {

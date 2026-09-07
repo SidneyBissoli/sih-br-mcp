@@ -26,7 +26,7 @@ import { cubeFreshness, describeBehind, getFreshness } from "./freshness.js";
 import csapGroups from "./data/csap-groups.json" with { type: "json" };
 import cidChapters from "./data/cid-chapters.json" with { type: "json" };
 
-export const SERVER_VERSION = "0.7.0";
+export const SERVER_VERSION = "0.8.0";
 
 export const provenance = createProvenanceContext({
   metaNamespace: "br.sbissoli.sih",
@@ -89,6 +89,8 @@ export interface SihSidecar {
   retrieved_at: string;
   partitions: SihSidecarPartition[];
   totals: Record<string, number>;
+  /** Builder >= 2.4.0: colunas cruas que o SIH-RD daquele ano não tem (RACA_COR antes de 2008). */
+  columns_missing?: string[];
   notes: string[];
 }
 
@@ -124,9 +126,41 @@ export function loadSidecars(): SihSidecar[] {
   return sidecars;
 }
 
-/** Só para testes: força a releitura dos sidecars. */
+/** Força a releitura dos sidecars (testes; e o cache local, que grava sidecar novo ao baixar um ano). */
 export function resetSidecars(): void {
   sidecars = null;
+}
+
+// =============================================================================
+// RAÇA/COR POR ANO
+// =============================================================================
+
+/**
+ * Anos cujo cubo NÃO tem raça/cor: RACA_COR só entra no leiaute da AIH em
+ * 2008, e o builder >= 2.4.0 grava `race` nulo nesses cubos e o registra em
+ * `columns_missing` no sidecar (1998–2007). Ano sem sidecar conta como tendo.
+ */
+export function yearsWithoutRace(): number[] {
+  return loadSidecars()
+    .filter((s) => (s.columns_missing ?? []).includes("RACA_COR"))
+    .map((s) => s.cube_year)
+    .sort((a, b) => a - b);
+}
+
+/**
+ * Nota para a resposta de uma ferramenta que filtra ou agrupa por raça quando
+ * algum ano consultado não tem a coluna. Sem `years` (a consulta cobre tudo
+ * que está carregado), valem os anos carregados.
+ */
+export function raceNotes(years: number[] | undefined, loadedYears: number[]): string[] {
+  const missing = yearsWithoutRace();
+  if (missing.length === 0) return [];
+  const asked = years && years.length > 0 ? years : loadedYears;
+  const hit = missing.filter((y) => asked.includes(y));
+  if (hit.length === 0) return [];
+  return [
+    `Raça/cor não existe no SIH-RD de ${hit.join(", ")} (RACA_COR entrou no leiaute da AIH em 2008): nessas linhas \`race\` é nulo — o filtro \`race\` não as alcança e, no agrupamento por \`race\`, elas formam o grupo null.`,
+  ];
 }
 
 // =============================================================================

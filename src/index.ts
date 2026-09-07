@@ -34,7 +34,7 @@ import {
 import csapGroups from "./data/csap-groups.json" with { type: "json" };
 import cidChapters from "./data/cid-chapters.json" with { type: "json" };
 import brazilRegions from "./data/brazil-regions.json" with { type: "json" };
-import { SERVER_VERSION, provenanceFor, withProvenance } from "./provenance.js";
+import { SERVER_VERSION, provenanceFor, raceNotes, withProvenance, yearsWithoutRace } from "./provenance.js";
 import { getFreshness, startFreshnessCheck } from "./freshness.js";
 import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cubesCacheDir, ensureYears, loadCubesManifest, publishedYears, yearsFromArgs } from "./cache.js";
 
@@ -89,7 +89,8 @@ const tools: Tool[] = [
     name: "get_hospitalizations",
     description:
       "Consulta dados de internações hospitalares do SUS com filtros flexíveis. " +
-      "Permite agregar por múltiplas dimensões (UF, CID, sexo, idade, raça, ano/mês).",
+      "Permite agregar por múltiplas dimensões (UF, CID, sexo, idade, raça, ano/mês). " +
+      "Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available).",
     inputSchema: {
       type: "object",
       properties: {
@@ -129,7 +130,7 @@ const tools: Tool[] = [
         race: {
           type: "array",
           items: { type: "string" },
-          description: "Raça/cor (branca, preta, parda, amarela, indigena, ignorado)",
+          description: "Raça/cor (branca, preta, parda, amarela, indigena, ignorado). Só existe de 2008 em diante: em 1998–2007 race é nulo e o filtro não alcança esses anos.",
         },
         is_csap: {
           type: "boolean",
@@ -228,7 +229,8 @@ const tools: Tool[] = [
     name: "get_icsap",
     description:
       "Consulta internações por Condições Sensíveis à Atenção Primária (ICSAP). " +
-      "Permite filtros por grupo CSAP, UF, município, sexo, idade e raça.",
+      "Permite filtros por grupo CSAP, UF, município, sexo, idade e raça. " +
+      "Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available).",
     inputSchema: {
       type: "object",
       properties: {
@@ -267,7 +269,7 @@ const tools: Tool[] = [
         race: {
           type: "array",
           items: { type: "string" },
-          description: "Raça/cor",
+          description: "Raça/cor (branca, preta, parda, amarela, indigena, ignorado). Só existe de 2008 em diante: em 1998–2007 race é nulo e o filtro não alcança esses anos.",
         },
         group_by: {
           type: "array",
@@ -284,7 +286,8 @@ const tools: Tool[] = [
     name: "get_icsap_indicators",
     description:
       "Calcula indicadores de ICSAP: percentual (ICSAP/Total×100). " +
-      "Métricas-chave para avaliar a Atenção Primária.",
+      "Métricas-chave para avaliar a Atenção Primária. " +
+      "Agrupar por raça só faz sentido de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available).",
     inputSchema: {
       type: "object",
       properties: {
@@ -558,6 +561,7 @@ async function describeCubesChannel() {
 async function handleGetAvailableYears() {
   try {
     const years = getAvailableYears();
+    const noRace = yearsWithoutRace();
     return {
       years,
       data_range: {
@@ -566,6 +570,10 @@ async function handleGetAvailableYears() {
         total_years: years.length,
       },
       note: "Anos com dados Parquet disponíveis",
+      // Raça/cor por ano (sidecar `columns_missing`, builder >= 2.4.0): RACA_COR
+      // só entra no leiaute da AIH em 2008; em 1998–2007 `race` é nulo.
+      race_available: Object.fromEntries(years.map((y) => [String(y), !noRace.includes(y)])),
+      years_without_race: noRace,
       // Intervalo de pop_uf.parquet, lido do arquivo: é o que as ferramentas de
       // taxa (get_hospitalization_rates, compare_icsap_trends) aceitam.
       population_years: await getPopulationYearRange(),
@@ -694,8 +702,10 @@ async function handleGetHospitalizations(args: GetHospitalizationsArgs) {
       { n: 0, days: 0, value: 0, deaths: 0 }
     );
 
+    const notes = args.race?.length || args.group_by?.includes("race") ? raceNotes(args.year, getAvailableYears()) : [];
     return {
       data,
+      ...(notes.length > 0 ? { notes } : {}),
       summary: {
         total_hospitalizations: totals.n,
         total_days: totals.days,
@@ -879,8 +889,10 @@ async function handleGetIcsap(args: GetIcsapArgs) {
       { icsap: 0, total: 0, days: 0, value: 0, deaths: 0 }
     );
 
+    const notes = args.race?.length || args.group_by?.includes("race") ? raceNotes(args.year, getAvailableYears()) : [];
     return {
       data,
+      ...(notes.length > 0 ? { notes } : {}),
       summary: {
         total_icsap: totals.icsap,
         total_hospitalizations: totals.total,
@@ -929,8 +941,10 @@ async function handleGetIcsapIndicators(args: GetIcsapIndicatorsArgs) {
       groupBy: args.group_by,
     });
 
+    const notes = args.group_by?.includes("race") ? raceNotes(args.year, getAvailableYears()) : [];
     return {
       data,
+      ...(notes.length > 0 ? { notes } : {}),
       indicators_calculated: ["icsap_percentage"],
       note: "icsap_percentage = (n_icsap / n_total) * 100",
     };

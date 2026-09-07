@@ -35,6 +35,15 @@
 # público somente-leitura vive no pacote; outro bucket entra por
 # `r2_credentials` (ver ?healthbR::sih_data). Este script não tem código S3
 # próprio desde a v2.2.0.
+#
+# RAÇA/COR ANTES DE 2008 (v2.4.0, 2026-09-07): RACA_COR só entra no leiaute da
+# AIH em 2008. Para 1998–2007 a coluna é OPCIONAL: o cubo sai com `race` NULO
+# em todas as linhas (decisão do usuário: não "ignorado", não valor próprio) e
+# o sidecar registra `columns_missing = ["RACA_COR"]` + nota. O healthbR impõe
+# ao prefixo o esquema do ano MAIS NOVO pedido, então o cubo de 1998 (lê
+# 1998+1999) não vê a coluna e o de 2007 (lê 2007+2008) a vê com NA nas linhas
+# de 2007 — os dois caminhos têm de dar o mesmo cubo (ver ler_particoes()).
+# Exige healthbR >= 0.4.0.9000 (sih_years() desde 1992).
 # =============================================================================
 
 library(dplyr)
@@ -60,7 +69,7 @@ if (!requireNamespace("healthbR", quietly = TRUE) ||
 OUTPUT_DIR <- here::here("data")
 dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
-BUILDER_VERSION <- "2.3.1"
+BUILDER_VERSION <- "2.4.0"
 
 # Meses de Y+1 lidos para fechar as internações de Y (ver cabeçalho)
 MESES_SEGUINTES <- 4L
@@ -74,9 +83,13 @@ HEALTHBR_LICENSE <- "CC-BY-4.0"
 
 DATASUS_FTP_DIR <- "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
 
-# Colunas cruas do SIH-RD que os cubos usam (projeção na leitura do R2)
-COLUNAS_SIH <- c("DT_INTER", "MUNIC_RES", "DIAG_PRINC", "SEXO", "IDADE",
-                 "COD_IDADE", "RACA_COR", "DIAS_PERM", "VAL_TOT", "MORTE")
+# Colunas cruas do SIH-RD que os cubos usam (projeção na leitura do R2).
+# As OPCIONAIS podem faltar no Parquet de um ano (RACA_COR: só de 2008 em
+# diante); saem nulas no cubo e registradas em `columns_missing` no sidecar.
+COLUNAS_OBRIGATORIAS <- c("DT_INTER", "MUNIC_RES", "DIAG_PRINC", "SEXO", "IDADE",
+                          "COD_IDADE", "DIAS_PERM", "VAL_TOT", "MORTE")
+COLUNAS_OPCIONAIS <- c("RACA_COR")
+COLUNAS_SIH <- c(COLUNAS_OBRIGATORIAS, COLUNAS_OPCIONAIS)
 
 # Todas as UFs brasileiras
 ALL_UFS <- c("AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
@@ -313,14 +326,27 @@ ler_particoes <- function(ano, ufs, particoes) {
   anos <- sort(unique(particoes$year))
   ds <- healthbR::sih_data(year = anos, uf = ufs, source = "r2",
                            lazy = TRUE, parse = FALSE)
-  faltam <- setdiff(COLUNAS_SIH, names(ds))
+  faltam <- setdiff(COLUNAS_OBRIGATORIAS, names(ds))
   if (length(faltam) > 0) {
     cli_abort("Colunas ausentes no Parquet do healthbr-data: {paste(faltam, collapse = ', ')}")
   }
+  # Opcionais (2.4.0): o healthbR impõe ao prefixo o esquema do ano MAIS NOVO
+  # pedido. Para o cubo de 1998 (lê 1998+1999) RACA_COR não está no esquema;
+  # para o de 2007 (lê 2007+2008) está, mas toda linha da competência de 2007
+  # vem NA. Os dois têm de dar o mesmo cubo: a coluna conta como AUSENTE no ano
+  # quando nenhuma linha das competências do ano a traz, e sai nula em TODAS as
+  # linhas do lote (inclusive nas de Y+1 que já a trazem).
+  presentes <- intersect(COLUNAS_OPCIONAIS, names(ds))
   dados <- ds %>%
     dplyr::filter(year == ano | (year == ano + 1L & month <= MESES_SEGUINTES)) %>%
-    dplyr::select(dplyr::all_of(c("year", "month", "uf_source", COLUNAS_SIH))) %>%
+    dplyr::select(dplyr::all_of(c("year", "month", "uf_source", COLUNAS_OBRIGATORIAS, presentes))) %>%
     dplyr::collect()
+  ausentes <- setdiff(COLUNAS_OPCIONAIS, presentes)
+  no_ano <- dados$year == ano
+  for (col in presentes) {
+    if (any(no_ano) && all(is.na(dados[[col]][no_ano]))) ausentes <- c(ausentes, col)
+  }
+  for (col in ausentes) dados[[col]] <- NA_character_
 
   # Cada partição lida tem de ter exatamente as linhas que o manifesto declara
   lidas <- dados %>%
@@ -357,7 +383,7 @@ ler_particoes <- function(ano, ufs, particoes) {
     )
   })
 
-  list(dados = dados, particoes = registro)
+  list(dados = dados, particoes = registro, colunas_ausentes = ausentes)
 }
 
 #' "AAAA-MM-DD HH:MM:SS.ffffff" (UTC, do manifesto) -> "AAAA-MM-DDTHH:MM:SSZ"
@@ -366,7 +392,8 @@ iso_utc <- function(ts) {
 }
 
 #' Escreve data/sih_provenance_<ano>.json — o registro de safra do cubo
-escrever_sidecar <- function(ano, chaves, particoes, manifest_last_updated, janela_completa, totais, output_dir) {
+escrever_sidecar <- function(ano, chaves, particoes, manifest_last_updated, janela_completa, totais, output_dir,
+                             columns_missing = character()) {
   git_commit <- tryCatch(
     trimws(system2("git", c("-C", shQuote(here::here()), "rev-parse", "HEAD"), stdout = TRUE, stderr = FALSE)),
     error = function(e) NA_character_, warning = function(w) NA_character_
@@ -415,10 +442,16 @@ escrever_sidecar <- function(ano, chaves, particoes, manifest_last_updated, jane
     retrieved_at = max(processados_em),
     partitions = particoes,
     totals = totais,
+    # 2.4.0: colunas cruas que este ano do SIH-RD não tem (RACA_COR antes de
+    # 2008). O servidor lê daqui se `race` existe no ano (get_available_years).
+    columns_missing = I(columns_missing),
     notes = I(c(
       "Cubo por ANO DE INTERNAÇÃO (DT_INTER): lê as competências do ano e os meses seguintes de Y+1 (window.months_after) e descarta internações de outros anos. Com 4 meses, 99,7-99,9% das internações do ano (dezembro 99,3-99,7%); o restante é reapresentação tardia difusa.",
       "uf dos cubos = UF de residência (MUNIC_RES); ufs_arquivo = UF do estabelecimento (nome do arquivo RD no FTP).",
-      "retrieved_at = processing_timestamp mais recente, no manifesto do healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream; igual, ao segundo, ao download_date do rodapé do Parquet). Lido por healthbR::sih_status()."
+      "retrieved_at = processing_timestamp mais recente, no manifesto do healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream; igual, ao segundo, ao download_date do rodapé do Parquet). Lido por healthbR::sih_status().",
+      if (length(columns_missing) > 0) sprintf(
+        "Coluna(s) %s não existe(m) no SIH-RD de %d (RACA_COR só entra no leiaute da AIH em 2008): `race` é nulo em todas as linhas deste cubo, inclusive nas internações faturadas nas competências seguintes de %d, que já trazem a coluna.",
+        paste(columns_missing, collapse = ", "), ano, ano + 1L)
     ))
   )
   destino <- file.path(output_dir, sprintf("sih_provenance_%d.json", ano))
@@ -435,7 +468,7 @@ escrever_sidecar <- function(ano, chaves, particoes, manifest_last_updated, jane
 #' por UF o maior lote (SP) fica em ~3,5 milhões. Somar agregados de lotes
 #' disjuntos dá o mesmo cubo que agregar tudo de uma vez: n, deaths e days são
 #' contagens/inteiros (exatos); value é soma de doubles, igual ao último ulp.
-agregar_lote <- function(dados, ano) {
+agregar_lote <- function(dados, ano, colunas_ausentes = character()) {
   n_lidos <- nrow(dados)
   dados <- dados %>%
     dplyr::mutate(dt_inter = as.Date(DT_INTER, format = "%Y%m%d"))
@@ -474,7 +507,8 @@ agregar_lote <- function(dados, ano) {
         COD_IDADE == "5" ~ as.integer(as.numeric(IDADE) + 100),
         TRUE ~ NA_integer_
       ),
-      raca = dplyr::case_when(
+      # Ano sem RACA_COR (2.4.0): race NULO, não "ignorado" — ver cabeçalho.
+      raca = if ("RACA_COR" %in% colunas_ausentes) NA_character_ else dplyr::case_when(
         RACA_COR == "01" ~ "branca",
         RACA_COR == "02" ~ "preta",
         RACA_COR == "03" ~ "parda",
@@ -598,15 +632,25 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     t0 <- Sys.time()
     lotes <- list()
     registro <- list()
+    ausentes_por_lote <- list()
     for (uf in ufs_com_dados) {
       part_uf <- particoes[particoes$uf == uf, , drop = FALSE]
       lido <- ler_particoes(ano, uf, part_uf)
       registro <- c(registro, lido$particoes)
-      lote <- agregar_lote(lido$dados, ano)
+      ausentes_por_lote[[uf]] <- lido$colunas_ausentes
+      lote <- agregar_lote(lido$dados, ano, lido$colunas_ausentes)
       cli_alert_info("  {uf}: {format(lote$n_lidos, big.mark='.')} lidas, {format(lote$n_cubo, big.mark='.')} internações de {ano}, {format(nrow(lote$causas), big.mark='.')} linhas de causas ({format(round(Sys.time() - t0, 1))})")
       lotes[[uf]] <- lote
       rm(lido, lote)
       gc()
+    }
+    colunas_ausentes <- sort(unique(unlist(ausentes_por_lote)))
+    if (length(colunas_ausentes) > 0) {
+      cli_alert_warning("Coluna(s) ausente(s) no SIH-RD de {ano}: {paste(colunas_ausentes, collapse = ', ')} — `race` sai NULO neste cubo (sidecar: columns_missing)")
+      lotes_diferentes <- names(ausentes_por_lote)[!vapply(ausentes_por_lote, identical, logical(1), colunas_ausentes)]
+      if (length(lotes_diferentes) > 0) {
+        cli_alert_warning("Lotes com colunas ausentes DIFERENTES do conjunto do ano: {paste(lotes_diferentes, collapse = ', ')} — o cubo mistura NULO e valor; investigar")
+      }
     }
     n_lidos <- sum(vapply(lotes, function(l) l$n_lidos, numeric(1)))
     n_invalidos <- sum(vapply(lotes, function(l) l$n_invalidos, numeric(1)))
@@ -684,7 +728,8 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
         series_rows = nrow(cubo_series),
         icsap_rows = nrow(cubo_icsap)
       ),
-      output_dir = output_dir
+      output_dir = output_dir,
+      columns_missing = colunas_ausentes
     )
 
     # Limpa memoria
@@ -729,6 +774,17 @@ build_data <- function(years, ufs) {
     if (any(is.na(years))) {
       cli_abort("Parametro 'years' invalido. Use um numero, vetor ou 'all'.")
     }
+  }
+
+  # O healthbR instalado tem de aceitar os anos (a 0.4.0 do CRAN limita o SIH a
+  # 2008+; 1992–2007 exigem >= 0.4.0.9000, SidneyBissoli/healthbR main)
+  anos_healthbr <- healthbR::sih_years(status = "all")
+  fora <- setdiff(years, anos_healthbr)
+  if (length(fora) > 0) {
+    cli_abort(c(
+      "O healthbR {packageVersion('healthbR')} instalado não aceita o(s) ano(s) {paste(fora, collapse = ', ')} (sih_years: {min(anos_healthbr)}–{max(anos_healthbr)}).",
+      "i" = "Cubos de 1992–2007 precisam do healthbR >= 0.4.0.9000: pak::pak('SidneyBissoli/healthbR')."
+    ))
   }
 
   # Valida e expande parametro ufs
