@@ -137,8 +137,10 @@ classes fixadas **a priori**: alta 0,80–1,25; média 0,67–1,50; baixa fora d
 esperada não é exatamente 1: a participação ICSAP total vinha caindo (26,6 % em jan/1997,
 25,8 % em dez/1998), logo 1,03–1,10 é o "ruído de tendência".
 
-Nesta sessão rodou o recorte C (os recortes A e B estão implementados no mesmo script e
-ficam para o usuário rodar — o executor bloqueou as chamadas; ver §5).
+Os três recortes rodaram (C na sessão; A e B pelo usuário logo depois, 12 s). O recorte
+primário é C', porque o lado CID-10 de A e de B cai justamente nos dois meses de transição
+(§3.3), e o de A carrega ainda o viés das AIH faturadas tarde (internações longas). A e B
+servem para confirmar os desvios de grupo e para ver a transição por UF (§3.4).
 
 ### 3.2 Resultado (C': 1997 em CID-9, 12.351.464 AIH, vs 1998-03..12 em CID-10, 10.254.735)
 
@@ -201,6 +203,29 @@ primeiros meses, com diagnósticos indo para rubricas residuais. Consequência p
 de 1997: as ~686 mil internações de 1997 faturadas em 1998-01..04 (CID-10) terão ICSAP
 subestimado nesses dois meses — efeito da fonte, a documentar em `cid_revision`.
 
+### 3.4 Recortes A e B: confirmação e a transição por UF
+
+**A — internações com `DT_INTER` em dez/1997:** 497.893 AIH faturadas em 1997-12 (CID-9,
+ICSAP 27,4 %) vs 472.762 faturadas em 1998-01..04 (CID-10, ICSAP **19,4 %**); razão global
+1,42. **B — competências 1997-10..12 vs 1998-01..03:** 3,05 M vs 3,05 M AIH, ICSAP 26,1 %
+vs 21,4 %, razão 1,22. As duas razões globais medem a queda de jan–fev/1998, não a lista:
+em A o lado CID-10 é quase todo faturado nesses dois meses. Por grupo, A e B repetem o
+padrão de C': g05 (7,35 em A; 5,65 em B) e g03 (0,19; 0,24) continuam os únicos fora de
+qualquer faixa; os demais ficam entre 0,85 e 1,74 em A e entre 0,88 e 1,48 em B, isto é,
+em torno da razão global de cada recorte. Em A, g01 cai a 0,57 (tuberculose e febre
+reumática são internações longas, sobre-representadas nas AIH faturadas tarde) e g07 asma
+sobe a 1,74 (internações curtas, sub-representadas) — é o viés de permanência previsto,
+e por isso A não é o recorte primário.
+
+**Transição por UF (recorte A, participação ICSAP total, lado CID-9 → lado CID-10):** a
+queda de jan–fev/1998 foi muito desigual — BA 28,2 → 9,5 % (razão 2,97), AC 2,35, SC
+2,14, GO e MA 2,03, RJ 1,89, PB 1,87; enquanto PE (1,02), SE (1,01), TO (0,98), ES (0,92),
+AL (0,90), PA (0,85) e AM (0,83) não caíram (DF 0,60 e AP 1,63 têm poucas AIH; RR tem 7
+AIH na competência 1997-12, a partição é quase vazia). Consequência para o cubo de 1997: o
+ICSAP das ~686 mil internações faturadas em 1998-01..04 será subestimado sobretudo em BA,
+RJ, SC, GO, MA e PB — vale registrar a marca `cid_revision = 10` por linha (decisão vi)
+para que o consumidor possa separar essas AIH.
+
 ## 4. Entregáveis e como o builder 2.5.0 deve usar
 
 - `src/data/csap-groups-cid9.json` — `metadata` (fontes, métodos, tabelas, `excluded`,
@@ -234,11 +259,10 @@ python scripts/estudo-icsap-cid9-analise.py <pasta>/fronteira
 python scripts/estudo-icsap-cid9-derivar.py --tab <cnv> --diag1997 <pasta>/diag/diag_1997.csv --gems <gems> --validation <pasta>/fronteira/validation.json
 ```
 
-Os CSV intermediários não são versionados. Recorte C: 10 s (1997) + 31 s (1998) lendo só
-`DIAG_PRINC`, `DT_INTER` e as partições do R2. Os recortes A e B (mesmas internações;
-competências vizinhas) não rodaram nesta sessão por bloqueio do executor — rodá-los não
-muda a lista, só acrescenta a confirmação por UF ao `validation.json`
-(`recortes.A_uf`) e ao JSON final ao repetir o último comando.
+Os CSV intermediários não são versionados. Recorte C: 10 s (1997) + 31 s (1998); A + B:
+12 s — lendo só `DIAG_PRINC`, `DT_INTER` e as partições do R2. O `validation.json` guarda
+os quatro recortes (`recortes.A`, `A_uf`, `B`, `C`, `C2`), as variantes e a série mensal;
+o JSON final embute a comparabilidade e a razão C' por grupo.
 
 ## Referências
 

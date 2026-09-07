@@ -164,6 +164,8 @@
     "validation": {
       "method": "participação de cada grupo nas AIH codificadas em CID-9 (esta lista) vs em CID-10 (lista oficial), lida do healthbr-data (scripts/estudo-icsap-cid9-fronteira.mjs + estudo-icsap-cid9-analise.py); razão = share9/share10; classes a priori: alta 0,80–1,25, média 0,67–1,50, baixa fora",
       "recortes_disponiveis": [
+        "A",
+        "B",
         "C",
         "C2"
       ],
