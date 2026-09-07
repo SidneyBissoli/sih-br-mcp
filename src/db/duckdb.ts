@@ -438,6 +438,7 @@ export async function queryIcsap<T = Record<string, unknown>>(options: {
   metrics?: ("n" | "n_total" | "days" | "value" | "deaths")[];
   orderBy?: string;
   limit?: number;
+  universe?: IcsapUniverse;
 }): Promise<T[]> {
   // 0.9.0: toda agregação do cubo ICSAP passa por icsapAggregateSql (o
   // denominador por estratos distintos); `metrics` fica só pela assinatura —
@@ -446,7 +447,10 @@ export async function queryIcsap<T = Record<string, unknown>>(options: {
 }
 
 /** Chaves do ESTRATO do cubo ICSAP: `n_total` é o total do estrato, repetido em cada linha dele. */
-const ICSAP_STRATUM_KEYS = ["year", "uf", "municipality_code", "cid_revision", "sex", "age", "race"];
+// `exclusion` (builder >= 2.6.0) é chave do estrato: sem ela, dois estratos que
+// só diferem no motivo de exclusão e têm o mesmo n_total colapsariam no
+// DISTINCT (2023/RR com universe = "all" dava 48.122 em vez de 48.480).
+const ICSAP_STRATUM_KEYS = ["year", "uf", "municipality_code", "cid_revision", "sex", "age", "race", "exclusion"];
 
 /**
  * SQL de agregação do cubo ICSAP com o denominador CERTO.
@@ -464,15 +468,29 @@ const ICSAP_STRATUM_KEYS = ["year", "uf", "municipality_code", "cid_revision", "
  * grupo nulo; o filtro por grupo CSAP só vale para o numerador (a fração é
  * "internações do grupo / todas as internações do estrato").
  */
+/**
+ * Universo do % ICSAP. "csapaih" (padrão, 0.10.0): como o pacote R csapAIH,
+ * fora do numerador E do denominador as internações com `exclusion` não nula
+ * (procedimento obstétrico, parto, longa permanência — builder >= 2.6.0).
+ * "all": todas as internações. Cubo anterior a 2.6.0 não tem a coluna: com
+ * union_by_name ela vem nula, o que equivale a "all" naquele ano.
+ */
+export type IcsapUniverse = "csapaih" | "all";
+
+function universeCondition(universe: IcsapUniverse | undefined): string {
+  return (universe ?? "csapaih") === "csapaih" ? "AND exclusion IS NULL" : "";
+}
+
 function icsapAggregateSql(options: {
   filters?: IcsapFilters;
   groupBy?: string[];
   orderBy?: string;
   limit?: number;
+  universe?: IcsapUniverse;
 }): string {
   const pattern = getParquetPattern("icsap");
   const { csapGroups, ...strataFilters } = options.filters ?? {};
-  const whereStrata = buildWhereClause(strataFilters);
+  const whereStrata = `${buildWhereClause(strataFilters)} ${universeCondition(options.universe)}`;
   const csapCond =
     csapGroups && csapGroups.length > 0 ? `AND csap_group IN (${csapGroups.map((g) => `'${g}'`).join(", ")})` : "";
   const groupBy = options.groupBy ?? [];
@@ -572,9 +590,10 @@ export async function rankCsapGroups<T = Record<string, unknown>>(options: {
   filters?: IcsapFilters;
   metric?: "n" | "days" | "value" | "deaths";
   limit?: number;
+  universe?: IcsapUniverse;
 }): Promise<T[]> {
   const pattern = getParquetPattern("icsap");
-  const whereClause = buildWhereClause(options.filters || {});
+  const whereClause = `${buildWhereClause(options.filters || {})} ${universeCondition(options.universe)}`;
   const metric = options.metric || "n";
 
   const metricsMap: Record<string, string> = {
@@ -608,9 +627,10 @@ export async function rankCsapGroups<T = Record<string, unknown>>(options: {
 export async function calculateIcsapIndicators<T = Record<string, unknown>>(options: {
   filters?: IcsapFilters;
   groupBy?: string[];
+  universe?: IcsapUniverse;
 }): Promise<T[]> {
   // 0.9.0: denominador por estratos distintos (ver icsapAggregateSql)
-  return query<T>(icsapAggregateSql({ filters: options.filters, groupBy: options.groupBy }));
+  return query<T>(icsapAggregateSql({ filters: options.filters, groupBy: options.groupBy, universe: options.universe }));
 }
 
 // =============================================================================

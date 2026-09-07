@@ -11,18 +11,24 @@ servidor é apontado para esta pasta pela variável `SIH_DATA_DIR` (ver
 `src/db/duckdb.ts`), que vale para os cubos SIH, para o sidecar e para os
 cubos de população.
 
-Os cubos SIH foram regerados em 07/09/2026 pelo builder 2.5.0 (`Rscript
+Os cubos SIH foram regerados em 07/09/2026 pelo builder 2.6.0 (`Rscript
 scripts/rebuild-cubes.R --years 2023 --ufs RR --out tests/fixtures/sih`): a
 coluna `cid_revision` (constante 10 aqui) entrou como chave nos três cubos, a
 correção do `COD_IDADE` moveu 358 AIH de neonatos (12–30 dias) de `age` 1–2
 para 0 — exatamente as com `COD_IDADE = 2` e `IDADE >= 12` no lote cru, contadas
-na prova — e o cubo ICSAP passou a trazer todos os estratos (1.940 linhas com
+na prova —, o cubo ICSAP passou a trazer todos os estratos (linhas com
 `csap_group` nulo e `n = 0`, só com `n_total`), para o denominador do % ICSAP
 sair certo (ver `icsapAggregateSql` em `src/db/duckdb.ts`: antes o golden
-gravava 3,65 % para 2023/RR; o valor é 19,75 %). Totais de `n`, `days`,
-`value` e `deaths` idênticos aos do build 2.2.0 nos três cubos; o sidecar traz
-os campos novos (`cid_revision`, `uf_basis`, `currency`, `records_date_imputed`,
-`icsap_list_revision`, `manifest_version` 1.1.0). A geração original, em
+gravava 3,65 % para 2023/RR), e a coluna `exclusion` marca o universo do
+csapAIH (9.766 AIH por procedimento obstétrico e 694 por diagnóstico de parto
+fora; 38.020 dentro — o mesmo universo que `csapAIH::csapAIH()` devolve
+sobre o lote cru, com 18 dos 19 grupos idênticos; o g01 difere em 18 AIH por
+uma regex do pacote que inclui B55 e perde B77.x, contra a Portaria). O %
+ICSAP de 2023/RR é 25,19 % no universo csapAIH (9.577/38.020) e 19,75 % com
+todas as internações. Totais de `n`, `days`, `value` e `deaths` idênticos aos
+do build 2.2.0 nos três cubos; o sidecar traz os campos novos (`cid_revision`,
+`uf_basis`, `currency`, `records_date_imputed`, `icsap_list_revision`,
+`csap_universe`, `manifest_version` 1.1.0). A geração original, em
 05/09/2026, foi com `build_data(years = 2023, ufs =
 "RR")`: as 16 partições `sih/rd/ano=2023/mes=MM/uf=RR/` e
 `ano=2024/mes=01..04/uf=RR/` do healthbr-data (espelho Parquet do FTP do

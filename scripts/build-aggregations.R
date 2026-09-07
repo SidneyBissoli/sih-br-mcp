@@ -82,6 +82,21 @@
 #     somado sobre estratos DISTINTOS (servidor >= 0.9.0); somar linha a
 #     linha multiplica pelo número de grupos e omite os estratos sem ICSAP
 #     (defeito do servidor <= 0.8.0: 2023/RR dava 3,65 % em vez de 19,75 %).
+#
+# UNIVERSO DO % ICSAP COMO O csapAIH (v2.6.0, 2026-09-07; decisão do usuário:
+# a metodologia consagrada na literatura brasileira é a do pacote R csapAIH,
+# de Fúlvio B. Nedel). O csapAIH classifica pela mesma lista da Portaria 221
+# (idêntica à tabela deste projeto, código por código), mas ANTES exclui do
+# numerador e do denominador: internações por procedimento obstétrico
+# (procobst.rm), com diagnóstico de parto O80–O84 (parto.rm) e AIH de longa
+# permanência IDENT = 5 (longa.rm). Aqui cada internação recebe a marca
+# `exclusion` (procedimento_obstetrico | parto | longa_permanencia | nulo),
+# gravada como CHAVE nos cubos de causas e ICSAP SEM apagar a classificação
+# CSAP — o servidor calcula o % ICSAP sobre `exclusion IS NULL` por padrão e
+# pode incluir tudo a pedido. Tabelas em src/data/csap-universe.json
+# (scripts/csap-universe-tables.py): SIGTAP 2008+ = os 10 códigos do csapAIH;
+# tabela antiga 1992–2007 = grupos partos normais/cesáreos/abortamentos de
+# PROCOBST.CNV do DATASUS; parto em CID-9 = 650 e 669.5–669.7.
 # =============================================================================
 
 library(dplyr)
@@ -107,7 +122,7 @@ if (!requireNamespace("healthbR", quietly = TRUE) ||
 OUTPUT_DIR <- here::here("data")
 dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
-BUILDER_VERSION <- "2.5.0"
+BUILDER_VERSION <- "2.6.0"
 
 # Meses de Y+1 lidos para fechar as internações de Y (ver cabeçalho)
 MESES_SEGUINTES <- 4L
@@ -126,7 +141,8 @@ DATASUS_FTP_DIR <- "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Da
 # diante; MUNIC_RES: só de 1994); saem nulas no cubo e registradas em
 # `columns_missing` no sidecar.
 COLUNAS_OBRIGATORIAS <- c("DT_INTER", "DIAG_PRINC", "SEXO", "IDADE",
-                          "COD_IDADE", "DIAS_PERM", "VAL_TOT", "MORTE")
+                          "COD_IDADE", "DIAS_PERM", "VAL_TOT", "MORTE",
+                          "PROC_REA", "IDENT")  # 2.6.0: universo do % ICSAP
 COLUNAS_OPCIONAIS <- c("MUNIC_RES", "RACA_COR")
 COLUNAS_SIH <- c(COLUNAS_OBRIGATORIAS, COLUNAS_OPCIONAIS)
 
@@ -182,9 +198,22 @@ carregar_tabelas <- function() {
                stringsAsFactors = FALSE)
   }))
 
+  # 2.6.0: universo do % ICSAP (csapAIH) — procedimentos obstétricos por era,
+  # diagnóstico de parto por revisão da CID, AIH de longa permanência
+  univ <- jsonlite::fromJSON(file.path(TABELAS_DIR, "csap-universe.json"), simplifyVector = FALSE)
+  universo <- list(
+    proc_obst = c(vapply(univ$procedures_sigtap, function(p) p$code, ""),
+                  vapply(univ$procedures_old_table, function(p) p$code, "")),
+    parto_cid10 = unlist(univ$delivery_diagnosis_cid10),
+    parto_cid9 = vapply(univ$delivery_diagnosis_cid9$codes6, function(p) p$code6, ""),
+    ident_longa = unlist(univ$long_stay_ident),
+    method = univ$metadata$method_source
+  )
+
   list(cid9 = cid9, csap9 = csap9, csap10 = csap10,
        icsap9_comparability = comparabilidade,
-       icsap9_list_revision = csap9_json$metadata$icsap_list_revision)
+       icsap9_list_revision = csap9_json$metadata$icsap_list_revision,
+       universo = universo)
 }
 TABELAS <- carregar_tabelas()
 
@@ -420,6 +449,30 @@ derivar_diagnostico <- function(diag) {
   list(revisao = revisao[idx], grupo = grupo[idx], capitulo = capitulo[idx], csap = csap[idx])
 }
 
+#' Marca de EXCLUSÃO do universo do % ICSAP, como csapAIH::csapAIH() com os
+#' padrões procobst.rm, parto.rm e longa.rm (nesta ordem de precedência):
+#'   "procedimento_obstetrico" PROC_REA na lista (SIGTAP 2008+ ou tabela antiga)
+#'   "parto"                   diagnóstico O80–O84 (CID-10) ou 650/669.5–.7 (CID-9)
+#'   "longa_permanencia"       IDENT = 5
+#'   NA                        entra no numerador e no denominador
+#' A classificação CSAP é feita para TODAS as linhas; a marca é chave à parte.
+derivar_exclusao <- function(proc, ident, diag, revisao) {
+  proc <- trimws(dplyr::coalesce(as.character(proc), ""))
+  ident <- trimws(dplyr::coalesce(as.character(ident), ""))
+  diag <- dplyr::coalesce(diag, "")
+  obst <- proc %in% TABELAS$universo$proc_obst
+  parto <- ifelse(revisao == 9L,
+                  diag %in% TABELAS$universo$parto_cid9,
+                  toupper(substr(diag, 1, 3)) %in% TABELAS$universo$parto_cid10)
+  longa <- ident %in% TABELAS$universo$ident_longa
+  dplyr::case_when(
+    obst ~ "procedimento_obstetrico",
+    parto ~ "parto",
+    longa ~ "longa_permanencia",
+    TRUE ~ NA_character_
+  )
+}
+
 #' Moedas das competências da janela do ano (por MÊS DE FATURAMENTO, medido em
 #' VAL_TOT — analise-002 §3): Cr$ cruzeiro até 1993-06, CR$ cruzeiro real
 #' 1993-07..1994-06, R$ real desde 1994-07. `value` dos cubos é nominal.
@@ -565,7 +618,10 @@ iso_utc <- function(ts) {
 #' Escreve data/sih_provenance_<ano>.json — o registro de safra do cubo
 escrever_sidecar <- function(ano, chaves, particoes, manifest_last_updated, janela_completa, totais, output_dir,
                              columns_missing = character(), records_date_imputed = 0L,
-                             cid_revision = list()) {
+                             cid_revision = list(), csap_excluded = list()) {
+  # 2.6.0: universo do % ICSAP (csapAIH) — quantas ficaram fora e por quê
+  n_universo <- if (length(csap_excluded) > 0) csap_excluded[["nenhuma"]] else NULL
+  fora <- csap_excluded[setdiff(names(csap_excluded), "nenhuma")]
   # 2.5.0: base do eixo `uf`, revisões da CID presentes, moedas da janela
   uf_arquivo <- ano <= UF_ARQUIVO_ATE_ANO
   uf_basis <- if (uf_arquivo) "arquivo" else "residencia"
@@ -631,6 +687,17 @@ escrever_sidecar <- function(ano, chaves, particoes, manifest_last_updated, jane
     uf_basis = uf_basis,
     municipality_available = !uf_arquivo,
     currency = moedas,
+    # 2.6.0: universo do % ICSAP como o csapAIH (procobst.rm, parto.rm,
+    # longa.rm): a marca `exclusion` é chave nos cubos de causas e ICSAP; o
+    # servidor calcula o % sobre exclusion IS NULL por padrão
+    csap_universe = list(
+      method = "csapAIH",
+      method_source = TABELAS$universo$method,
+      rules = I(c("procedimento_obstetrico", "parto", "longa_permanencia")),
+      tables = "src/data/csap-universe.json",
+      records_in_universe = n_universo,
+      excluded = fora
+    ),
     # 2.4.0: colunas cruas que este ano do SIH-RD não tem (RACA_COR antes de
     # 2008; MUNIC_RES antes de 1994). O servidor lê daqui se `race` existe.
     columns_missing = I(columns_missing),
@@ -652,6 +719,7 @@ escrever_sidecar <- function(ano, chaves, particoes, manifest_last_updated, jane
         "As internações de 1997 faturadas em 1998-01 e 1998-02 (cid_revision = 10) têm ICSAP subestimado: a proporção ICSAP caiu para 19-20% nesses dois meses de adaptação à CID-10 e voltou a 24,5% em março (analise-003 §3.4). Efeito da fonte, não corrigido.",
       if (varias_moedas)
         "value é NOMINAL na moeda da competência de faturamento (currency): Cr$ cruzeiro até 1993-06, CR$ cruzeiro real 1993-07..1994-06, R$ real desde 1994-07. Não somar nem comparar valores entre moedas; não comparável com anos posteriores antes de 1994-07 (decisão v da analise-002 §5).",
+      "% ICSAP como o pacote R csapAIH (Nedel): a lista de diagnósticos é a da Portaria 221/2008 para TODAS as internações, mas o percentual da literatura exclui do numerador e do denominador as internações por procedimento obstétrico (PROC_REA na lista SIGTAP do csapAIH, ou nos grupos partos/cesáreas/abortamentos da tabela antiga até 2007), as com diagnóstico de parto (O80-O84; em CID-9 650 e 669.5-669.7) e as AIH de longa permanência (IDENT = 5). A coluna `exclusion` (chave nos cubos de causas e ICSAP) marca o motivo; nula = entra no universo (csap_universe.records_in_universe). O servidor usa o universo por padrão e pode incluir tudo a pedido.",
       "age: COD_IDADE 2 (dias) e 3 (meses) valem 0 anos. As versões < 2.5.0 do builder trocavam os dois (neonatos de 12-30 dias saíam com 1-2 anos); corrigido em 2.5.0 (sih:cod-idade) e os cubos de 1998+ reconstruídos."
     ))
   )
@@ -708,6 +776,8 @@ agregar_lote <- function(dados, ano, colunas_ausentes = character()) {
 
   # Diagnóstico pelos valores únicos e por revisão da CID (2.5.0)
   diag <- derivar_diagnostico(dados$DIAG_PRINC)
+  # Universo do % ICSAP (2.6.0, csapAIH): marca por linha, chave à parte
+  exclusao <- derivar_exclusao(dados$PROC_REA, dados$IDENT, dados$DIAG_PRINC, diag$revisao)
 
   dados <- dados %>%
     dplyr::mutate(
@@ -749,7 +819,8 @@ agregar_lote <- function(dados, ano, colunas_ausentes = character()) {
       valor = as.numeric(VAL_TOT),
       obito = as.integer(MORTE == "1"),
       grupo_csap = diag$csap,
-      is_csap = !is.na(grupo_csap)
+      is_csap = !is.na(grupo_csap),
+      exclusao = exclusao  # coluna: o cubo ICSAP filtra linhas antes de agrupar
     )
 
   causas <- dados %>%
@@ -763,6 +834,7 @@ agregar_lote <- function(dados, ano, colunas_ausentes = character()) {
       sex = sexo,
       age = idade,
       race = raca,
+      exclusion = exclusao,
       is_csap,
       csap_group = grupo_csap
     ) %>%
@@ -796,7 +868,8 @@ agregar_lote <- function(dados, ano, colunas_ausentes = character()) {
       cid_revision = cid_revisao,
       sex = sexo,
       age = idade,
-      race = raca
+      race = raca,
+      exclusion = exclusao
     ) %>%
     dplyr::summarise(
       n_total = dplyr::n(),
@@ -814,7 +887,8 @@ agregar_lote <- function(dados, ano, colunas_ausentes = character()) {
       csap_group = grupo_csap,
       sex = sexo,
       age = idade,
-      race = raca
+      race = raca,
+      exclusion = exclusao
     ) %>%
     dplyr::summarise(
       n = dplyr::n(),
@@ -899,13 +973,17 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     cli_alert_info("Gerando cubo sih_causas_{ano}.parquet...")
     cubo_causas <- somar_lotes(
       lapply(lotes, function(l) l$causas),
-      c("year", "month", "uf", "cid_chapter", "cid_revision", "cid_group", "sex", "age", "race", "is_csap", "csap_group")
+      c("year", "month", "uf", "cid_chapter", "cid_revision", "cid_group", "sex", "age", "race", "exclusion", "is_csap", "csap_group")
     )
     write_parquet(cubo_causas, file.path(output_dir, sprintf("sih_causas_%d.parquet", ano)))
     cli_alert_success("  sih_causas_{ano}.parquet: {.val {format(nrow(cubo_causas), big.mark='.')}} linhas")
     # 2.5.0: internações por revisão da CID (sidecar cid_revision)
     por_revisao <- tapply(cubo_causas$n, cubo_causas$cid_revision, sum)
     cid_revision_counts <- as.list(setNames(as.integer(por_revisao), names(por_revisao)))
+    # 2.6.0: internações fora do universo do % ICSAP, por motivo (csapAIH)
+    excl <- tapply(cubo_causas$n, dplyr::coalesce(cubo_causas$exclusion, "nenhuma"), sum)
+    excl_counts <- as.list(setNames(as.integer(excl), names(excl)))
+    cli_alert_info("  universo do % ICSAP (csapAIH): {paste(sprintf('%s %s', names(excl), format(as.integer(excl), big.mark='.')), collapse = '; ')}")
     cli_alert_info("  por revisão da CID: {paste(sprintf('CID-%s %s', names(por_revisao), format(as.integer(por_revisao), big.mark='.')), collapse = '; ')}")
     # 2.3.1: o maior objeto do ano (6,5 M linhas) e os lotes de causas não são
     # mais necessários — soltar ANTES do cubo ICSAP. Em 2025 (14,6 M
@@ -936,11 +1014,11 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     cli_alert_info("Gerando cubo sih_icsap_{ano}.parquet...")
     totais <- somar_lotes(
       lapply(lotes, function(l) l$totais),
-      c("year", "uf", "municipality_code", "cid_revision", "sex", "age", "race")
+      c("year", "uf", "municipality_code", "cid_revision", "sex", "age", "race", "exclusion")
     )
     icsap <- somar_lotes(
       lapply(lotes, function(l) l$icsap),
-      c("year", "uf", "municipality_code", "cid_revision", "csap_group", "sex", "age", "race")
+      c("year", "uf", "municipality_code", "cid_revision", "csap_group", "sex", "age", "race", "exclusion")
     )
     # Junta com totais. 2.5.0: TODOS os estratos entram — os sem ICSAP saem com
     # csap_group NULO e n = 0, carregando n_total. Antes só os estratos com
@@ -950,7 +1028,7 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
     # vez de 19,75 %). O denominador certo é n_total somado sobre os estratos
     # DISTINTOS (year, uf, municipality_code, cid_revision, sex, age, race);
     # o servidor >= 0.9.0 calcula assim.
-    chaves_estrato <- c("year", "uf", "municipality_code", "cid_revision", "sex", "age", "race")
+    chaves_estrato <- c("year", "uf", "municipality_code", "cid_revision", "sex", "age", "race", "exclusion")
     cubo_icsap <- icsap %>%
       dplyr::full_join(totais, by = chaves_estrato) %>%
       dplyr::mutate(
@@ -983,7 +1061,8 @@ processar_ano <- function(ano, ufs_arquivo, output_dir) {
       output_dir = output_dir,
       columns_missing = colunas_ausentes,
       records_date_imputed = n_imputados,
-      cid_revision = cid_revision_counts
+      cid_revision = cid_revision_counts,
+      csap_excluded = excl_counts
     )
 
     # Limpa memoria

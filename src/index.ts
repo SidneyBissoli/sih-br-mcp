@@ -28,6 +28,7 @@ import {
   getPopulationByUf,
   CausasFilters,
   IcsapFilters,
+  type IcsapUniverse,
 } from "./db/duckdb.js";
 
 // Importa dados de referência
@@ -106,7 +107,8 @@ const tools: Tool[] = [
       "Permite agregar por múltiplas dimensões (UF, CID, sexo, idade, raça, ano/mês). " +
       "Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). " +
       "Série desde 1992: em 1992–1997 o diagnóstico é CID-9 decodificado por tabela (`cid_group` = categoria de 3 dígitos, `cid_chapter` = capítulo CID-10 equivalente; agrupar por `cid_revision` separa 9 e 10 — 1997 tem os dois), " +
-      "`uf` é a UF do ARQUIVO (estabelecimento), não de residência, e `value` é nominal na moeda da época — ver get_available_years (uf_basis, currency) e as `notes` da resposta.",
+      "`uf` é a UF do ARQUIVO (estabelecimento), não de residência, e `value` é nominal na moeda da época — ver get_available_years (uf_basis, currency) e as `notes` da resposta. " +
+      "`exclusion` (agrupável) marca as internações fora do universo do % ICSAP do csapAIH (procedimento_obstetrico, parto, longa_permanencia; nula = dentro).",
     inputSchema: {
       type: "object",
       properties: {
@@ -156,7 +158,7 @@ const tools: Tool[] = [
           type: "array",
           items: {
             type: "string",
-            enum: ["year", "month", "uf", "cid_chapter", "cid_revision", "cid_group", "sex", "age", "race", "is_csap", "csap_group"],
+            enum: ["year", "month", "uf", "cid_chapter", "cid_revision", "cid_group", "sex", "age", "race", "exclusion", "is_csap", "csap_group"],
           },
           description: "Dimensões para agrupamento",
         },
@@ -249,7 +251,8 @@ const tools: Tool[] = [
       "Permite filtros por grupo CSAP, UF, município, sexo, idade e raça. " +
       "Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). " +
       "Série desde 1992: em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+), " +
-      "`uf` é a UF do arquivo e `municipality_code` é nulo — ver get_available_years (icsap_list_revision, uf_basis) e as `notes`.",
+      "`uf` é a UF do arquivo e `municipality_code` é nulo — ver get_available_years (icsap_list_revision, uf_basis) e as `notes`. " +
+      "Percentual no universo do pacote R csapAIH por padrão (`universe`): fora do numerador e do denominador as internações por procedimento obstétrico, parto e longa permanência.",
     inputSchema: {
       type: "object",
       properties: {
@@ -298,6 +301,11 @@ const tools: Tool[] = [
           },
           description: "Dimensões para agrupamento",
         },
+        universe: {
+          type: "string",
+          enum: ["csapaih", "all"],
+          description: "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações.",
+        },
       },
     },
   },
@@ -307,7 +315,8 @@ const tools: Tool[] = [
       "Calcula indicadores de ICSAP: percentual (ICSAP/Total×100). " +
       "Métricas-chave para avaliar a Atenção Primária. " +
       "Agrupar por raça só faz sentido de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). " +
-      "Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `uf` é a UF do arquivo — ver as `notes`.",
+      "Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `uf` é a UF do arquivo — ver as `notes`. " +
+      "Percentual no universo do pacote R csapAIH por padrão (`universe`): fora do numerador e do denominador as internações por procedimento obstétrico, parto e longa permanência.",
     inputSchema: {
       type: "object",
       properties: {
@@ -346,6 +355,11 @@ const tools: Tool[] = [
           },
           description: "Dimensões para agrupamento",
         },
+        universe: {
+          type: "string",
+          enum: ["csapaih", "all"],
+          description: "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações.",
+        },
       },
     },
   },
@@ -354,7 +368,8 @@ const tools: Tool[] = [
     description:
       "Gera ranking dos 19 grupos CSAP por número de internações, " +
       "dias de internação ou valor. Identifica principais causas evitáveis. " +
-      "Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `value` é nominal na moeda da época — ver as `notes`.",
+      "Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `value` é nominal na moeda da época — ver as `notes`. " +
+      "Universo do pacote R csapAIH por padrão (`universe`): fora as internações por procedimento obstétrico, parto e longa permanência.",
     inputSchema: {
       type: "object",
       properties: {
@@ -385,6 +400,11 @@ const tools: Tool[] = [
           type: "string",
           enum: ["n", "days", "value", "deaths"],
           description: "Métrica para ranking (default: n)",
+        },
+        universe: {
+          type: "string",
+          enum: ["csapaih", "all"],
+          description: "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações.",
         },
         limit: {
           type: "integer",
@@ -482,7 +502,8 @@ const tools: Tool[] = [
       "Análise temporal comparativa de ICSAP entre UFs ou grupos CSAP. " +
       "Calcula tendências, variação anual e identifica melhores/piores desempenhos. Para `percentage` e `count` valem todos os anos do SIH (desde 1992); " +
       "`rate_per_10k` exige população e aceita só os anos de get_available_years.population_years. " +
-      "Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `uf` é a UF do arquivo — ver as `notes`.",
+      "Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `uf` é a UF do arquivo — ver as `notes`. " +
+      "Percentual no universo do pacote R csapAIH por padrão (`universe`): fora do numerador e do denominador as internações por procedimento obstétrico, parto e longa permanência.",
     inputSchema: {
       type: "object",
       properties: {
@@ -513,6 +534,11 @@ const tools: Tool[] = [
           type: "boolean",
           description: "Incluir análise de tendência linear (default: true)",
         },
+        universe: {
+          type: "string",
+          enum: ["csapaih", "all"],
+          description: "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações.",
+        },
       },
       required: ["start_year", "end_year"],
     },
@@ -531,6 +557,17 @@ const tools: Tool[] = [
 function notesField(years: number[] | undefined, aspects: EraAspects = {}, extra: string[] = []): { notes?: string[] } {
   const notes = [...extra, ...eraNotes(years, getAvailableYears(), aspects)];
   return notes.length > 0 ? { notes } : {};
+}
+
+/**
+ * Nota do universo do % ICSAP (0.10.0): qual universo a resposta usou. Sempre
+ * presente nas quatro ferramentas ICSAP, para o leitor saber que o número é o
+ * da literatura (csapAIH) e como obter o outro.
+ */
+function universeNote(universe: IcsapUniverse | undefined): string {
+  return (universe ?? "csapaih") === "csapaih"
+    ? "Universo do % ICSAP como o pacote R csapAIH (Nedel): numerador e denominador SEM as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84; CID-9 650 e 669.5-669.7) e as AIH de longa permanência (IDENT = 5) — coluna `exclusion` dos cubos. A lista de diagnósticos CSAP é a da Portaria 221/2008 sem alteração. Para contar todas as internações, `universe: \"all\"`."
+    : "Universo `all`: todas as internações no numerador e no denominador, inclusive partos, procedimentos obstétricos e AIH de longa permanência. O percentual da literatura brasileira (csapAIH) é o de `universe: \"csapaih\"` (padrão).";
 }
 
 // --- Metadados ---
@@ -626,6 +663,13 @@ async function handleGetAvailableYears() {
       municipality_available: byYear((s) => s.municipality_available ?? true),
       currency: byYear((s) => s.currency ?? null),
       records_date_imputed: byYear((s) => s.records_date_imputed ?? 0),
+      // Universo do % ICSAP (builder >= 2.6.0, csapAIH): internações dentro do
+      // universo e fora dele por motivo; null em cubo anterior a 2.6.0.
+      csap_universe: byYear((s) =>
+        s.csap_universe
+          ? { method: s.csap_universe.method, records_in_universe: s.csap_universe.records_in_universe, excluded: s.csap_universe.excluded }
+          : null,
+      ),
       // Intervalo de pop_uf.parquet, lido do arquivo: é o que as ferramentas de
       // taxa (get_hospitalization_rates, compare_icsap_trends) aceitam.
       population_years: await getPopulationYearRange(),
@@ -907,6 +951,7 @@ interface GetIcsapArgs {
   age_max?: number;
   race?: string[];
   group_by?: string[];
+  universe?: IcsapUniverse;
 }
 
 async function handleGetIcsap(args: GetIcsapArgs) {
@@ -926,6 +971,7 @@ async function handleGetIcsap(args: GetIcsapArgs) {
       filters,
       groupBy: args.group_by,
       metrics: ["n", "n_total", "days", "value", "deaths"],
+      universe: args.universe,
       orderBy: args.group_by?.includes("year")
         ? "year"
         : args.group_by?.[0] || "n_icsap DESC",
@@ -934,7 +980,7 @@ async function handleGetIcsap(args: GetIcsapArgs) {
     // Totais do filtro inteiro, numa consulta sem agrupamento (0.9.0): somar
     // as linhas de `data` repetiria n_total sempre que o agrupamento divide o
     // estrato (por grupo CSAP) — o denominador vem dos estratos distintos.
-    const [whole] = await calculateIcsapIndicators<Record<string, unknown>>({ filters, groupBy: [] });
+    const [whole] = await calculateIcsapIndicators<Record<string, unknown>>({ filters, groupBy: [], universe: args.universe });
     const totals = {
       icsap: Number(whole?.n_icsap) || 0,
       total: Number(whole?.n_total) || 0,
@@ -949,7 +995,7 @@ async function handleGetIcsap(args: GetIcsapArgs) {
       ...notesField(
         args.year,
         { icsap: true, value: true, municipality: !!args.municipality_code || !!args.group_by?.includes("municipality_code") },
-        raceN,
+        [...raceN, universeNote(args.universe)],
       ),
       summary: {
         total_icsap: totals.icsap,
@@ -981,6 +1027,7 @@ interface GetIcsapIndicatorsArgs {
   age_min?: number;
   age_max?: number;
   group_by?: string[];
+  universe?: IcsapUniverse;
 }
 
 async function handleGetIcsapIndicators(args: GetIcsapIndicatorsArgs) {
@@ -997,12 +1044,13 @@ async function handleGetIcsapIndicators(args: GetIcsapIndicatorsArgs) {
     const data = await calculateIcsapIndicators({
       filters,
       groupBy: args.group_by,
+      universe: args.universe,
     });
 
     const raceN = args.group_by?.includes("race") ? raceNotes(args.year, getAvailableYears()) : [];
     return {
       data,
-      ...notesField(args.year, { icsap: true, value: true }, raceN),
+      ...notesField(args.year, { icsap: true, value: true }, [...raceN, universeNote(args.universe)]),
       indicators_calculated: ["icsap_percentage"],
       note: "icsap_percentage = (n_icsap / n_total) * 100",
     };
@@ -1022,6 +1070,7 @@ interface RankCsapGroupsArgs {
   age_max?: number;
   metric?: "n" | "days" | "value" | "deaths";
   limit?: number;
+  universe?: IcsapUniverse;
 }
 
 async function handleRankCsapGroups(args: RankCsapGroupsArgs) {
@@ -1038,6 +1087,7 @@ async function handleRankCsapGroups(args: RankCsapGroupsArgs) {
       filters,
       metric: args.metric || "n",
       limit: args.limit || 19,
+      universe: args.universe,
     });
 
     // Adiciona nomes dos grupos e calcula percentuais
@@ -1070,7 +1120,7 @@ async function handleRankCsapGroups(args: RankCsapGroupsArgs) {
     return {
       metric: args.metric || "n",
       ranking,
-      ...notesField(args.year, { icsap: true, value: true }),
+      ...notesField(args.year, { icsap: true, value: true }, [universeNote(args.universe)]),
       concentration: {
         top_3_percentage: Math.round(top3Pct * 100) / 100,
         top_5_percentage: Math.round(top5Pct * 100) / 100,
@@ -1271,6 +1321,7 @@ interface CompareIcsapTrendsArgs {
   compare_values?: string[];
   indicator?: "percentage" | "count" | "rate_per_10k";
   include_trend_line?: boolean;
+  universe?: IcsapUniverse;
 }
 
 async function handleCompareIcsapTrends(args: CompareIcsapTrendsArgs) {
@@ -1335,6 +1386,7 @@ async function handleCompareIcsapTrends(args: CompareIcsapTrendsArgs) {
     const data = await calculateIcsapIndicators({
       filters,
       groupBy,
+      universe: args.universe,
     });
 
     // Organiza série temporal
@@ -1468,7 +1520,7 @@ async function handleCompareIcsapTrends(args: CompareIcsapTrendsArgs) {
       period: { start: start_year, end: end_year },
       compare_by: compare_by || "total",
       series,
-      ...notesField(years, { icsap: true }),
+      ...notesField(years, { icsap: true }, [universeNote(args.universe)]),
       trends: includeTrend ? trends : undefined,
       summary: {
         best_performer: bestPerformer,

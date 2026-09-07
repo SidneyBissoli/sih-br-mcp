@@ -20,7 +20,7 @@
   },
   {
     "name": "compare_icsap_trends",
-    "description": "Análise temporal comparativa de ICSAP entre UFs ou grupos CSAP. Calcula tendências, variação anual e identifica melhores/piores desempenhos. Para `percentage` e `count` valem todos os anos do SIH (desde 1992); `rate_per_10k` exige população e aceita só os anos de get_available_years.population_years. Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `uf` é a UF do arquivo — ver as `notes`.",
+    "description": "Análise temporal comparativa de ICSAP entre UFs ou grupos CSAP. Calcula tendências, variação anual e identifica melhores/piores desempenhos. Para `percentage` e `count` valem todos os anos do SIH (desde 1992); `rate_per_10k` exige população e aceita só os anos de get_available_years.population_years. Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `uf` é a UF do arquivo — ver as `notes`. Percentual no universo do pacote R csapAIH por padrão (`universe`): fora do numerador e do denominador as internações por procedimento obstétrico, parto e longa permanência.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -59,6 +59,14 @@
         "include_trend_line": {
           "type": "boolean",
           "description": "Incluir análise de tendência linear (default: true)"
+        },
+        "universe": {
+          "type": "string",
+          "enum": [
+            "csapaih",
+            "all"
+          ],
+          "description": "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações."
         }
       },
       "required": [
@@ -240,7 +248,7 @@
   },
   {
     "name": "get_hospitalizations",
-    "description": "Consulta dados de internações hospitalares do SUS com filtros flexíveis. Permite agregar por múltiplas dimensões (UF, CID, sexo, idade, raça, ano/mês). Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). Série desde 1992: em 1992–1997 o diagnóstico é CID-9 decodificado por tabela (`cid_group` = categoria de 3 dígitos, `cid_chapter` = capítulo CID-10 equivalente; agrupar por `cid_revision` separa 9 e 10 — 1997 tem os dois), `uf` é a UF do ARQUIVO (estabelecimento), não de residência, e `value` é nominal na moeda da época — ver get_available_years (uf_basis, currency) e as `notes` da resposta.",
+    "description": "Consulta dados de internações hospitalares do SUS com filtros flexíveis. Permite agregar por múltiplas dimensões (UF, CID, sexo, idade, raça, ano/mês). Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). Série desde 1992: em 1992–1997 o diagnóstico é CID-9 decodificado por tabela (`cid_group` = categoria de 3 dígitos, `cid_chapter` = capítulo CID-10 equivalente; agrupar por `cid_revision` separa 9 e 10 — 1997 tem os dois), `uf` é a UF do ARQUIVO (estabelecimento), não de residência, e `value` é nominal na moeda da época — ver get_available_years (uf_basis, currency) e as `notes` da resposta. `exclusion` (agrupável) marca as internações fora do universo do % ICSAP do csapAIH (procedimento_obstetrico, parto, longa_permanencia; nula = dentro).",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -313,6 +321,7 @@
               "sex",
               "age",
               "race",
+              "exclusion",
               "is_csap",
               "csap_group"
             ]
@@ -328,7 +337,7 @@
   },
   {
     "name": "get_icsap",
-    "description": "Consulta internações por Condições Sensíveis à Atenção Primária (ICSAP). Permite filtros por grupo CSAP, UF, município, sexo, idade e raça. Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). Série desde 1992: em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+), `uf` é a UF do arquivo e `municipality_code` é nulo — ver get_available_years (icsap_list_revision, uf_basis) e as `notes`.",
+    "description": "Consulta internações por Condições Sensíveis à Atenção Primária (ICSAP). Permite filtros por grupo CSAP, UF, município, sexo, idade e raça. Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). Série desde 1992: em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+), `uf` é a UF do arquivo e `municipality_code` é nulo — ver get_available_years (icsap_list_revision, uf_basis) e as `notes`. Percentual no universo do pacote R csapAIH por padrão (`universe`): fora do numerador e do denominador as internações por procedimento obstétrico, parto e longa permanência.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -396,13 +405,21 @@
             ]
           },
           "description": "Dimensões para agrupamento"
+        },
+        "universe": {
+          "type": "string",
+          "enum": [
+            "csapaih",
+            "all"
+          ],
+          "description": "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações."
         }
       }
     }
   },
   {
     "name": "get_icsap_indicators",
-    "description": "Calcula indicadores de ICSAP: percentual (ICSAP/Total×100). Métricas-chave para avaliar a Atenção Primária. Agrupar por raça só faz sentido de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `uf` é a UF do arquivo — ver as `notes`.",
+    "description": "Calcula indicadores de ICSAP: percentual (ICSAP/Total×100). Métricas-chave para avaliar a Atenção Primária. Agrupar por raça só faz sentido de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `uf` é a UF do arquivo — ver as `notes`. Percentual no universo do pacote R csapAIH por padrão (`universe`): fora do numerador e do denominador as internações por procedimento obstétrico, parto e longa permanência.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -453,6 +470,14 @@
             ]
           },
           "description": "Dimensões para agrupamento"
+        },
+        "universe": {
+          "type": "string",
+          "enum": [
+            "csapaih",
+            "all"
+          ],
+          "description": "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações."
         }
       }
     }
@@ -484,7 +509,7 @@
   },
   {
     "name": "rank_csap_groups",
-    "description": "Gera ranking dos 19 grupos CSAP por número de internações, dias de internação ou valor. Identifica principais causas evitáveis. Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `value` é nominal na moeda da época — ver as `notes`.",
+    "description": "Gera ranking dos 19 grupos CSAP por número de internações, dias de internação ou valor. Identifica principais causas evitáveis. Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `value` é nominal na moeda da época — ver as `notes`. Universo do pacote R csapAIH por padrão (`universe`): fora as internações por procedimento obstétrico, parto e longa permanência.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -527,6 +552,14 @@
             "deaths"
           ],
           "description": "Métrica para ranking (default: n)"
+        },
+        "universe": {
+          "type": "string",
+          "enum": [
+            "csapaih",
+            "all"
+          ],
+          "description": "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações."
         },
         "limit": {
           "type": "integer",

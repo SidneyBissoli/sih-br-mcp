@@ -27,7 +27,7 @@ import csapGroups from "./data/csap-groups.json" with { type: "json" };
 import csapGroupsCid9 from "./data/csap-groups-cid9.json" with { type: "json" };
 import cidChapters from "./data/cid-chapters.json" with { type: "json" };
 
-export const SERVER_VERSION = "0.9.0";
+export const SERVER_VERSION = "0.10.0";
 
 export const provenance = createProvenanceContext({
   metaNamespace: "br.sbissoli.sih",
@@ -108,6 +108,19 @@ export interface SihSidecar {
   municipality_available?: boolean;
   /** Builder >= 2.5.0: moeda de `value` por competência da janela (Cr$ BRE, CR$ BRR, R$ BRL). */
   currency?: { from: string; to: string; code: string; symbol: string; name: string }[];
+  /**
+   * Builder >= 2.6.0: universo do % ICSAP como o csapAIH (procedimento
+   * obstétrico, parto e longa permanência fora do numerador e do denominador);
+   * `excluded` traz as internações fora do universo por motivo.
+   */
+  csap_universe?: {
+    method: string;
+    method_source?: { name: string; author: string; version: string; url: string; license: string; functions: string[] };
+    rules: string[];
+    tables: string;
+    records_in_universe: number | null;
+    excluded: Record<string, number>;
+  };
   notes: string[];
 }
 
@@ -492,6 +505,45 @@ export function csapCid9Provenance(): CanonicalProvenance {
   });
 }
 
+/**
+ * Método do % ICSAP: o pacote R csapAIH (Fúlvio B. Nedel) — mesma lista da
+ * Portaria 221/2008, mas com o universo de cálculo que a literatura brasileira
+ * usa (fora: procedimento obstétrico, parto O80–O84, longa permanência). O
+ * builder >= 2.6.0 grava a marca `exclusion` nos cubos (src/data/csap-universe.json).
+ */
+export function csapAihProvenance(): CanonicalProvenance {
+  return provenance.build({
+    source: {
+      name: "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R, Fúlvio B. Nedel)",
+      agency: "Fúlvio Borges Nedel",
+      database: "github.com/fulvionedel/csapAIH",
+      endpoint: null,
+    },
+    source_url: "https://github.com/fulvionedel/csapAIH",
+    license: {
+      id: "GPL-3.0",
+      name: "GPL (>= 3) — método reproduzido em tabela (src/data/csap-universe.json), não código copiado",
+      url: null,
+      terms_url: null,
+      verified_at: null,
+    },
+    dataset: {
+      id: "csapaih-universo",
+      version: "0.0.4.8",
+      name: "Universo do % ICSAP como csapAIH::csapAIH() (procobst.rm, parto.rm, longa.rm)",
+    },
+    data_vintage:
+      "csapAIH 0.0.4.8 (2026-01-16): fora do numerador e do denominador as internações por procedimento obstétrico (10 códigos SIGTAP; tabela antiga do SIH até 2007 por PROCOBST.CNV do DATASUS), com diagnóstico de parto O80–O84 (CID-9: 650, 669.5–669.7) e as AIH de longa permanência (IDENT = 5)",
+    retrieved_at: REFERENCE_SNAPSHOT_AT,
+    citation:
+      "NEDEL, F. B. csapAIH: Classificar Condições Sensíveis à Atenção Primária. Pacote R, versão 0.0.4.8, 2026. https://github.com/fulvionedel/csapAIH",
+    derived: true,
+    derivation_note:
+      "Universo reproduzido em tabela versionada e conferido contra o próprio pacote em 2023/RR (48.480 AIH): mesmas 38.020 internações no universo, 18 dos 19 grupos idênticos; o g01 difere em 18 AIH porque a regex da listaBRMS do pacote inclui B55–B56 e omite B05–B06 e B77.x, contra a Portaria — este servidor segue a Portaria (= listaBRAlfradique do pacote).",
+    served_from_cache: null,
+  });
+}
+
 /** Capítulos da CID-10 (OMS), transcritos em src/data. */
 export function cidProvenance(): CanonicalProvenance {
   return provenance.build({
@@ -590,6 +642,8 @@ export function provenanceFor(tool: string, args: unknown): CanonicalProvenance 
       const years = yearsFromArgs(args);
       const blocks = [sihProvenance(years), csapProvenance()];
       if (yearsCid9().some((y) => years.length === 0 || years.includes(y))) blocks.push(csapCid9Provenance());
+      // 0.10.0: o método do percentual (universo csapAIH) é fonte da resposta
+      blocks.push(csapAihProvenance());
       return blocks;
     }
     case "get_hospitalization_rates":
