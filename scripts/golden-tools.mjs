@@ -144,6 +144,12 @@ const CASES = [
   ["get_hospitalization_rates", { year: [Y] }],
   ["get_hospitalization_rates", { year: [Y], rate_type: "specific", rate_per: 100000, group_by: ["uf"] }],
   ["get_hospitalization_rates", { year: [Y], sex: "M", age_min: 60, is_csap: true, group_by: ["sex"] }],
+  // sih:taxas-1992-1999: antes de 2000 o recorte etário só vale nas faixas
+  // quinquenais de pop_uf_agregado.parquet — 0–17 é recusado com a lista das
+  // faixas (a fixture tem o arquivo 1991–1999; não tem cubo de 1995, e a
+  // validação vem antes da consulta ao cubo)
+  ["get_hospitalization_rates", { year: [1995], age_min: 0, age_max: 17 }],
+  ["get_hospitalization_rates", { year: [1995], uf: ["RR"], age_min: 0, age_max: 4 }],
   ["compare_icsap_trends", { start_year: Y - 1, end_year: Y, compare_by: "uf", compare_values: ["MG", "RJ"], indicator: "percentage" }],
   ["compare_icsap_trends", { start_year: Y, end_year: Y, compare_by: "csap_group", compare_values: ["g01", "g02"], indicator: "rate_per_10k" }],
   ["compare_icsap_trends", { start_year: Y, end_year: Y, compare_by: "uf", indicator: "count", include_trend_line: false }],

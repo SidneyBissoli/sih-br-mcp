@@ -736,6 +736,8 @@ export async function queryPopulationUfAgregado<T = Record<string, unknown>>(opt
   years?: number[];
   ufs?: string[];
   sex?: string;
+  /** Faixas de AGGREGATED_AGE_GROUPS; sem isto, todas — inclusive a idade ignorada (age_group nulo), que faz parte do total. */
+  ageGroups?: string[];
   groupBy?: string[];
 }): Promise<T[]> {
   const pattern = getPopulationPattern("uf_agregado");
@@ -743,6 +745,13 @@ export async function queryPopulationUfAgregado<T = Record<string, unknown>>(opt
 
   if (options.years && options.years.length > 0) {
     conditions.push(`year IN (${options.years.join(", ")})`);
+  }
+
+  if (options.ageGroups && options.ageGroups.length > 0) {
+    // As linhas de idade ignorada (age_group nulo; POPBR "I000") ficam fora de
+    // qualquer recorte etário — e dentro do total, que só bate com a
+    // estimativa do IBGE com elas (Brasil 1993: 151.556.521).
+    conditions.push(`age_group IN (${options.ageGroups.map((g) => `'${g}'`).join(", ")})`);
   }
 
   if (options.ufs && options.ufs.length > 0) {
@@ -780,32 +789,106 @@ function hasPopUf(): boolean {
   return existsSync(path);
 }
 
-let popYearRangeCache: { first_year: number; last_year: number } | null | undefined;
-
-/**
- * Intervalo de anos coberto por pop_uf.parquet (idade simples por UF), lido
- * do próprio arquivo — nunca fixado no código. É o que decide quais anos as
- * ferramentas de taxa aceitam: a regra do CONTEXT.md diz que a população vai
- * até o último ano de cubo FECHADO do SIH, e quem a cumpre é
- * scripts/build-population.R; o servidor só reflete o que existe.
- * Devolve null sem pop_uf.parquet.
- */
-export async function getPopulationYearRange(): Promise<{ first_year: number; last_year: number } | null> {
-  if (popYearRangeCache !== undefined) return popYearRangeCache;
-  if (!hasPopUf()) {
-    popYearRangeCache = null;
-    return null;
-  }
-  const path = join(DATA_DIR, "pop_uf.parquet").replace(/\\/g, "/");
+/** Intervalo de anos de um arquivo de população, lido do próprio arquivo. */
+async function yearRangeOf(file: string): Promise<{ first_year: number; last_year: number } | null> {
+  const path = join(DATA_DIR, file);
+  if (!existsSync(path)) return null;
   const rows = await query<{ first_year: number; last_year: number }>(
-    `SELECT CAST(min(year) AS INTEGER) AS first_year, CAST(max(year) AS INTEGER) AS last_year FROM read_parquet('${path}')`
+    `SELECT CAST(min(year) AS INTEGER) AS first_year, CAST(max(year) AS INTEGER) AS last_year FROM read_parquet('${path.replace(/\\/g, "/")}')`
   );
   const r = rows[0];
-  popYearRangeCache =
-    r && r.first_year != null && r.last_year != null
-      ? { first_year: Number(r.first_year), last_year: Number(r.last_year) }
-      : null;
-  return popYearRangeCache;
+  return r && r.first_year != null && r.last_year != null
+    ? { first_year: Number(r.first_year), last_year: Number(r.last_year) }
+    : null;
+}
+
+/** Faixas etárias quinquenais de pop_uf_agregado.parquet (1991–1999), na ordem. */
+export const AGGREGATED_AGE_GROUPS = [
+  "0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44",
+  "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80 e +",
+];
+
+/**
+ * Faixas de pop_uf_agregado.parquet que cobrem EXATAMENTE [ageMin, ageMax].
+ * Devolve null quando o intervalo não cai nos limites das faixas (ex.: 0–14
+ * serve, 0–17 não): antes de 2000 só há população por faixa quinquenal, e uma
+ * taxa com denominador aproximado seria número errado com cara de certo.
+ * Sem filtro de idade devolve undefined (todas as faixas).
+ */
+export function aggregatedAgeGroupsFor(ageMin?: number, ageMax?: number): string[] | null | undefined {
+  if (ageMin === undefined && ageMax === undefined) return undefined;
+  const lo = ageMin ?? 0;
+  const hi = ageMax ?? Infinity;
+  if (lo % 5 !== 0) return null;
+  if (hi !== Infinity && hi < 79 && (hi + 1) % 5 !== 0) return null;
+  const out: string[] = [];
+  for (const g of AGGREGATED_AGE_GROUPS) {
+    const start = parseInt(g, 10);
+    const end = g === "80 e +" ? Infinity : start + 4;
+    if (start >= lo && end <= hi) out.push(g);
+    else if (start >= lo && g === "80 e +" && hi >= 80) out.push(g);
+  }
+  if (hi !== Infinity && hi >= 80 && hi < Infinity && !out.includes("80 e +")) return null;
+  return out.length > 0 ? out : null;
+}
+
+export interface PopulationCoverage {
+  /** União dos dois arquivos: o que as ferramentas de taxa aceitam. */
+  first_year: number;
+  last_year: number;
+  /** pop_uf.parquet — idade simples por UF e sexo (projeções IBGE, 2000+). */
+  detailed: { first_year: number; last_year: number; source: string; age: string } | null;
+  /** pop_uf_agregado.parquet — faixa etária quinquenal por UF e sexo (1991–1999). */
+  aggregated: { first_year: number; last_year: number; source: string; age: string; age_groups: string[] } | null;
+}
+
+let popCoverageCache: PopulationCoverage | null | undefined;
+
+/**
+ * Cobertura populacional, lida dos próprios arquivos — nunca fixada no código.
+ * `first_year`/`last_year` é a união de pop_uf.parquet (idade simples, 2000+;
+ * a regra do CONTEXT.md diz que vai até o último ano de cubo FECHADO do SIH,
+ * e quem a cumpre é scripts/build-population.R) e de pop_uf_agregado.parquet
+ * (faixa etária, 1991–1999; sih:taxas-1992-1999). Antes de 2000 a taxa por
+ * idade só sai nas faixas do arquivo (aggregatedAgeGroupsFor). Devolve null
+ * sem nenhum dos dois arquivos.
+ */
+export async function getPopulationCoverage(): Promise<PopulationCoverage | null> {
+  if (popCoverageCache !== undefined) return popCoverageCache;
+  const detailed = await yearRangeOf("pop_uf.parquet");
+  const aggregated = await yearRangeOf("pop_uf_agregado.parquet");
+  if (!detailed && !aggregated) {
+    popCoverageCache = null;
+    return null;
+  }
+  const ranges = [detailed, aggregated].filter((r): r is NonNullable<typeof r> => !!r);
+  popCoverageCache = {
+    first_year: Math.min(...ranges.map((r) => r.first_year)),
+    last_year: Math.max(...ranges.map((r) => r.last_year)),
+    detailed: detailed ? { ...detailed, source: "pop_uf.parquet", age: "idade simples" } : null,
+    aggregated: aggregated
+      ? { ...aggregated, source: "pop_uf_agregado.parquet", age: "faixa etária quinquenal", age_groups: AGGREGATED_AGE_GROUPS }
+      : null,
+  };
+  return popCoverageCache;
+}
+
+/** Qual arquivo de população serve a um ano (null = nenhum). */
+export async function populationSourceFor(year: number): Promise<"detailed" | "aggregated" | null> {
+  const c = await getPopulationCoverage();
+  if (!c) return null;
+  if (c.detailed && year >= c.detailed.first_year && year <= c.detailed.last_year) return "detailed";
+  if (c.aggregated && year >= c.aggregated.first_year && year <= c.aggregated.last_year) return "aggregated";
+  return null;
+}
+
+/**
+ * Compatibilidade: o intervalo aceito pelas taxas (união dos dois arquivos).
+ * Devolve null sem população.
+ */
+export async function getPopulationYearRange(): Promise<{ first_year: number; last_year: number } | null> {
+  const c = await getPopulationCoverage();
+  return c ? { first_year: c.first_year, last_year: c.last_year } : null;
 }
 
 /**
@@ -883,18 +966,26 @@ export async function getPopulation(options: {
     if (result[0]?.population) return result[0].population;
   }
 
-  // Tenta pop_uf_agregado.parquet para anos < 2000
+  // pop_uf_agregado.parquet para anos < 2000 (sih:taxas-1992-1999): idade só
+  // nas faixas do arquivo — intervalo fora dos limites das faixas é erro, não
+  // aproximação; e com filtro de idade não há fallback para os municípios,
+  // que não têm idade.
   if (options.year < 2000) {
-    try {
-      const result = await queryPopulationUfAgregado<{ population: number }>({
-        years: [options.year],
-        ufs: options.uf,
-        sex: options.sex,
-      });
-      if (result[0]?.population) return result[0].population;
-    } catch {
-      // Continua para fallback
+    const ageGroups = aggregatedAgeGroupsFor(options.ageMin, options.ageMax);
+    if (ageGroups === null) {
+      throw new Error(
+        `Antes de 2000 a população por UF só existe em faixas etárias quinquenais (${AGGREGATED_AGE_GROUPS.join(", ")}): ` +
+          `o intervalo de idade ${options.ageMin ?? 0}–${options.ageMax ?? "+"} não cai nos limites das faixas. Use age_min múltiplo de 5 e age_max terminado em 4 ou 9 (ou 80+).`,
+      );
     }
+    const result = await queryPopulationUfAgregado<{ population: number }>({
+      years: [options.year],
+      ufs: options.uf,
+      sex: options.sex,
+      ageGroups,
+    });
+    if (result[0]?.population) return result[0].population;
+    if (ageGroups) return 0;
   }
 
   // Fallback: pop_municipios.parquet (agregando por UF)
@@ -933,14 +1024,23 @@ export async function getPopulationByUf(options: {
       groupBy: ["uf"],
     });
   } else if (options.year < 2000) {
+    const ageGroups = aggregatedAgeGroupsFor(options.ageMin, options.ageMax);
+    if (ageGroups === null) {
+      throw new Error(
+        `Antes de 2000 a população por UF só existe em faixas etárias quinquenais (${AGGREGATED_AGE_GROUPS.join(", ")}): ` +
+          `o intervalo de idade ${options.ageMin ?? 0}–${options.ageMax ?? "+"} não cai nos limites das faixas.`,
+      );
+    }
     try {
       result = await queryPopulationUfAgregado<{ uf: string; population: number }>({
         years: [options.year],
         sex: options.sex,
+        ageGroups,
         groupBy: ["uf"],
       });
     } catch {
-      // Fallback
+      if (ageGroups) throw new Error("pop_uf_agregado.parquet indisponível: sem população por faixa etária antes de 2000.");
+      // Fallback (sem idade)
       result = await queryPopulationFromMunicipios<{ uf: string; population: number }>({
         years: [options.year],
         sex: options.sex,

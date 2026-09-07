@@ -129,7 +129,7 @@
   },
   {
     "name": "get_hospitalization_rates",
-    "description": "Calcula taxas de internação por população (por 100.000 habitantes, configurável). Requer dados populacionais (pop_uf.parquet). Anos válidos: os cobertos por pop_uf.parquet, informados em get_available_years.population_years.",
+    "description": "Calcula taxas de internação por população (por 100.000 habitantes, configurável). Denominador lido de dois arquivos, informados em get_available_years.population_years: projeções do IBGE por idade simples de 2000 em diante (pop_uf.parquet) e, de 1991 a 1999, população por faixa etária quinquenal somada dos municípios (pop_uf_agregado.parquet) — antes de 2000 o recorte por idade só vale nos limites das faixas (age_min múltiplo de 5, age_max terminado em 4 ou 9, ou 80+). A resposta diz qual arquivo serviu a cada ano (population_source) e avisa quando mistura os dois.",
     "inputSchema": {
       "type": "object",
       "properties": {
