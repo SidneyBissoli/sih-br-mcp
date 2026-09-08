@@ -1,5 +1,5 @@
 {
-  "manifest_version": "1.0.0",
+  "manifest_version": "1.1.0",
   "dataset": "sih/rd",
   "cube_year": 2010,
   "window": {
@@ -11,14 +11,14 @@
   },
   "competencias": ["2010-01", "2010-02", "2010-03", "2010-04", "2010-05", "2010-06", "2010-07", "2010-08", "2010-09", "2010-10", "2010-11", "2010-12", "2011-01", "2011-02", "2011-03", "2011-04"],
   "ufs_arquivo": ["AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO"],
-  "built_at": "2026-09-07T03:12:17Z",
+  "built_at": "2026-09-08T03:07:34Z",
   "builder": {
     "script": "scripts/build-aggregations.R",
-    "version": "2.3.1",
-    "git_commit": "7e7d09f7a9bf28c70026810a7990b4046c8ba92a",
+    "version": "2.6.0",
+    "git_commit": "7d8de00d14be3d207aaf689c3beaa62c6122820f",
     "r_version": "R version 4.6.1 (2026-06-24)",
     "arrow_version": "25.0.1",
-    "healthbr_version": "0.4.0"
+    "healthbr_version": "0.4.0.9000"
   },
   "source": {
     "name": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
@@ -5658,9 +5658,53 @@
     "records_invalid_dt_inter": 0,
     "records_other_year": 4029707,
     "records_in_cube": 11559361,
-    "causas_rows": 5569500,
+    "causas_rows": 5655584,
     "series_rows": 6748,
-    "icsap_rows": 1493548
+    "icsap_rows": 2489804,
+    "icsap_rows_without_csap": 995204
   },
-  "notes": ["Cubo por ANO DE INTERNAÇÃO (DT_INTER): lê as competências do ano e os meses seguintes de Y+1 (window.months_after) e descarta internações de outros anos. Com 4 meses, 99,7-99,9% das internações do ano (dezembro 99,3-99,7%); o restante é reapresentação tardia difusa.", "uf dos cubos = UF de residência (MUNIC_RES); ufs_arquivo = UF do estabelecimento (nome do arquivo RD no FTP).", "retrieved_at = processing_timestamp mais recente, no manifesto do healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream; igual, ao segundo, ao download_date do rodapé do Parquet). Lido por healthbR::sih_status()."]
+  "records_date_imputed": 0,
+  "cid_revision": {
+    "10": 11559361
+  },
+  "icsap_list_revision": {
+    "10": "portaria-221-2008"
+  },
+  "not_official_icsap": false,
+  "uf_basis": "residencia",
+  "municipality_available": true,
+  "currency": [
+    {
+      "from": "2010-01",
+      "to": "2011-04",
+      "code": "BRL",
+      "symbol": "R$",
+      "name": "real"
+    }
+  ],
+  "csap_universe": {
+    "method": "csapAIH",
+    "method_source": {
+      "name": "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R)",
+      "author": "Fúlvio Borges Nedel",
+      "version": "0.0.4.8 (2026-01-16)",
+      "url": "https://github.com/fulvionedel/csapAIH",
+      "license": "GPL-3",
+      "functions": [
+        "csapAIH()",
+        "proc.obst()",
+        "partos()"
+      ]
+    },
+    "rules": ["procedimento_obstetrico", "parto", "longa_permanencia"],
+    "tables": "src/data/csap-universe.json",
+    "records_in_universe": 9188391,
+    "excluded": {
+      "longa_permanencia": 214240,
+      "parto": 812,
+      "procedimento_obstetrico": 2155918
+    }
+  },
+  "columns_missing": [],
+  "notes": ["Cubo por ANO DE INTERNAÇÃO (DT_INTER): lê as competências do ano e os meses seguintes de Y+1 (window.months_after) e descarta internações de outros anos. Com 4 meses, 99,7-99,9% das internações do ano (dezembro 99,3-99,7%); o restante é reapresentação tardia difusa.", "uf dos cubos = UF de residência (MUNIC_RES); ufs_arquivo = UF do estabelecimento (nome do arquivo RD no FTP).", "retrieved_at = processing_timestamp mais recente, no manifesto do healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream; igual, ao segundo, ao download_date do rodapé do Parquet). Lido por healthbR::sih_status().", "% ICSAP como o pacote R csapAIH (Nedel): a lista de diagnósticos é a da Portaria 221/2008 para TODAS as internações, mas o percentual da literatura exclui do numerador e do denominador as internações por procedimento obstétrico (PROC_REA na lista SIGTAP do csapAIH, ou nos grupos partos/cesáreas/abortamentos da tabela antiga até 2007), as com diagnóstico de parto (O80-O84; em CID-9 650 e 669.5-669.7) e as AIH de longa permanência (IDENT = 5). A coluna `exclusion` (chave nos cubos de causas e ICSAP) marca o motivo; nula = entra no universo (csap_universe.records_in_universe). O servidor usa o universo por padrão e pode incluir tudo a pedido.", "age: COD_IDADE 2 (dias) e 3 (meses) valem 0 anos. As versões < 2.5.0 do builder trocavam os dois (neonatos de 12-30 dias saíam com 1-2 anos); corrigido em 2.5.0 (sih:cod-idade) e os cubos de 1998+ reconstruídos."]
 }
