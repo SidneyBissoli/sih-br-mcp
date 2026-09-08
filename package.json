@@ -1,11 +1,14 @@
 {
   "name": "sih-br-mcp",
   "version": "0.12.0",
-  "private": true,
-  "description": "MCP Server para análise de dados do SIH-SUS com foco em ICSAP",
+  "description": "Servidor MCP do SIH/SUS (internações hospitalares do Brasil, 1992–2025): causas, séries mensais, ICSAP e taxas por 100 mil, lendo cubos agregados e denominadores populacionais do canal público healthbr-data sob demanda",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SidneyBissoli/sih-br-mcp.git"
+  },
+  "homepage": "https://github.com/SidneyBissoli/sih-br-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/SidneyBissoli/sih-br-mcp/issues"
   },
   "type": "module",
   "main": "dist/index.js",
@@ -38,7 +41,7 @@
     "saude-publica",
     "epidemiologia"
   ],
-  "author": "",
+  "author": "Sidney Bissoli",
   "license": "MIT",
   "dependencies": {
     "@duckdb/node-api": "^1.5.5-r.4",
@@ -52,8 +55,10 @@
   "engines": {
     "node": ">=22"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
-    "dist",
-    "data"
+    "dist"
   ]
 }
