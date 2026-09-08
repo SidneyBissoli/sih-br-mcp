@@ -3059,17 +3059,17 @@
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
-          "source": "IBGE — SIDRA, tabela 7358 (projeção da população por sexo e idade, UF)",
-          "source_url": "https://sidra.ibge.gov.br/tabela/7358",
-          "data_vintage": "Projeções por UF baixadas por scripts/build-population.R até o último ano de cubo FECHADO do SIH (pop_uf.parquet; intervalo em get_available_years.population_years)",
-          "retrieved_at": "2026-01-23T00:00:00Z",
-          "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade. SIDRA, tabela 7358.",
-          "license": "Dados abertos do IBGE"
+          "source": "IBGE — Projeção da População do Brasil e das Unidades da Federação, Revisão 2024 (UF × sexo × idade simples); DATASUS — população residente por município (POPBR/POPSVS, estimativas e censos do IBGE)",
+          "source_url": "https://www.ibge.gov.br/estatisticas/sociais/populacao/9109-projecao-da-populacao.html",
+          "data_vintage": "Arquivos de população da pasta de dados (fixture ou build local do build-population.R); pop_uf até o último ano de cubo FECHADO do SIH (intervalo em get_available_years.population_years)",
+          "retrieved_at": "2026-09-07T00:00:00Z",
+          "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade simples — Revisão 2024. Ministério da Saúde/DATASUS. População residente por município (POPBR/POPSVS).",
+          "license": "Dados abertos do IBGE e do DATASUS; redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         }
       ],
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
-        "https://sidra.ibge.gov.br/tabela/7358"
+        "https://www.ibge.gov.br/estatisticas/sociais/populacao/9109-projecao-da-populacao.html"
       ]
     }
   },
@@ -3202,17 +3202,17 @@
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
-          "source": "IBGE — SIDRA, tabela 7358 (projeção da população por sexo e idade, UF)",
-          "source_url": "https://sidra.ibge.gov.br/tabela/7358",
-          "data_vintage": "Projeções por UF baixadas por scripts/build-population.R até o último ano de cubo FECHADO do SIH (pop_uf.parquet; intervalo em get_available_years.population_years)",
-          "retrieved_at": "2026-01-23T00:00:00Z",
-          "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade. SIDRA, tabela 7358.",
-          "license": "Dados abertos do IBGE"
+          "source": "IBGE — Projeção da População do Brasil e das Unidades da Federação, Revisão 2024 (UF × sexo × idade simples); DATASUS — população residente por município (POPBR/POPSVS, estimativas e censos do IBGE)",
+          "source_url": "https://www.ibge.gov.br/estatisticas/sociais/populacao/9109-projecao-da-populacao.html",
+          "data_vintage": "Arquivos de população da pasta de dados (fixture ou build local do build-population.R); pop_uf até o último ano de cubo FECHADO do SIH (intervalo em get_available_years.population_years)",
+          "retrieved_at": "2026-09-07T00:00:00Z",
+          "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade simples — Revisão 2024. Ministério da Saúde/DATASUS. População residente por município (POPBR/POPSVS).",
+          "license": "Dados abertos do IBGE e do DATASUS; redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         }
       ],
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
-        "https://sidra.ibge.gov.br/tabela/7358"
+        "https://www.ibge.gov.br/estatisticas/sociais/populacao/9109-projecao-da-populacao.html"
       ]
     }
   },
@@ -3276,17 +3276,17 @@
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
-          "source": "IBGE — SIDRA, tabela 7358 (projeção da população por sexo e idade, UF)",
-          "source_url": "https://sidra.ibge.gov.br/tabela/7358",
-          "data_vintage": "Projeções por UF baixadas por scripts/build-population.R até o último ano de cubo FECHADO do SIH (pop_uf.parquet; intervalo em get_available_years.population_years)",
-          "retrieved_at": "2026-01-23T00:00:00Z",
-          "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade. SIDRA, tabela 7358.",
-          "license": "Dados abertos do IBGE"
+          "source": "IBGE — Projeção da População do Brasil e das Unidades da Federação, Revisão 2024 (UF × sexo × idade simples); DATASUS — população residente por município (POPBR/POPSVS, estimativas e censos do IBGE)",
+          "source_url": "https://www.ibge.gov.br/estatisticas/sociais/populacao/9109-projecao-da-populacao.html",
+          "data_vintage": "Arquivos de população da pasta de dados (fixture ou build local do build-population.R); pop_uf até o último ano de cubo FECHADO do SIH (intervalo em get_available_years.population_years)",
+          "retrieved_at": "2026-09-07T00:00:00Z",
+          "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade simples — Revisão 2024. Ministério da Saúde/DATASUS. População residente por município (POPBR/POPSVS).",
+          "license": "Dados abertos do IBGE e do DATASUS; redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         }
       ],
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
-        "https://sidra.ibge.gov.br/tabela/7358"
+        "https://www.ibge.gov.br/estatisticas/sociais/populacao/9109-projecao-da-populacao.html"
       ]
     }
   },
@@ -3348,17 +3348,17 @@
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
-          "source": "IBGE — SIDRA, tabela 7358 (projeção da população por sexo e idade, UF)",
-          "source_url": "https://sidra.ibge.gov.br/tabela/7358",
-          "data_vintage": "Projeções por UF baixadas por scripts/build-population.R até o último ano de cubo FECHADO do SIH (pop_uf.parquet; intervalo em get_available_years.population_years)",
-          "retrieved_at": "2026-01-23T00:00:00Z",
-          "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade. SIDRA, tabela 7358.",
-          "license": "Dados abertos do IBGE"
+          "source": "IBGE — Projeção da População do Brasil e das Unidades da Federação, Revisão 2024 (UF × sexo × idade simples); DATASUS — população residente por município (POPBR/POPSVS, estimativas e censos do IBGE)",
+          "source_url": "https://www.ibge.gov.br/estatisticas/sociais/populacao/9109-projecao-da-populacao.html",
+          "data_vintage": "Arquivos de população da pasta de dados (fixture ou build local do build-population.R); pop_uf até o último ano de cubo FECHADO do SIH (intervalo em get_available_years.population_years)",
+          "retrieved_at": "2026-09-07T00:00:00Z",
+          "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade simples — Revisão 2024. Ministério da Saúde/DATASUS. População residente por município (POPBR/POPSVS).",
+          "license": "Dados abertos do IBGE e do DATASUS; redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         }
       ],
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
-        "https://sidra.ibge.gov.br/tabela/7358"
+        "https://www.ibge.gov.br/estatisticas/sociais/populacao/9109-projecao-da-populacao.html"
       ]
     }
   },
@@ -3392,17 +3392,17 @@
           "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         },
         {
-          "source": "IBGE — SIDRA, tabela 7358 (projeção da população por sexo e idade, UF)",
-          "source_url": "https://sidra.ibge.gov.br/tabela/7358",
-          "data_vintage": "Projeções por UF baixadas por scripts/build-population.R até o último ano de cubo FECHADO do SIH (pop_uf.parquet; intervalo em get_available_years.population_years)",
-          "retrieved_at": "2026-01-23T00:00:00Z",
-          "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade. SIDRA, tabela 7358.",
-          "license": "Dados abertos do IBGE"
+          "source": "IBGE — Projeção da População do Brasil e das Unidades da Federação, Revisão 2024 (UF × sexo × idade simples); DATASUS — população residente por município (POPBR/POPSVS, estimativas e censos do IBGE)",
+          "source_url": "https://www.ibge.gov.br/estatisticas/sociais/populacao/9109-projecao-da-populacao.html",
+          "data_vintage": "Arquivos de população da pasta de dados (fixture ou build local do build-population.R); pop_uf até o último ano de cubo FECHADO do SIH (intervalo em get_available_years.population_years)",
+          "retrieved_at": "2026-09-07T00:00:00Z",
+          "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade simples — Revisão 2024. Ministério da Saúde/DATASUS. População residente por município (POPBR/POPSVS).",
+          "license": "Dados abertos do IBGE e do DATASUS; redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
         }
       ],
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
-        "https://sidra.ibge.gov.br/tabela/7358"
+        "https://www.ibge.gov.br/estatisticas/sociais/populacao/9109-projecao-da-populacao.html"
       ]
     }
   },

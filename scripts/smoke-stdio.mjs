@@ -74,7 +74,10 @@ const surfaceJson = JSON.stringify(surface, null, 2) + "\n";
 console.log(`tools/list: ${tools.length} ferramentas`);
 
 if (baseline) {
-  const expected = readFileSync(baseline, "utf8");
+  // Forma canônica LF: num checkout Windows com autocrlf (i/lf w/crlf) o
+  // baseline chega com CRLF e a comparação byte a byte reprovava sem a
+  // superfície ter mudado (mesma classe do tables-check, 2026-09-08).
+  const expected = readFileSync(baseline, "utf8").replace(/\r\n/g, "\n");
   if (expected !== surfaceJson) {
     const before = new Set(JSON.parse(expected).map((t) => t.name));
     const after = new Set(surface.map((t) => t.name));

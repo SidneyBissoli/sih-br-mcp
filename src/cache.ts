@@ -50,6 +50,26 @@ export interface CubesManifestYear {
   files: Record<CubeKind | "provenance", CubesManifestFile>;
 }
 
+export type PopulationKind = "pop_uf" | "pop_uf_agregado" | "pop_municipios";
+const POPULATION_KINDS: PopulationKind[] = ["pop_uf", "pop_uf_agregado", "pop_municipios"];
+
+/**
+ * >= 1.2.0 (2026-09-08, sih:populacao-no-canal): os denominadores populacionais
+ * publicados ao lado dos cubos pelo build-sih-population.yml do healthbr-data
+ * (build-population.R): pop_uf (IBGE, Projeção 2024, UF × sexo × idade simples,
+ * 2000..último cubo FECHADO), pop_municipios (DATASUS POPBR/POPSVS 1991–2024),
+ * pop_uf_agregado (soma por UF, 1991–1999) e o sidecar pop_provenance.json.
+ */
+export interface CubesManifestPopulation {
+  built_at: string | null;
+  builder_version: string | null;
+  /** Último ano de pop_uf = último cubo FECHADO do SIH (regra do CONTEXT.md). */
+  last_year: number | null;
+  rule?: string | null;
+  sources?: Array<{ file: string; name: string; agency?: string | null; url?: string | null; years?: string | null }>;
+  files: Record<PopulationKind | "provenance", CubesManifestFile>;
+}
+
 export interface CubesManifest {
   manifest_version: string;
   dataset: string;
@@ -59,6 +79,8 @@ export interface CubesManifest {
   producer?: { repository?: string; pipeline?: string; workflow?: string | null; run_url?: string | null };
   /** >= 1.1.0: tabelas de classificação publicadas em tables/, com SHA-256 — src/data/ é cópia (scripts/tables-check.mjs). */
   tables?: Record<string, CubesManifestFile>;
+  /** >= 1.2.0: denominadores populacionais; null/ausente em manifesto anterior à população (não é erro do canal). */
+  population?: CubesManifestPopulation | null;
   years: Record<string, CubesManifestYear>;
 }
 
@@ -74,6 +96,11 @@ export function yearsPresent(dir: string): number[] {
     if (CUBE_KINDS.every((k) => existsSync(join(dir, `sih_${k}_${y}.parquet`)))) years.add(y);
   }
   return [...years].sort((a, b) => a - b);
+}
+
+/** Os três arquivos de população presentes numa pasta (o sidecar é opcional). */
+export function populationPresent(dir: string): boolean {
+  return existsSync(dir) && POPULATION_KINDS.every((k) => existsSync(join(dir, `${k}.parquet`)));
 }
 
 // ---------------------------------------------------------------------------
@@ -137,6 +164,15 @@ export function setCubesManifestForTests(manifest: CubesManifest | null): void {
   manifestMemo = manifest ? { at: Date.now(), manifest, source: "remote" } : null;
 }
 
+/**
+ * O manifesto já carregado nesta execução (memoizado), sem ir à rede — para
+ * quem é síncrono, como populationProvenance(): depois de ensurePopulation()
+ * o memo está cheio; com o cache desligado (fixture, golden) fica null.
+ */
+export function cachedCubesManifest(): CubesManifest | null {
+  return manifestMemo?.manifest ?? null;
+}
+
 // ---------------------------------------------------------------------------
 // Download com verificação
 
@@ -149,7 +185,13 @@ async function sha256File(path: string): Promise<string> {
 }
 
 async function downloadVerified(file: CubesManifestFile, dir: string, timeoutMs: number): Promise<void> {
-  const url = CUBES_BASE_URL + file.name;
+  // ?v=<sha256>: os objetos do canal são reescritos NO LUGAR a cada rebuild e a
+  // borda do domínio guarda cópia pelo Cache-Control do objeto — sem isto, um
+  // consumidor recebia o cubo do build anterior (HIT, Age 15 h) enquanto o
+  // manifesto já assinava o novo, e a verificação abaixo falhava (2026-09-08,
+  // sih_series_2023: 36.047 bytes servidos vs 36.352 no manifesto). A query
+  // entra na chave de cache: versão nova = URL nova = nunca a cópia velha.
+  const url = `${CUBES_BASE_URL}${file.name}?v=${file.sha256.slice(0, 16)}`;
   const final = join(dir, file.name);
   const tmp = `${final}.part-${process.pid}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
@@ -213,6 +255,43 @@ export async function ensureYears(dir: string, years: number[] | null, log?: (ms
     downloaded.push(y);
   }
   return { downloaded, unavailable };
+}
+
+let populationInFlight: Promise<{ downloaded: string[]; available: boolean }> | null = null;
+
+/**
+ * Garante os denominadores populacionais (três Parquet + pop_provenance.json)
+ * na pasta, baixados do canal e verificados como um ano de cubos. Idempotente
+ * (arquivo presente com o tamanho do manifesto não baixa) e sem corrida.
+ * `available = false` quando o manifesto do canal não tem o bloco `population`
+ * (manifesto anterior a 1.2.0) — o handler responde "sem denominador", não
+ * "erro do canal". Falha de rede lança — o handler decide a mensagem.
+ */
+export function ensurePopulation(dir: string, log: (msg: string) => void = () => {}): Promise<{ downloaded: string[]; available: boolean }> {
+  if (populationInFlight) return populationInFlight;
+  const p = (async () => {
+    const { manifest } = await loadCubesManifest();
+    if (!manifest) throw new Error(`manifesto dos cubos indisponível (${CUBES_BASE_URL}manifest.json) e sem cópia local`);
+    const pop = manifest.population;
+    if (!pop || !pop.files) return { downloaded: [], available: false };
+    mkdirSync(dir, { recursive: true });
+    const wanted: CubesManifestFile[] = [...POPULATION_KINDS.map((k) => pop.files[k]), pop.files.provenance].filter(Boolean);
+    const downloaded: string[] = [];
+    for (const f of wanted) {
+      const path = join(dir, f.name);
+      if (existsSync(path) && statSync(path).size === f.size_bytes) continue;
+      const t0 = Date.now();
+      log(`baixando ${f.name} (${(f.size_bytes / 1e6).toFixed(1)} MB) de ${CUBES_BASE_URL}`);
+      await downloadVerified(f, dir, 10 * 60 * 1000);
+      log(`  ${f.name} ok em ${((Date.now() - t0) / 1000).toFixed(1)} s (SHA-256 confere)`);
+      downloaded.push(f.name);
+    }
+    return { downloaded, available: true };
+  })().finally(() => {
+    populationInFlight = null;
+  });
+  populationInFlight = p;
+  return p;
 }
 
 /** Anos que uma chamada de ferramenta pede, lidos dos argumentos; null = não diz. */

@@ -638,29 +638,43 @@ export async function calculateIcsapIndicators<T = Record<string, unknown>>(opti
 // =============================================================================
 
 /**
- * Retorna padrão de arquivo para dados populacionais.
- * Dados populacionais ficam SEMPRE em data/ (não em data/test/).
+ * Onde os arquivos de população vivem (0.12.0, sih:populacao-no-canal): a
+ * pasta configurada (SIH_DATA_DIR ou data/ do projeto; nunca data/test/) tem
+ * precedência sempre que tiver pop_uf.parquet — é o caso da fixture do smoke
+ * e do golden e de quem gerou a população à mão; sem nada nela e com o cache
+ * ligado, o cache local, que `ensurePopulation()` (src/cache.ts) enche a
+ * partir do canal sih/cubos/ (pop_uf, pop_uf_agregado, pop_municipios +
+ * pop_provenance.json, assinados no bloco `population` do manifesto).
  */
+export function getPopulationDir(): string {
+  if (existsSync(join(DATA_DIR, "pop_uf.parquet"))) return DATA_DIR;
+  if (CUBES_CACHE_ENABLED) return cubesCacheDir();
+  return DATA_DIR;
+}
+
+/** Padrão de arquivo para dados populacionais (pasta de getPopulationDir()). */
 export function getPopulationPattern(type: "municipios" | "uf" | "uf_agregado"): string {
   const filename = type === "municipios" ? "pop_municipios.parquet" :
                    type === "uf" ? "pop_uf.parquet" :
                    "pop_uf_agregado.parquet";
-  return join(DATA_DIR, filename).replace(/\\/g, "/");
+  return join(getPopulationDir(), filename).replace(/\\/g, "/");
 }
 
-/**
- * Verifica se dados populacionais estão disponíveis.
- * Busca em data/ (não data/test/).
- */
+/** Verifica se algum arquivo de população está disponível em getPopulationDir(). */
 export function hasPopulationData(): boolean {
   try {
-    if (!existsSync(DATA_DIR)) return false;
-    const files = readdirSync(DATA_DIR);
-    return files.some(f => f.startsWith("pop_"));
+    const dir = getPopulationDir();
+    if (!existsSync(dir)) return false;
+    const files = readdirSync(dir);
+    return files.some(f => f.startsWith("pop_") && f.endsWith(".parquet"));
   } catch {
     return false;
   }
 }
+
+/** Mensagem única para "sem denominador" — aponta o canal, não um script R. */
+export const POPULATION_MISSING_MESSAGE =
+  `Dados populacionais não disponíveis: nem pop_uf.parquet na pasta de dados nem no cache local. Com o cache ligado o servidor baixa pop_uf, pop_uf_agregado e pop_municipios de ${CUBES_BASE_URL} (bloco population do manifest.json); confira a rede ou a variável SIH_CUBES_CACHE.`;
 
 /**
  * Interface para filtros de população
@@ -785,13 +799,13 @@ export async function queryPopulationUfAgregado<T = Record<string, unknown>>(opt
  * Verifica se pop_uf.parquet existe
  */
 function hasPopUf(): boolean {
-  const path = join(DATA_DIR, "pop_uf.parquet");
+  const path = join(getPopulationDir(), "pop_uf.parquet");
   return existsSync(path);
 }
 
 /** Intervalo de anos de um arquivo de população, lido do próprio arquivo. */
 async function yearRangeOf(file: string): Promise<{ first_year: number; last_year: number } | null> {
-  const path = join(DATA_DIR, file);
+  const path = join(getPopulationDir(), file);
   if (!existsSync(path)) return null;
   const rows = await query<{ first_year: number; last_year: number }>(
     `SELECT CAST(min(year) AS INTEGER) AS first_year, CAST(max(year) AS INTEGER) AS last_year FROM read_parquet('${path.replace(/\\/g, "/")}')`
@@ -845,10 +859,19 @@ export interface PopulationCoverage {
 let popCoverageCache: PopulationCoverage | null | undefined;
 
 /**
+ * Esquece a cobertura memoizada — chamada depois que ensurePopulation() baixa
+ * algum arquivo: uma chamada anterior pode ter memoizado `null` (sem
+ * população) antes do download.
+ */
+export function resetPopulationCoverageCache(): void {
+  popCoverageCache = undefined;
+}
+
+/**
  * Cobertura populacional, lida dos próprios arquivos — nunca fixada no código.
  * `first_year`/`last_year` é a união de pop_uf.parquet (idade simples, 2000+;
  * a regra do CONTEXT.md diz que vai até o último ano de cubo FECHADO do SIH,
- * e quem a cumpre é scripts/build-population.R) e de pop_uf_agregado.parquet
+ * e quem a cumpre é o build-population.R do healthbr-data) e de pop_uf_agregado.parquet
  * (faixa etária, 1991–1999; sih:taxas-1992-1999). Antes de 2000 a taxa por
  * idade só sai nas faixas do arquivo (aggregatedAgeGroupsFor). Devolve null
  * sem nenhum dos dois arquivos.
@@ -949,7 +972,7 @@ export async function getPopulation(options: {
   ageMax?: number;
 }): Promise<number> {
   if (!hasPopulationData()) {
-    throw new Error("Dados populacionais não disponíveis. Execute build_population.R primeiro.");
+    throw new Error(POPULATION_MISSING_MESSAGE);
   }
 
   // Tenta pop_uf.parquet para anos >= 2000 (idade simples)
@@ -1008,7 +1031,7 @@ export async function getPopulationByUf(options: {
   ageMax?: number;
 }): Promise<Record<string, number>> {
   if (!hasPopulationData()) {
-    throw new Error("Dados populacionais não disponíveis. Execute build_population.R primeiro.");
+    throw new Error(POPULATION_MISSING_MESSAGE);
   }
 
   let result: Array<{ uf: string; population: number }>;
