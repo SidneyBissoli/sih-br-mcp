@@ -44,7 +44,8 @@ _ul
 _ul-*
 *-Sidney-desktop*
 
-# tabelas CNV do DATASUS extraídas por scripts/estudo-1992-1997-cnv.py (o que vale é src/data/cid9-*.json)
+# insumos dos estudos (analise-002/003); os geradores das tabelas vivem no
+# healthbr-data (scripts/pipeline/sih-cubos/tables/generators/) desde 08/09/2026
 scripts/tab/
 scripts/cid9_codes.csv
 scripts/cid9_cats.csv

@@ -2,9 +2,11 @@
  * Cache local dos cubos — item (c) de `sih:cubos-frescor` (2026-09-06).
  *
  * Os cubos anuais (`sih_{causas,series,icsap}_<ano>.parquet` + sidecar) são
- * publicados pelo rebuild-cubes.yml em `sih/cubos/` do bucket healthbr-data,
- * servido em https://data.sidneybissoli.com/sih/cubos/ com um `manifest.json`
- * (tamanho e SHA-256 por arquivo; `scripts/cubes-manifest.mjs`). O pacote npm
+ * publicados pela pipeline sih-cubos do healthbr-data (rebuild-sih-cubes.yml;
+ * até 08/09/2026 o produtor era o rebuild-cubes.yml deste repositório) em
+ * `sih/cubos/` do bucket, servido em https://data.sidneybissoli.com/sih/cubos/
+ * com um `manifest.json` (tamanho e SHA-256 por arquivo e por tabela de
+ * classificação; healthbr-data scripts/pipeline/sih-cubos/cubes-manifest.mjs). O pacote npm
  * NÃO embarca cubo nenhum (~60 MB por ano): quando a pasta de dados do
  * projeto não tem cubos, o servidor usa `~/.cache/sih-br-mcp/cubos/` e baixa
  * de lá só os anos que a chamada pede, verificando SHA-256 antes de aceitar.
@@ -53,6 +55,10 @@ export interface CubesManifest {
   dataset: string;
   generated_at: string;
   base_url: string;
+  /** >= 1.1.0 (2026-09-08): quem gerou — repositório e pipeline do produtor. */
+  producer?: { repository?: string; pipeline?: string; workflow?: string | null; run_url?: string | null };
+  /** >= 1.1.0: tabelas de classificação publicadas em tables/, com SHA-256 — src/data/ é cópia (scripts/tables-check.mjs). */
+  tables?: Record<string, CubesManifestFile>;
   years: Record<string, CubesManifestYear>;
 }
 

@@ -1,0 +1,39 @@
+{
+  "manifest_version": "1.1.0",
+  "dataset": "sih/cubos",
+  "note": "Trecho do manifesto de sih/cubos/ restrito ao cabeçalho e ao bloco `tables`, gerado a partir das cópias de src/data/ (as mesmas tabelas que o produtor publica); é o gate OFFLINE de scripts/tables-check.mjs. Regenerar quando o produtor publicar tabela nova e a cópia for atualizada.",
+  "generated_at": "2026-09-08T13:40:16.030Z",
+  "base_url": "https://data.sidneybissoli.com/sih/cubos/",
+  "producer": {
+    "repository": "https://github.com/SidneyBissoli/healthbr-data",
+    "pipeline": "scripts/pipeline/sih-cubos"
+  },
+  "tables": {
+    "cid9-chapters.json": {
+      "name": "tables/cid9-chapters.json",
+      "size_bytes": 2567,
+      "sha256": "d740b1520c73756b4155184b9b5a14edc0fe6fbf5aa306b01ccbd5778648d99b"
+    },
+    "cid9-codes.json": {
+      "name": "tables/cid9-codes.json",
+      "size_bytes": 1268943,
+      "sha256": "a18ec335b9d45baa03db094c9a28859169344099d13edbc801dc1a2b59b8ba40"
+    },
+    "csap-groups-cid9.json": {
+      "name": "tables/csap-groups-cid9.json",
+      "size_bytes": 112525,
+      "sha256": "7d9ffea3e576cc57d320779b7d557943d8256c566eb9dc20fbb8e272f4a9d4c2"
+    },
+    "csap-groups.json": {
+      "name": "tables/csap-groups.json",
+      "size_bytes": 11733,
+      "sha256": "c035861cdff86b0d6fc401fc27fbd0a113034b9e5e3c2f2b545a276a598e095d"
+    },
+    "csap-universe.json": {
+      "name": "tables/csap-universe.json",
+      "size_bytes": 7006,
+      "sha256": "57122e1972a3c87d183e3d92ba92450adcb28667b85b2228b4402d7c0e48e606"
+    }
+  },
+  "years": {}
+}

@@ -1,6 +1,6 @@
 # Fixture do smoke e do golden stdio
 
-Cópia, sem alteração, dos três cubos de 2023 que `scripts/build-aggregations.R`
+Cópia, sem alteração, dos três cubos de 2023 que `build-aggregations.R` (hoje em healthbr-data/scripts/pipeline/sih-cubos/)
 gera em `data/` (dados reais, agregados — não há nada sintético aqui), mais o
 sidecar de proveniência `sih_provenance_2023.json` que o mesmo script grava ao
 lado deles, e os dois cubos de população por UF que
@@ -64,7 +64,7 @@ Quem lê daqui:
 - `scripts/freshness-check.mjs --selftest` — sidecar vs `manifest-excerpt.json`.
 - `scripts/cube-delta.mjs --selftest` — o sidecar contra si mesmo (delta zero)
   e contra cópias adulteradas (partição perdida, queda > 1%, janela regredida,
-  escopo mudado, reedição do MS): é o gate que `rebuild-cubes.yml` aplica a um
+  escopo mudado, reedição do MS): é o gate que `rebuild-sih-cubes.yml` (healthbr-data) aplica a um
   cubo real recém-gerado, provado aqui offline.
 - `scripts/golden-tools.mjs` — as doze ferramentas com argumentos fixos,
   comparadas byte a byte com `baselines/golden-tools.json`. Os dois cubos de

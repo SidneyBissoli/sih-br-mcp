@@ -3,7 +3,7 @@
     "description": "Categoria CID-9 (OMS, 1975) → capítulo CID-10 equivalente, por faixa de categoria, com as exceções que a CID-10 moveu de capítulo. Usado pelo builder (cid_chapter dos cubos de 1992–1997) e pelo servidor.",
     "evidence": "docs/analise-002-sih-1992-1997.md §3 — bate com os 10 grupos IDB do DATASUS; exceções cobrem 0,15 % das AIH de 1992–1997",
     "generated_by": "scripts/cid9-tables.py",
-    "generated_at": "2026-09-07T20:38:03Z"
+    "generated_at": "2026-09-08T13:26:05Z"
   },
   "ranges": [
     {
