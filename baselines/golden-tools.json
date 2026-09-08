@@ -550,8 +550,39 @@
         }
       },
       "population_years": {
-        "first_year": 2000,
-        "last_year": 2024
+        "first_year": 1991,
+        "last_year": 2025,
+        "detailed": {
+          "first_year": 2000,
+          "last_year": 2025,
+          "source": "pop_uf.parquet",
+          "age": "idade simples"
+        },
+        "aggregated": {
+          "first_year": 1991,
+          "last_year": 1999,
+          "source": "pop_uf_agregado.parquet",
+          "age": "faixa etária quinquenal",
+          "age_groups": [
+            "0-4",
+            "5-9",
+            "10-14",
+            "15-19",
+            "20-24",
+            "25-29",
+            "30-34",
+            "35-39",
+            "40-44",
+            "45-49",
+            "50-54",
+            "55-59",
+            "60-64",
+            "65-69",
+            "70-74",
+            "75-79",
+            "80 e +"
+          ]
+        }
       },
       "cubes_channel": {
         "enabled": false,
@@ -2993,21 +3024,25 @@
         {
           "n_hospitalizations": 48480,
           "deaths": 1485,
-          "population": 221272301,
-          "rate_per_100k": 21.91,
+          "population": 211695158,
+          "rate_per_100k": 22.9,
           "rate_per": 100000,
+          "population_source": "detailed",
           "mortality_rate": 3.06
         }
       ],
       "summary": {
         "total_hospitalizations": 48480,
-        "total_population": 221272301,
-        "overall_rate": 21.91,
+        "total_population": 211695158,
+        "overall_rate": 22.9,
         "rate_per": 100000,
         "rate_type": "crude"
       },
       "metadata": {
-        "population_source": "pop_uf.parquet",
+        "population_source": {
+          "2023": "detailed"
+        },
+        "population_notes": [],
         "filters_applied": {
           "year": [
             2023
@@ -3057,84 +3092,95 @@
           "uf": "AM",
           "n_hospitalizations": 117,
           "deaths": 5,
-          "population": 4435886,
-          "rate_per_100k": 2.64,
+          "population": 4240571,
+          "rate_per_100k": 2.76,
           "rate_per": 100000,
+          "population_source": "detailed",
           "mortality_rate": 4.27
         },
         {
           "uf": "CE",
           "n_hospitalizations": 2,
           "deaths": 1,
-          "population": 9548607,
+          "population": 9196672,
           "rate_per_100k": 0.02,
           "rate_per": 100000,
+          "population_source": "detailed",
           "mortality_rate": 50
         },
         {
           "uf": "GO",
           "n_hospitalizations": 1,
           "deaths": 0,
-          "population": 7515888,
+          "population": 7274463,
           "rate_per_100k": 0.01,
           "rate_per": 100000,
+          "population_source": "detailed",
           "mortality_rate": 0
         },
         {
           "uf": "MA",
           "n_hospitalizations": 2,
           "deaths": 0,
-          "population": 7353346,
+          "population": 7003234,
           "rate_per_100k": 0.03,
           "rate_per": 100000,
+          "population_source": "detailed",
           "mortality_rate": 0
         },
         {
           "uf": "MG",
           "n_hospitalizations": 6,
           "deaths": 0,
-          "population": 22231863,
+          "population": 21247401,
           "rate_per_100k": 0.03,
           "rate_per": 100000,
+          "population_source": "detailed",
           "mortality_rate": 0
         },
         {
           "uf": "PB",
           "n_hospitalizations": 1,
           "deaths": 0,
-          "population": 4198939,
+          "population": 4124468,
           "rate_per_100k": 0.02,
           "rate_per": 100000,
+          "population_source": "detailed",
           "mortality_rate": 0
         },
         {
           "uf": "RR",
           "n_hospitalizations": 48349,
           "deaths": 1479,
-          "population": 688474,
-          "rate_per_100k": 7022.63,
+          "population": 695270,
+          "rate_per_100k": 6953.99,
           "rate_per": 100000,
+          "population_source": "detailed",
           "mortality_rate": 3.06
         },
         {
           "uf": "SP",
           "n_hospitalizations": 2,
           "deaths": 0,
-          "population": 48549278,
+          "population": 45850570,
           "rate_per_100k": 0,
           "rate_per": 100000,
+          "population_source": "detailed",
           "mortality_rate": 0
         }
       ],
       "summary": {
         "total_hospitalizations": 48480,
-        "total_population": 104522281,
-        "overall_rate": 46.38,
+        "total_population": 99632649,
+        "overall_rate": 48.66,
         "rate_per": 100000,
         "rate_type": "specific"
       },
       "metadata": {
-        "population_source": "pop_uf.parquet",
+        "population_source": {
+          "2023": "detailed"
+        },
+        "population_notes": [],
         "filters_applied": {
           "year": [
             2023
@@ -3189,21 +3235,25 @@
         {
           "n_hospitalizations": 1151,
           "deaths": 145,
-          "population": 16729471,
-          "rate_per_100k": 6.88,
+          "population": 14552605,
+          "rate_per_100k": 7.91,
           "rate_per": 100000,
+          "population_source": "detailed",
           "mortality_rate": 12.6
         }
       ],
       "summary": {
         "total_hospitalizations": 1151,
-        "total_population": 16729471,
-        "overall_rate": 6.88,
+        "total_population": 14552605,
+        "overall_rate": 7.91,
         "rate_per": 100000,
         "rate_type": "crude"
       },
       "metadata": {
-        "population_source": "pop_uf.parquet",
+        "population_source": {
+          "2023": "detailed"
+        },
+        "population_notes": [],
         "filters_applied": {
           "year": [
             2023
@@ -3216,6 +3266,122 @@
           ]
         }
       },
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T04:02:47Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.10.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "IBGE — SIDRA, tabela 7358 (projeção da população por sexo e idade, UF)",
+          "source_url": "https://sidra.ibge.gov.br/tabela/7358",
+          "data_vintage": "Projeções por UF baixadas por scripts/build-population.R até o último ano de cubo FECHADO do SIH (pop_uf.parquet; intervalo em get_available_years.population_years)",
+          "retrieved_at": "2026-01-23T00:00:00Z",
+          "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade. SIDRA, tabela 7358.",
+          "license": "Dados abertos do IBGE"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://sidra.ibge.gov.br/tabela/7358"
+      ]
+    }
+  },
+  {
+    "tool": "get_hospitalization_rates",
+    "args": {
+      "year": [
+        1995
+      ],
+      "age_min": 0,
+      "age_max": 17
+    },
+    "isError": false,
+    "result": {
+      "error": "Antes de 2000 a população por UF só existe em faixas etárias quinquenais (0-4, 5-9, 10-14, 15-19, 20-24, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64, 65-69, 70-74, 75-79, 80 e +): o intervalo 0–17 não cai nos limites das faixas. Use age_min múltiplo de 5 e age_max terminado em 4 ou 9 (ou só age_min = 80).",
+      "data": [],
+      "population_years": {
+        "first_year": 1991,
+        "last_year": 2025,
+        "detailed": {
+          "first_year": 2000,
+          "last_year": 2025,
+          "source": "pop_uf.parquet",
+          "age": "idade simples"
+        },
+        "aggregated": {
+          "first_year": 1991,
+          "last_year": 1999,
+          "source": "pop_uf_agregado.parquet",
+          "age": "faixa etária quinquenal",
+          "age_groups": [
+            "0-4",
+            "5-9",
+            "10-14",
+            "15-19",
+            "20-24",
+            "25-29",
+            "30-34",
+            "35-39",
+            "40-44",
+            "45-49",
+            "50-54",
+            "55-59",
+            "60-64",
+            "65-69",
+            "70-74",
+            "75-79",
+            "80 e +"
+          ]
+        }
+      },
+      "provenance": [
+        {
+          "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
+          "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+          "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
+          "retrieved_at": "2026-03-09T04:02:47Z",
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra 2026-03-09; agregados por sih-br-mcp v0.10.0.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        },
+        {
+          "source": "IBGE — SIDRA, tabela 7358 (projeção da população por sexo e idade, UF)",
+          "source_url": "https://sidra.ibge.gov.br/tabela/7358",
+          "data_vintage": "Projeções por UF baixadas por scripts/build-population.R até o último ano de cubo FECHADO do SIH (pop_uf.parquet; intervalo em get_available_years.population_years)",
+          "retrieved_at": "2026-01-23T00:00:00Z",
+          "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade. SIDRA, tabela 7358.",
+          "license": "Dados abertos do IBGE"
+        }
+      ],
+      "attribution": [
+        "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
+        "https://sidra.ibge.gov.br/tabela/7358"
+      ]
+    }
+  },
+  {
+    "tool": "get_hospitalization_rates",
+    "args": {
+      "year": [
+        1995
+      ],
+      "uf": [
+        "RR"
+      ],
+      "age_min": 0,
+      "age_max": 4
+    },
+    "isError": false,
+    "result": {
+      "error": "Nenhum dos anos solicitados (1995) tem dados SIH disponíveis.",
+      "data": [],
+      "available_sih_years": [
+        2023
+      ],
+      "note": "Use get_available_years para ver anos com dados de internação.",
       "provenance": [
         {
           "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",

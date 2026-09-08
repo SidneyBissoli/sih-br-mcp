@@ -177,10 +177,36 @@ export function summaryUrl(manifestUrl: string): string | null {
   return manifestUrl.endsWith(`/${MANIFEST_FILE}`) ? manifestUrl.slice(0, -MANIFEST_FILE.length) + SUMMARY_FILE : null;
 }
 
-async function fetchText(url: string, timeoutMs: number, headers?: Record<string, string>): Promise<{ status: number; text: string }> {
+/**
+ * Domínio próprio do bucket healthbr-data (sih:canal-acabamento, 0.10.0). Os
+ * sidecars antigos apontam para o `r2.dev`; o domínio serve os mesmos
+ * caminhos (e é o que ganha Cache Rule). Preferido; o `r2.dev` fica de
+ * reserva quando o domínio falha.
+ */
+const R2_DEV_HOST = "https://pub-99d9e1a3f5c542178d04efbddf1bba97.r2.dev";
+export const HEALTHBR_DOMAIN = process.env.HEALTHBR_DATA_DOMAIN ?? "https://data.sidneybissoli.com";
+
+/** A mesma URL no domínio próprio (ou ela mesma, se já não é do r2.dev). */
+export function preferDomain(url: string): string {
+  return url.startsWith(R2_DEV_HOST) ? HEALTHBR_DOMAIN + url.slice(R2_DEV_HOST.length) : url;
+}
+
+async function fetchOnce(url: string, timeoutMs: number, headers?: Record<string, string>): Promise<{ status: number; text: string }> {
   const res = await fetch(url, { headers, signal: AbortSignal.timeout(timeoutMs) });
   if (!res.ok && res.status !== 206) throw new Error(`HTTP ${res.status} em ${url}`);
   return { status: res.status, text: await res.text() };
+}
+
+/** Busca no domínio próprio e, se ele falhar, no r2.dev original (quando a URL era do r2.dev). */
+async function fetchText(url: string, timeoutMs: number, headers?: Record<string, string>): Promise<{ status: number; text: string }> {
+  const first = preferDomain(url);
+  try {
+    return await fetchOnce(first, timeoutMs, headers);
+  } catch (e) {
+    if (first === url) throw e;
+    console.error(`[frescor] domínio ${HEALTHBR_DOMAIN} falhou (${e instanceof Error ? e.message : String(e)}); tentando o r2.dev`);
+    return fetchOnce(url, timeoutMs, headers);
+  }
 }
 
 /** Baixa o índice de partições: o resumo quando está em dia com o manifesto, senão o manifesto inteiro. */

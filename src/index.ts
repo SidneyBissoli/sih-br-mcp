@@ -17,6 +17,9 @@ import {
   getAvailableYears,
   getDataDirectory,
   getPopulationYearRange,
+  getPopulationCoverage,
+  aggregatedAgeGroupsFor,
+  populationSourceFor,
   closeDatabase,
   queryCausas,
   queryIcsap,
@@ -439,7 +442,8 @@ const tools: Tool[] = [
     name: "get_hospitalization_rates",
     description:
       "Calcula taxas de internação por população (por 100.000 habitantes, configurável). " +
-      "Requer dados populacionais (pop_uf.parquet). Anos válidos: os cobertos por pop_uf.parquet, informados em get_available_years.population_years.",
+      "Denominador lido de dois arquivos, informados em get_available_years.population_years: projeções do IBGE por idade simples de 2000 em diante (pop_uf.parquet) e, de 1991 a 1999, população por faixa etária quinquenal somada dos municípios (pop_uf_agregado.parquet) — " +
+      "antes de 2000 o recorte por idade só vale nos limites das faixas (age_min múltiplo de 5, age_max terminado em 4 ou 9, ou 80+). A resposta diz qual arquivo serviu a cada ano (population_source) e avisa quando mistura os dois.",
     inputSchema: {
       type: "object",
       properties: {
@@ -564,6 +568,36 @@ function notesField(years: number[] | undefined, aspects: EraAspects = {}, extra
  * presente nas quatro ferramentas ICSAP, para o leitor saber que o número é o
  * da literatura (csapAIH) e como obter o outro.
  */
+/**
+ * Notas do denominador populacional (sih:taxas-1992-1999): qual arquivo serviu
+ * a cada ano e o aviso quando a consulta mistura os dois (idade simples de
+ * 2000 em diante; faixa etária quinquenal, somada dos municípios, antes).
+ */
+function populationNotes(sources: Record<number, "detailed" | "aggregated" | null>): string[] {
+  const years = Object.keys(sources).map(Number).sort((a, b) => a - b);
+  const agg = years.filter((y) => sources[y] === "aggregated");
+  const det = years.filter((y) => sources[y] === "detailed");
+  const notes: string[] = [];
+  if (agg.length > 0) {
+    notes.push(
+      `Denominador de ${agg.join(", ")}: pop_uf_agregado.parquet — população por UF, sexo e FAIXA ETÁRIA quinquenal (0-4 … 75-79, 80 e +), somada dos municípios (IBGE via DATASUS/POPBR; a idade ignorada da fonte entra no total e fica fora de qualquer recorte etário). Recorte por idade só nos limites das faixas.`,
+    );
+  }
+  if (agg.length > 0 && det.length > 0) {
+    notes.push(
+      `A consulta mistura dois denominadores: faixa etária somada dos municípios até 1999 (${agg.join(", ")}) e projeções do IBGE por idade simples de 2000 em diante (${det.join(", ")}). Taxas brutas são comparáveis; taxas por idade só se o recorte cair nas faixas quinquenais.`,
+    );
+  }
+  return notes;
+}
+
+/** Arquivo de população por ano, para populationNotes(). */
+async function popSourcesFor(years: number[]): Promise<Record<number, "detailed" | "aggregated" | null>> {
+  const out: Record<number, "detailed" | "aggregated" | null> = {};
+  for (const y of years) out[y] = await populationSourceFor(y);
+  return out;
+}
+
 function universeNote(universe: IcsapUniverse | undefined): string {
   return (universe ?? "csapaih") === "csapaih"
     ? "Universo do % ICSAP como o pacote R csapAIH (Nedel): numerador e denominador SEM as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84; CID-9 650 e 669.5-669.7) e as AIH de longa permanência (IDENT = 5) — coluna `exclusion` dos cubos. A lista de diagnósticos CSAP é a da Portaria 221/2008 sem alteração. Para contar todas as internações, `universe: \"all\"`."
@@ -670,9 +704,10 @@ async function handleGetAvailableYears() {
           ? { method: s.csap_universe.method, records_in_universe: s.csap_universe.records_in_universe, excluded: s.csap_universe.excluded }
           : null,
       ),
-      // Intervalo de pop_uf.parquet, lido do arquivo: é o que as ferramentas de
-      // taxa (get_hospitalization_rates, compare_icsap_trends) aceitam.
-      population_years: await getPopulationYearRange(),
+      // Cobertura dos arquivos de população, lida deles: é o que as ferramentas
+      // de taxa aceitam — `detailed` (idade simples, 2000+) e `aggregated`
+      // (faixa etária quinquenal, 1991–1999; sih:taxas-1992-1999).
+      population_years: await getPopulationCoverage(),
       // Canal público dos cubos (src/cache.ts): o que existe para baixar e onde
       // o cache local vive. `published_years` vem do manifest.json do canal
       // (timeout curto; cópia em disco quando a rede falha); `years` acima são
@@ -1160,15 +1195,29 @@ async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) 
     };
   }
 
-  // Valida anos pelo intervalo REAL de pop_uf.parquet (lido do arquivo, não fixado aqui)
-  const popRange = await getPopulationYearRange();
-  if (popRange && args.year && args.year.some(y => y < popRange.first_year || y > popRange.last_year)) {
+  // Valida anos pela cobertura REAL dos arquivos de população (lida deles, não
+  // fixada aqui): idade simples de 2000 em diante (pop_uf) e faixa etária
+  // quinquenal antes (pop_uf_agregado, 1991–1999 — sih:taxas-1992-1999).
+  const coverage = await getPopulationCoverage();
+  if (coverage && args.year && args.year.some(y => y < coverage.first_year || y > coverage.last_year)) {
     return {
-      error: `Anos devem estar entre ${popRange.first_year} e ${popRange.last_year} (intervalo com dados populacionais por UF em pop_uf.parquet).`,
+      error: `Anos devem estar entre ${coverage.first_year} e ${coverage.last_year} (cobertura dos arquivos de população por UF: ${[coverage.aggregated, coverage.detailed].filter(Boolean).map((c) => `${c!.source} ${c!.first_year}–${c!.last_year}, ${c!.age}`).join("; ")}).`,
       data: [],
-      population_years: popRange,
+      population_years: coverage,
       available_sih_years: getAvailableYears(),
     };
+  }
+  // Antes de 2000 o recorte etário só existe nas faixas quinquenais do arquivo
+  if (coverage?.aggregated && args.year && (args.age_min !== undefined || args.age_max !== undefined)) {
+    const agg = coverage.aggregated;
+    const usesAggregated = args.year.some((y) => y >= agg.first_year && y <= agg.last_year && !(coverage.detailed && y >= coverage.detailed.first_year));
+    if (usesAggregated && aggregatedAgeGroupsFor(args.age_min, args.age_max) === null) {
+      return {
+        error: `Antes de 2000 a população por UF só existe em faixas etárias quinquenais (${agg.age_groups.join(", ")}): o intervalo ${args.age_min ?? 0}–${args.age_max ?? "+"} não cai nos limites das faixas. Use age_min múltiplo de 5 e age_max terminado em 4 ou 9 (ou só age_min = 80).`,
+        data: [],
+        population_years: coverage,
+      };
+    }
   }
 
   // Normaliza UFs para uppercase
@@ -1198,6 +1247,10 @@ async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) 
     ageMax: args.age_max,
     isCsap: args.is_csap,
   };
+
+  // Qual arquivo de população serve a cada ano consultado (sih:taxas-1992-1999)
+  const popSources: Record<number, "detailed" | "aggregated" | null> = {};
+  for (const y of validYears) popSources[y] = await populationSourceFor(y);
 
   try {
     // Define agrupamento: se uf ou year foram passados sem group_by, agrupa automaticamente
@@ -1242,7 +1295,7 @@ async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) 
           rate_type: args.rate_type || "crude",
         },
         metadata: {
-          population_source: "pop_uf.parquet",
+          population_source: popSources,
           filters_applied: { ...args, uf: normalizedUfs, year: validYears },
           note: "Nenhuma internação encontrada para os filtros aplicados.",
           available_sih_years: availableYears,
@@ -1283,6 +1336,7 @@ async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) 
         population,
         rate_per_100k: Math.round(rate * 100) / 100,
         rate_per: ratePer,
+        population_source: popSources[hospYear] ?? null,
         mortality_rate: nHosp > 0 ? Math.round((deaths / nHosp) * 10000) / 100 : 0,
       });
     }
@@ -1302,7 +1356,8 @@ async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) 
         rate_type: args.rate_type || "crude",
       },
       metadata: {
-        population_source: "pop_uf.parquet",
+        population_source: popSources,
+        population_notes: populationNotes(popSources),
         filters_applied: { ...args, uf: normalizedUfs, year: validYears },
       },
     };
@@ -1336,7 +1391,7 @@ async function handleCompareIcsapTrends(args: CompareIcsapTrendsArgs) {
   const popRange = await getPopulationYearRange();
   if (indicatorType === "rate_per_10k" && popRange && (start_year < popRange.first_year || end_year > popRange.last_year)) {
     return {
-      error: `Para rate_per_10k os anos devem estar entre ${popRange.first_year} e ${popRange.last_year} (intervalo com dados populacionais em pop_uf.parquet); percentage e count aceitam qualquer ano do SIH.`,
+      error: `Para rate_per_10k os anos devem estar entre ${popRange.first_year} e ${popRange.last_year} (cobertura dos arquivos de população: idade simples de 2000 em diante, faixa etária quinquenal antes — ver get_available_years.population_years); percentage e count aceitam qualquer ano do SIH.`,
       series: [],
       population_years: popRange,
       available_sih_years: getAvailableYears(),
@@ -1520,7 +1575,10 @@ async function handleCompareIcsapTrends(args: CompareIcsapTrendsArgs) {
       period: { start: start_year, end: end_year },
       compare_by: compare_by || "total",
       series,
-      ...notesField(years, { icsap: true }, [universeNote(args.universe)]),
+      ...notesField(years, { icsap: true }, [
+        universeNote(args.universe),
+        ...(indicatorType === "rate_per_10k" ? populationNotes(await popSourcesFor(years)) : []),
+      ]),
       trends: includeTrend ? trends : undefined,
       summary: {
         best_performer: bestPerformer,

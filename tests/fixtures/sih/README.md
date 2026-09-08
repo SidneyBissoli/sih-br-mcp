@@ -4,8 +4,10 @@ Cópia, sem alteração, dos três cubos de 2023 que `scripts/build-aggregations
 gera em `data/` (dados reais, agregados — não há nada sintético aqui), mais o
 sidecar de proveniência `sih_provenance_2023.json` que o mesmo script grava ao
 lado deles, e os dois cubos de população por UF que
-`scripts/build-population.R` gera (`pop_uf.parquet`, idade simples, 2000–2024;
-`pop_uf_agregado.parquet`, faixa etária, 1991–1999). Existem porque
+`scripts/build-population.R` gera (`pop_uf.parquet`, idade simples, 2000–2025,
+Projeção da População Revisão 2024 do IBGE desde 07/09/2026 — antes era a
+revisão 2018 da SIDRA 7358, que dava ao Brasil de 2023 221,3 milhões contra
+211,7 da revisão atual; `pop_uf_agregado.parquet`, faixa etária, 1991–1999). Existem porque
 `data/*.parquet` é gitignored e o CI parte de um checkout sem dado nenhum; o
 servidor é apontado para esta pasta pela variável `SIH_DATA_DIR` (ver
 `src/db/duckdb.ts`), que vale para os cubos SIH, para o sidecar e para os

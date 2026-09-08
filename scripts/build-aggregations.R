@@ -122,7 +122,7 @@ if (!requireNamespace("healthbR", quietly = TRUE) ||
 OUTPUT_DIR <- here::here("data")
 dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
-BUILDER_VERSION <- "2.6.0"
+BUILDER_VERSION <- "2.6.1"
 
 # Meses de Y+1 lidos para fechar as internações de Y (ver cabeçalho)
 MESES_SEGUINTES <- 4L
@@ -130,7 +130,9 @@ MESES_SEGUINTES <- 4L
 # Identidade do distribuidor, registrada no sidecar (o acesso é do healthbR)
 HEALTHBR_BUCKET <- "healthbr-data"
 HEALTHBR_PREFIX <- "sih/rd"
-HEALTHBR_MANIFEST_URL <- "https://pub-99d9e1a3f5c542178d04efbddf1bba97.r2.dev/sih/rd/manifest.json"
+# 2.6.1: domínio próprio do bucket (sih:canal-acabamento); o servidor lê o
+# sidecar e, se o domínio falhar, cai no r2.dev sozinho (src/freshness.ts)
+HEALTHBR_MANIFEST_URL <- "https://data.sidneybissoli.com/sih/rd/manifest.json"
 HEALTHBR_REPO_URL <- "https://github.com/SidneyBissoli/healthbr-data"
 HEALTHBR_LICENSE <- "CC-BY-4.0"
 
