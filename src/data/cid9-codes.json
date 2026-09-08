@@ -4,12 +4,12 @@
     "source": "DATASUS, TAB_SIH_199201-199712.zip (pasta Auxiliar do FTP do SIH/SUS), tabelas CID9_01.CNV … CID9_17.CNV e CID9_SUP.CNV",
     "evidence": "docs/analise-002-sih-1992-1997.md §3",
     "generated_by": "scripts/estudo-1992-1997-cnv.py → scripts/cid9-tables.py",
-    "generated_at": "2026-09-07T20:38:03Z",
+    "generated_at": "2026-09-08T13:26:05Z",
     "fields": {
       "code6": "código de 6 dígitos como aparece em DIAG_PRINC",
       "rubric": "rubrica CID-9 (NNN.N, NNN, ENNN.N, VNN.N)",
       "category": "categoria de 3 dígitos (com prefixo E/V) — o cid_group dos cubos",
-      "chapter": "capítulo CID-10 equivalente (1–21), por src/data/cid9-chapters.json",
+      "chapter": "capítulo CID-10 equivalente (1–21), por tables/cid9-chapters.json",
       "chapter_cid9": "capítulo CID-9 da tabela de origem (1–17; V = classificação suplementar)",
       "label": "rótulo do DATASUS (Latin-1 convertido para UTF-8)",
       "valid": "false quando o DATASUS marca 'Código inválido - fora da CID'"

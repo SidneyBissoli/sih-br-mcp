@@ -111,7 +111,13 @@ jobs:
       # não vê data/, só a fixture. Aqui só se prova, offline, que a comparação
       # reprova o que deve (partição perdida, queda > 1% sem retirada no
       # espelho, janela regredida, escopo mudado) e aprova reedição do MS.
-      - run: npm run cube:delta:selftest
+      # As tabelas de classificação em src/data/ são cópias do contrato que o
+      # produtor dos cubos (healthbr-data, pipeline sih-cubos, desde 08/09/2026)
+      # publica em sih/cubos/tables/ e assina no manifesto: o SHA-256 tem de
+      # bater. Offline contra um trecho versionado do manifesto (gate); ao vivo
+      # contra o canal (aviso se o portal estiver fora — não é gate de rede).
+      - run: npm run tables:check:offline
+      - run: npm run tables:check
       # Cache local dos cubos (src/cache.ts) provado OFFLINE: servidor HTTP
       # local com manifesto e arquivos de mentira — download íntegro aceito,
       # adulterado recusado pelo SHA-256, manifesto do disco sem rede. Nunca

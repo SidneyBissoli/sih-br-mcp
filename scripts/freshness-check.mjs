@@ -8,8 +8,9 @@
 //       Range de 512 bytes; baixa o resumo ou o manifesto inteiro só se ele
 //       mudou). Sai 0 em `current`, 3 em `stale`, 2 em `unknown` (rede).
 //       `--out` grava o estado em JSON — é o que o job `decide` de
-//       .github/workflows/rebuild-cubes.yml lê para escolher os anos. Não é
-//       gate de CI: depende do portal.
+//       rebuild-sih-cubes.yml (healthbr-data, produtor dos cubos desde
+//       08/09/2026) lê para escolher os anos, apontando `--fixtures` para os
+//       sidecars baixados do canal. Não é gate de CI: depende do portal.
 //
 //   node scripts/freshness-check.mjs --fixtures tests/fixtures/sih --selftest
 //       OFFLINE, determinístico (é o que o CI roda): compara o sidecar da

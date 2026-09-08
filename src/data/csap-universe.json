@@ -14,7 +14,7 @@
       ]
     },
     "generated_by": "scripts/csap-universe-tables.py",
-    "generated_at": "2026-09-07T21:53:05Z",
+    "generated_at": "2026-09-08T13:26:05Z",
     "rules_order": [
       "procedimento_obstetrico",
       "parto",

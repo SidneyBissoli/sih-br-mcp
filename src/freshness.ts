@@ -28,8 +28,9 @@
  * `disabled` (SIH_FRESHNESS_CHECK=off — smoke e golden usam, para que o CI
  * nunca dependa do portal). Quem lê: `sihProvenance()` (marca `data_vintage`
  * e `notices` quando está atrás), `get_available_years` (campo `freshness`)
- * e o job `decide` de `.github/workflows/rebuild-cubes.yml`, pela CLI
- * `npm run freshness -- --out`, que reconstrói os cubos `behind` (item (b)).
+ * e o job `decide` de `rebuild-sih-cubes.yml` no healthbr-data (produtor dos
+ * cubos desde 2026-09-08), que roda esta mesma CLI (`scripts/freshness-check.mjs
+ * --fixtures <sidecars do canal> --out`) e reconstrói os cubos `behind`.
  *
  * Fora do escopo daqui: cache local de cubos (item (c) de `sih:cubos-frescor`).
  * Isto só AVISA — quem age é o workflow.

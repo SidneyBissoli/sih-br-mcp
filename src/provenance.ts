@@ -3,7 +3,8 @@
  *
  * Cadeia dos cubos SIH: Ministério da Saúde / DATASUS (arquivos RD no FTP)
  *   -> healthbr-data (Parquet 1:1, manifesto com hash e data de download)
- *   -> scripts/build-aggregations.R (cubos por ano de competência)
+ *   -> healthbr-data scripts/pipeline/sih-cubos/build-aggregations.R (cubos
+ *      por ano de internação; até 2026-09-08 o builder vivia neste repositório)
  *   -> este servidor (filtra e soma).
  *
  * O elo que amarra a resposta à versão dos arquivos é o sidecar
@@ -131,12 +132,12 @@ let sidecars: SihSidecar[] | null = null;
 /** Lê os sidecars da pasta de cubos em uso (uma vez por processo). */
 export function loadSidecars(): SihSidecar[] {
   if (sidecars) return sidecars;
-  // Sem Parquet na pasta configurada (checkout limpo: o workflow
-  // rebuild-cubes.yml decide o que reconstruir lendo SÓ os sidecars
-  // versionados em data/), o sidecar ainda vale: é o registro de safra, e é
-  // dele que o frescor parte. Por isso a pasta CONFIGURADA tem precedência
-  // sempre que tiver sidecar; só sem nenhum (instalação pelo npm, sem data/)
-  // é que vale a pasta em uso — o cache local, que ensureYears() enche com o
+  // Sem Parquet na pasta configurada (SIH_DATA_DIR só com sidecars — é assim
+  // que o job `decide` do produtor, no healthbr-data, mede o frescor dos
+  // cubos publicados), o sidecar ainda vale: é o registro de safra, e é dele
+  // que o frescor parte. Por isso a pasta CONFIGURADA tem precedência sempre
+  // que tiver sidecar; só sem nenhum (o caso normal desde a 0.11.0: data/
+  // não versiona sidecar — o estado é o canal) é que vale a pasta em uso — o cache local, que ensureYears() enche com o
   // sidecar junto do Parquet. Desde a 0.7.0 getDataDirectory() não lança mais
   // erro quando data/ está sem cubo (devolve o cache, possivelmente vazio),
   // então cair no catch não servia mais de critério (run 34071934742).

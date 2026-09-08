@@ -1,5 +1,10 @@
 # PLAN-003 — Rebuild automático dos cubos atrás do espelho
 
+> **Migrado em 2026-09-08 (CONTEXT decisão 27):** o workflow desenhado aqui
+> rodou neste repositório de 06 a 08/09/2026 e hoje vive no healthbr-data
+> (`.github/workflows/rebuild-sih-cubes.yml`, `scripts/pipeline/sih-cubos/`).
+> Este servidor é consumidor do canal; o que segue é o registro histórico.
+
 Item (b) de `sih:cubos-frescor` no portfolio-monitor. Executado em
 2026-09-06, numa sessão, na ordem abaixo. Modelo: PLAN-002 (fatos medidos →
 fases com critério de saída → riscos → fora de escopo).
