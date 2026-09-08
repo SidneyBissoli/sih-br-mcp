@@ -47,16 +47,26 @@ em `healthbr-data/scripts/pipeline/sih-cubos/README.md` e no card
 
 ## Uso
 
+Pacote no npm: [`sih-br-mcp`](https://www.npmjs.com/package/sih-br-mcp) (Node 22+).
+Ele não embarca dado nenhum — cubos, tabelas e população vêm do canal na primeira
+chamada e ficam no cache local.
+
 ```bash
-npm install
-npm run build
-node dist/index.js          # stdio
+npx -y sih-br-mcp           # stdio
 ```
 
 Configuração num cliente MCP (Claude Desktop, Claude Code):
 
 ```json
-{ "mcpServers": { "sih": { "command": "node", "args": ["C:/dev/mcp/sih-br-mcp/dist/index.js"] } } }
+{ "mcpServers": { "sih": { "command": "npx", "args": ["-y", "sih-br-mcp"] } } }
+```
+
+A partir do código-fonte:
+
+```bash
+npm install
+npm run build
+node dist/index.js          # stdio
 ```
 
 Variáveis: `SIH_DATA_DIR` (pasta com cubos já prontos, em vez do cache),
