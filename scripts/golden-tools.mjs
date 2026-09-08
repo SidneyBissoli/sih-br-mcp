@@ -213,7 +213,10 @@ const firstDiff = (a, b, path = "$") => {
 };
 
 if (baseline) {
-  const expectedJson = readFileSync(baseline, "utf8");
+  // Forma canônica LF: checkout Windows com autocrlf entrega o baseline em CRLF
+  // e a comparação byte a byte reprovava "em 0 caso(s)" (mesma classe do
+  // smoke-stdio e do tables-check, 2026-09-08).
+  const expectedJson = readFileSync(baseline, "utf8").replace(/\r\n/g, "\n");
   if (expectedJson !== goldenJson) {
     const expected = JSON.parse(expectedJson);
     const valor = [];
