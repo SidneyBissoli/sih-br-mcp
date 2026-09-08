@@ -185,7 +185,13 @@ async function sha256File(path: string): Promise<string> {
 }
 
 async function downloadVerified(file: CubesManifestFile, dir: string, timeoutMs: number): Promise<void> {
-  const url = CUBES_BASE_URL + file.name;
+  // ?v=<sha256>: os objetos do canal são reescritos NO LUGAR a cada rebuild e a
+  // borda do domínio guarda cópia pelo Cache-Control do objeto — sem isto, um
+  // consumidor recebia o cubo do build anterior (HIT, Age 15 h) enquanto o
+  // manifesto já assinava o novo, e a verificação abaixo falhava (2026-09-08,
+  // sih_series_2023: 36.047 bytes servidos vs 36.352 no manifesto). A query
+  // entra na chave de cache: versão nova = URL nova = nunca a cópia velha.
+  const url = `${CUBES_BASE_URL}${file.name}?v=${file.sha256.slice(0, 16)}`;
   const final = join(dir, file.name);
   const tmp = `${final}.part-${process.pid}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });

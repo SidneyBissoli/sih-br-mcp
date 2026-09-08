@@ -64,7 +64,8 @@ writeFileSync(join(site, "sih_causas_2002.parquet"), "causas-2OO2");
 writeFileSync(join(site, "manifest.json"), JSON.stringify(manifest));
 
 const server = createServer((req, res) => {
-  const name = decodeURIComponent((req.url ?? "/").replace(/^\/+/, ""));
+  // o cliente anexa ?v=<sha256> (chave de cache por versão) — o "canal" ignora a query
+  const name = decodeURIComponent((req.url ?? "/").replace(/^\/+/, "").replace(/\?.*$/, ""));
   const p = join(site, name);
   if (!existsSync(p)) { res.statusCode = 404; return res.end("nao existe"); }
   res.end(readFileSync(p));
