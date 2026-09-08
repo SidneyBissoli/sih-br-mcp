@@ -1,0 +1,34 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.SidneyBissoli/sih-br-mcp",
+  "title": "SIH/SUS Brasil MCP",
+  "description": "Brazilian hospital admissions (SIH/SUS, 1992-2025): causes, monthly series, ICSAP and rates per 100k from public aggregated cubes, with provenance. 12 tools.",
+  "repository": {
+    "url": "https://github.com/SidneyBissoli/sih-br-mcp",
+    "source": "github"
+  },
+  "version": "0.12.1",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "sih-br-mcp",
+      "version": "0.12.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "SIH_CACHE_DIR",
+          "description": "Folder for the local cache of cubes and population files downloaded from the public channel (default ~/.cache/sih-br-mcp/cubos).",
+          "isRequired": false
+        },
+        {
+          "name": "SIH_CUBES_BASE_URL",
+          "description": "Alternative channel base URL (default https://data.sidneybissoli.com/sih/cubos/).",
+          "isRequired": false
+        }
+      ]
+    }
+  ]
+}
