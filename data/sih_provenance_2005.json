@@ -1,5 +1,5 @@
 {
-  "manifest_version": "1.0.0",
+  "manifest_version": "1.1.0",
   "dataset": "sih/rd",
   "cube_year": 2005,
   "window": {
@@ -11,11 +11,11 @@
   },
   "competencias": ["2005-01", "2005-02", "2005-03", "2005-04", "2005-05", "2005-06", "2005-07", "2005-08", "2005-09", "2005-10", "2005-11", "2005-12", "2006-01", "2006-02", "2006-03", "2006-04"],
   "ufs_arquivo": ["AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO"],
-  "built_at": "2026-09-07T12:37:14Z",
+  "built_at": "2026-09-08T04:35:03Z",
   "builder": {
     "script": "scripts/build-aggregations.R",
-    "version": "2.4.0",
-    "git_commit": "9e912e92f1a0d89ded2aa2e7a3fb396b45369bf9",
+    "version": "2.6.0",
+    "git_commit": "d9c341ff003cfe066baf3fe323c52693083df4a9",
     "r_version": "R version 4.6.1 (2026-06-24)",
     "arrow_version": "25.0.1",
     "healthbr_version": "0.4.0.9000"
@@ -5658,10 +5658,53 @@
     "records_invalid_dt_inter": 0,
     "records_other_year": 4187076,
     "records_in_cube": 11487429,
-    "causas_rows": 3891707,
+    "causas_rows": 3957465,
     "series_rows": 6648,
-    "icsap_rows": 1349934
+    "icsap_rows": 1764086,
+    "icsap_rows_without_csap": 413980
+  },
+  "records_date_imputed": 0,
+  "cid_revision": {
+    "10": 11487429
+  },
+  "icsap_list_revision": {
+    "10": "portaria-221-2008"
+  },
+  "not_official_icsap": false,
+  "uf_basis": "residencia",
+  "municipality_available": true,
+  "currency": [
+    {
+      "from": "2005-01",
+      "to": "2006-04",
+      "code": "BRL",
+      "symbol": "R$",
+      "name": "real"
+    }
+  ],
+  "csap_universe": {
+    "method": "csapAIH",
+    "method_source": {
+      "name": "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R)",
+      "author": "Fúlvio Borges Nedel",
+      "version": "0.0.4.8 (2026-01-16)",
+      "url": "https://github.com/fulvionedel/csapAIH",
+      "license": "GPL-3",
+      "functions": [
+        "csapAIH()",
+        "proc.obst()",
+        "partos()"
+      ]
+    },
+    "rules": ["procedimento_obstetrico", "parto", "longa_permanencia"],
+    "tables": "src/data/csap-universe.json",
+    "records_in_universe": 8849129,
+    "excluded": {
+      "longa_permanencia": 174039,
+      "parto": 1322,
+      "procedimento_obstetrico": 2462939
+    }
   },
   "columns_missing": ["RACA_COR"],
-  "notes": ["Cubo por ANO DE INTERNAÇÃO (DT_INTER): lê as competências do ano e os meses seguintes de Y+1 (window.months_after) e descarta internações de outros anos. Com 4 meses, 99,7-99,9% das internações do ano (dezembro 99,3-99,7%); o restante é reapresentação tardia difusa.", "uf dos cubos = UF de residência (MUNIC_RES); ufs_arquivo = UF do estabelecimento (nome do arquivo RD no FTP).", "retrieved_at = processing_timestamp mais recente, no manifesto do healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream; igual, ao segundo, ao download_date do rodapé do Parquet). Lido por healthbR::sih_status().", "Coluna(s) RACA_COR não existe(m) no SIH-RD de 2005 (RACA_COR só entra no leiaute da AIH em 2008): `race` é nulo em todas as linhas deste cubo, inclusive nas internações faturadas nas competências seguintes de 2006, que já trazem a coluna."]
+  "notes": ["Cubo por ANO DE INTERNAÇÃO (DT_INTER): lê as competências do ano e os meses seguintes de Y+1 (window.months_after) e descarta internações de outros anos. Com 4 meses, 99,7-99,9% das internações do ano (dezembro 99,3-99,7%); o restante é reapresentação tardia difusa.", "uf dos cubos = UF de residência (MUNIC_RES); ufs_arquivo = UF do estabelecimento (nome do arquivo RD no FTP).", "retrieved_at = processing_timestamp mais recente, no manifesto do healthbr-data, dos .dbc que alimentaram este cubo (extração no upstream; igual, ao segundo, ao download_date do rodapé do Parquet). Lido por healthbR::sih_status().", "Coluna(s) RACA_COR não existe(m) no SIH-RD de 2005 (RACA_COR só entra no leiaute da AIH em 2008; MUNIC_RES só em dez/1994): a coluna derivada (`race` de RACA_COR) é nula em todas as linhas deste cubo, inclusive nas internações faturadas nas competências seguintes de 2006, que já trazem a coluna.", "% ICSAP como o pacote R csapAIH (Nedel): a lista de diagnósticos é a da Portaria 221/2008 para TODAS as internações, mas o percentual da literatura exclui do numerador e do denominador as internações por procedimento obstétrico (PROC_REA na lista SIGTAP do csapAIH, ou nos grupos partos/cesáreas/abortamentos da tabela antiga até 2007), as com diagnóstico de parto (O80-O84; em CID-9 650 e 669.5-669.7) e as AIH de longa permanência (IDENT = 5). A coluna `exclusion` (chave nos cubos de causas e ICSAP) marca o motivo; nula = entra no universo (csap_universe.records_in_universe). O servidor usa o universo por padrão e pode incluir tudo a pedido.", "age: COD_IDADE 2 (dias) e 3 (meses) valem 0 anos. As versões < 2.5.0 do builder trocavam os dois (neonatos de 12-30 dias saíam com 1-2 anos); corrigido em 2.5.0 (sih:cod-idade) e os cubos de 1998+ reconstruídos."]
 }
