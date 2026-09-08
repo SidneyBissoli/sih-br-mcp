@@ -23,6 +23,7 @@ import {
 } from "@sbissoli/mcp-provenance";
 
 import { configuredDataDirectory, getDataDirectory } from "./db/duckdb.js";
+import { CUBES_BASE_URL, cachedCubesManifest } from "./cache.js";
 import { cubeFreshness, describeBehind, getFreshness } from "./freshness.js";
 import csapGroups from "./data/csap-groups.json" with { type: "json" };
 import csapGroupsCid9 from "./data/csap-groups-cid9.json" with { type: "json" };
@@ -324,8 +325,14 @@ const SIH_LICENSE = {
 /** Data em que as tabelas de referência (CSAP, CID) entraram no repositório. */
 const REFERENCE_SNAPSHOT_AT = "2026-01-21T00:00:00Z";
 
-/** Data de geração de data/pop_uf.parquet por scripts/build-population.R. */
-const POPULATION_BUILT_AT = "2026-01-23T00:00:00Z";
+/**
+ * Safra dos arquivos de população da FIXTURE (tests/fixtures/sih/pop_uf.parquet,
+ * Projeção 2024, gerado em 2026-09-07) — só vale quando não há manifesto do
+ * canal carregado (cache desligado); com o canal, o `built_at` do bloco
+ * `population` do manifesto é que responde.
+ */
+const POPULATION_BUILT_AT = "2026-09-07T00:00:00Z";
+const IBGE_PROJECAO_2024_URL = "https://ftp.ibge.gov.br/Projecao_da_Populacao/Projecao_da_Populacao_2024/projecoes_2024_tab1_idade_simples.xlsx";
 
 function safraOf(iso: string): string {
   return iso.slice(0, 10);
@@ -574,32 +581,49 @@ export function cidProvenance(): CanonicalProvenance {
   });
 }
 
-/** Denominadores populacionais por UF (IBGE, SIDRA tabela 7358). */
+/**
+ * Denominadores populacionais (pop_uf: IBGE, Projeção da População Revisão
+ * 2024; pop_uf_agregado/pop_municipios: DATASUS POPBR/POPSVS). Desde a 0.12.0
+ * vêm do canal sih/cubos/ (bloco `population` do manifest.json, produzido pelo
+ * build-population.R do healthbr-data): `retrieved_at` e a versão são os do
+ * manifesto já carregado nesta execução. Sem manifesto (cache desligado —
+ * fixture do smoke e do golden; ou população gerada à mão em data/), vale a
+ * safra da fixture (POPULATION_BUILT_AT), nunca uma data inventada.
+ */
 export function populationProvenance(): CanonicalProvenance {
+  const pop = cachedCubesManifest()?.population ?? null;
+  const fromChannel = !!pop?.built_at;
+  const lastYear = pop?.last_year ?? null;
   return provenance.build({
     source: {
-      name: "IBGE — SIDRA, tabela 7358 (projeção da população por sexo e idade, UF)",
+      name: "IBGE — Projeção da População do Brasil e das Unidades da Federação, Revisão 2024 (UF × sexo × idade simples); DATASUS — população residente por município (POPBR/POPSVS, estimativas e censos do IBGE)",
       agency: "IBGE",
-      database: "SIDRA",
-      endpoint: "https://apisidra.ibge.gov.br/values/t/7358",
+      database: "Projeção da População 2024 (FTP do IBGE); POPBR/POPSVS (FTP do DATASUS)",
+      endpoint: fromChannel ? CUBES_BASE_URL + "pop_provenance.json" : IBGE_PROJECAO_2024_URL,
     },
-    source_url: "https://sidra.ibge.gov.br/tabela/7358",
+    source_url: "https://www.ibge.gov.br/estatisticas/sociais/populacao/9109-projecao-da-populacao.html",
     license: {
       id: null,
-      name: "Dados abertos do IBGE",
+      name: "Dados abertos do IBGE e do DATASUS; redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
       url: null,
       terms_url: null,
       verified_at: null,
     },
-    dataset: { id: "sidra-7358", version: null, name: "Projeção da população por UF, sexo e idade simples (SIDRA 7358, revisão 2018)" },
-    data_vintage: "Projeções por UF baixadas por scripts/build-population.R até o último ano de cubo FECHADO do SIH (pop_uf.parquet; intervalo em get_available_years.population_years)",
-    retrieved_at: POPULATION_BUILT_AT,
+    dataset: {
+      id: "sih-cubos-population",
+      version: pop?.builder_version ?? null,
+      name: "Denominadores populacionais do canal sih/cubos/ (pop_uf 2000+ idade simples; pop_uf_agregado 1991–1999 faixa etária; pop_municipios 1991–2024)",
+    },
+    data_vintage: fromChannel
+      ? `Publicados no canal ${CUBES_BASE_URL} pelo build-population.R do healthbr-data em ${safraOf(pop!.built_at!)}; pop_uf até ${lastYear ?? "o último cubo FECHADO do SIH"} (regra do CONTEXT.md: nunca além do último cubo fechado; intervalo real em get_available_years.population_years)`
+      : "Arquivos de população da pasta de dados (fixture ou build local do build-population.R); pop_uf até o último ano de cubo FECHADO do SIH (intervalo em get_available_years.population_years)",
+    retrieved_at: fromChannel ? pop!.built_at! : POPULATION_BUILT_AT,
     citation:
-      "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade. SIDRA, tabela 7358.",
+      "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade simples — Revisão 2024. Ministério da Saúde/DATASUS. População residente por município (POPBR/POPSVS).",
     derived: true,
     derivation_note:
-      "Denominadores por UF usados no cálculo de taxas; somente soma de estratos, sem interpolação nem projeção própria (regras em CONTEXT.md).",
-    served_from_cache: null,
+      "Denominadores usados no cálculo de taxas; somente soma de estratos (município → UF), sem interpolação nem projeção própria (regras em CONTEXT.md).",
+    served_from_cache: fromChannel ? true : null,
   });
 }
 

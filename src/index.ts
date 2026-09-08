@@ -27,6 +27,10 @@ import {
   rankCsapGroups,
   calculateIcsapIndicators,
   hasPopulationData,
+  configuredDataDirectory,
+  getPopulationDir,
+  resetPopulationCoverageCache,
+  POPULATION_MISSING_MESSAGE,
   getPopulation,
   getPopulationByUf,
   CausasFilters,
@@ -51,7 +55,7 @@ import {
   type EraAspects,
 } from "./provenance.js";
 import { getFreshness, startFreshnessCheck } from "./freshness.js";
-import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cubesCacheDir, ensureYears, loadCubesManifest, publishedYears, yearsFromArgs } from "./cache.js";
+import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cubesCacheDir, ensurePopulation, ensureYears, loadCubesManifest, populationPresent, publishedYears, yearsFromArgs } from "./cache.js";
 
 // =============================================================================
 // DEFINIÇÃO DAS FERRAMENTAS
@@ -1186,12 +1190,13 @@ interface GetHospitalizationRatesArgs {
 }
 
 async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) {
-  // Verifica se dados populacionais estão disponíveis
+  // Verifica se dados populacionais estão disponíveis (pasta de dados ou cache
+  // local, enchido do canal por ensurePopulation() antes deste handler)
   if (!hasPopulationData()) {
     return {
-      error: "Dados populacionais não disponíveis. Execute o script R build_population.R primeiro.",
+      error: POPULATION_MISSING_MESSAGE,
       data: [],
-      note: "Esta ferramenta requer os arquivos pop_uf.parquet ou pop_municipios.parquet no diretório data/",
+      note: `Esta ferramenta requer pop_uf.parquet (ou pop_uf_agregado/pop_municipios) em ${getPopulationDir()}; o canal ${CUBES_BASE_URL} publica os três no bloco population do manifest.json.`,
     };
   }
 
@@ -1401,7 +1406,7 @@ async function handleCompareIcsapTrends(args: CompareIcsapTrendsArgs) {
   // Se usa taxa, verifica população
   if (indicatorType === "rate_per_10k" && !hasPopulationData()) {
     return {
-      error: "Taxa por população requer dados populacionais. Execute build_population.R primeiro.",
+      error: `Taxa por população requer dados populacionais. ${POPULATION_MISSING_MESSAGE}`,
       series: [],
     };
   }
@@ -1621,12 +1626,43 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 // população): não disparam download do cache.
 const TOOLS_WITHOUT_CUBES = new Set(["list_csap_groups", "list_cid_chapters", "get_available_years", "classify_as_csap"]);
 
+// Ferramentas que precisam do denominador populacional (0.12.0): garantem os
+// arquivos de população no cache local antes de rodar — chamada própria, fora
+// do `if` dos cubos, porque get_available_years está em TOOLS_WITHOUT_CUBES e
+// mesmo assim relata population_years.
+const TOOLS_WITH_POPULATION = new Set(["get_hospitalization_rates", "compare_icsap_trends", "get_available_years"]);
+
+/**
+ * População: só age quando a pasta de dados configurada não tem os três
+ * arquivos (instalação pelo npm) e o cache está ligado. Idempotente. Falha de
+ * rede não derruba a chamada — o handler responde "sem denominador" com a
+ * mensagem única (POPULATION_MISSING_MESSAGE); o motivo vai para o stderr.
+ */
+async function ensurePopulationForTool(name: string): Promise<void> {
+  if (!CUBES_CACHE_ENABLED || !TOOLS_WITH_POPULATION.has(name)) return;
+  if (populationPresent(configuredDataDirectory())) return;
+  try {
+    const { downloaded, available } = await ensurePopulation(cubesCacheDir(), (m) => console.error(`[cache] ${m}`));
+    if (downloaded.length) {
+      console.error(`[cache] população (${downloaded.join(", ")}) baixada para ${cubesCacheDir()}`);
+      resetPopulationCoverageCache();
+    }
+    if (!available) console.error(`[cache] manifesto de ${CUBES_BASE_URL} sem bloco population — sem denominador até o produtor publicar`);
+  } catch (e) {
+    console.error(`[cache] população não baixada: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+
 // Handler: Executa ferramenta
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   try {
     let result: unknown;
+
+    // Denominadores populacionais do canal (0.12.0): antes do switch e fora do
+    // `if` dos cubos — get_available_years não lê cubo mas relata population_years.
+    await ensurePopulationForTool(name);
 
     // Cache local dos cubos (src/cache.ts): ferramentas que leem cubo garantem
     // antes os anos pedidos — ou a série publicada inteira, quando a chamada

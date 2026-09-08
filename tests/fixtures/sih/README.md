@@ -4,7 +4,9 @@ Cópia, sem alteração, dos três cubos de 2023 que `build-aggregations.R` (hoj
 gera em `data/` (dados reais, agregados — não há nada sintético aqui), mais o
 sidecar de proveniência `sih_provenance_2023.json` que o mesmo script grava ao
 lado deles, e os dois cubos de população por UF que
-`scripts/build-population.R` gera (`pop_uf.parquet`, idade simples, 2000–2025,
+`build-population.R` (hoje em healthbr-data/scripts/pipeline/sih-cubos/; desde a 0.12.0 o
+servidor os baixa do canal `sih/cubos/`, mas esta pasta tem precedência por ter
+`pop_uf.parquet` — o golden não depende de rede) gera (`pop_uf.parquet`, idade simples, 2000–2025,
 Projeção da População Revisão 2024 do IBGE desde 07/09/2026 — antes era a
 revisão 2018 da SIDRA 7358, que dava ao Brasil de 2023 221,3 milhões contra
 211,7 da revisão atual; `pop_uf_agregado.parquet`, faixa etária, 1991–1999). Existem porque

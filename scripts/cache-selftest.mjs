@@ -4,7 +4,10 @@
 //   1. ensureYears() baixa um ano inteiro e aceita quando tamanho e SHA-256 batem;
 //   2. arquivo adulterado no canal é RECUSADO e não sobra nada na pasta;
 //   3. sem rede, o manifesto vem da cópia em disco (source = "disk");
-//   4. yearsFromArgs() lê year/years/start_year..end_year e devolve null sem ano.
+//   4. yearsFromArgs() lê year/years/start_year..end_year e devolve null sem ano;
+//   5. ensurePopulation() (0.12.0) baixa os três pop_*.parquet + pop_provenance.json
+//      do bloco `population`, é idempotente, RECUSA arquivo adulterado e responde
+//      available=false quando o manifesto não tem o bloco (canal anterior a 1.2.0).
 // Sem tocar em data.sidneybissoli.com — o CI roda isto sem rede externa.
 import { createHash } from "node:crypto";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -35,11 +38,19 @@ mk("sih_causas_2002.parquet", "causas-2002");
 mk("sih_series_2002.parquet", "series-2002");
 mk("sih_icsap_2002.parquet", "icsap-2002");
 mk("sih_provenance_2002.json", JSON.stringify({ cube_year: 2002 }));
+mk("pop_uf.parquet", "pop-uf");
+mk("pop_uf_agregado.parquet", "pop-uf-agregado");
+mk("pop_municipios.parquet", "pop-municipios");
+mk("pop_provenance.json", JSON.stringify({ built_at: "2026-09-08T00:00:00Z", last_year: 2025 }));
 const manifest = {
-  manifest_version: "1.0.0",
+  manifest_version: "1.2.0",
   dataset: "sih/cubos",
   generated_at: new Date().toISOString(),
   base_url: "http://local/",
+  population: {
+    built_at: "2026-09-08T00:00:00Z", builder_version: "1.0.0", last_year: 2025,
+    files: { pop_uf: files["pop_uf.parquet"], pop_uf_agregado: files["pop_uf_agregado.parquet"], pop_municipios: files["pop_municipios.parquet"], provenance: files["pop_provenance.json"] },
+  },
   years: {
     2001: { built_at: null, builder_version: "t", records_in_cube: 1, window_complete: true, ufs: 1, manifest_last_updated: null,
       files: { causas: files["sih_causas_2001.parquet"], series: files["sih_series_2001.parquet"], icsap: files["sih_icsap_2001.parquet"], provenance: files["sih_provenance_2001.json"] } },
@@ -90,6 +101,28 @@ ok(!existsSync(join(cache, "sih_causas_2002.parquet")) && !readdirSync(cache).so
 // ano fora do canal
 const r3 = await mod.ensureYears(cache, [1999]);
 ok(JSON.stringify(r3.unavailable) === "[1999]", "ano fora do canal vai para unavailable");
+
+// 5. população: baixa os quatro, idempotente, verifica SHA-256, e "sem bloco" = available=false
+ok(mod.populationPresent(cache) === false, "populationPresent: cache sem população");
+const p1 = await mod.ensurePopulation(cache);
+ok(p1.available === true && p1.downloaded.length === 4, `ensurePopulation baixou 4 arquivos (${p1.downloaded.join(", ")})`);
+ok(["pop_uf.parquet", "pop_uf_agregado.parquet", "pop_municipios.parquet", "pop_provenance.json"].every((f) => existsSync(join(cache, f))), "população: quatro arquivos no cache");
+ok(mod.populationPresent(cache) === true, "populationPresent vê os três Parquet");
+const p2 = await mod.ensurePopulation(cache);
+ok(p2.downloaded.length === 0 && p2.available === true, "segunda chamada não baixa a população de novo");
+// adulterado no canal: MESMO tamanho (6 bytes), conteúdo diferente; apaga a cópia local para forçar o download
+writeFileSync(join(site, "pop_uf.parquet"), "pop-Uf");
+rmSync(join(cache, "pop_uf.parquet"));
+let erroPop = null;
+try { await mod.ensurePopulation(cache); } catch (e) { erroPop = String(e.message ?? e); }
+ok(erroPop !== null && /SHA-256/.test(erroPop), `pop_uf adulterado recusado: ${erroPop}`);
+ok(!existsSync(join(cache, "pop_uf.parquet")) && !readdirSync(cache).some((f) => f.includes(".part-")), "pop_uf: nada ficou no cache (nem .part)");
+// manifesto sem o bloco (canal anterior à população): não é erro
+mod.setCubesManifestForTests({ ...manifest, population: null });
+const p3 = await mod.ensurePopulation(cache);
+ok(p3.available === false && p3.downloaded.length === 0, "manifesto sem population → available=false, sem download");
+mod.setCubesManifestForTests(null);
+await mod.loadCubesManifest();
 
 // 3. sem rede: manifesto da cópia em disco
 server.close();

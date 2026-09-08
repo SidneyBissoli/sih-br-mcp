@@ -36,8 +36,14 @@ em `healthbr-data/scripts/pipeline/sih-cubos/README.md` e no card
   `sih/cubos/tables/`; `npm run tables:check` confere o SHA-256 contra o manifesto
   (roda no CI). Nunca edite aqui — a fonte é o produtor.
 - **População** (`pop_uf.parquet`, `pop_uf_agregado.parquet`, `pop_municipios.parquet`):
-  gerada localmente por `scripts/build-population.R` (IBGE, Projeção 2024; DATASUS
-  POPBR até 1999); ainda não está no canal.
+  desde a 0.12.0 vem do mesmo canal, assinada no bloco `population` do `manifest.json`
+  (produtor: `build-population.R` + `build-sih-population.yml` do healthbr-data — IBGE,
+  Projeção 2024 por UF; DATASUS POPBR/POPSVS por município). As ferramentas de taxa
+  (`get_hospitalization_rates`, `compare_icsap_trends` com `rate_per_10k`) e
+  `get_available_years` baixam os três arquivos para o cache na primeira chamada,
+  com SHA-256 conferido; uma pasta de dados que já tenha `pop_uf.parquet` tem
+  precedência (fixture, build local). A proveniência da população responde com o
+  `built_at` do manifesto.
 
 ## Uso
 
