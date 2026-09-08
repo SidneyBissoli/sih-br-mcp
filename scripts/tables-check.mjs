@@ -60,7 +60,10 @@ for (const name of names) {
     falhas++;
     continue;
   }
-  const sha = createHash("sha256").update(readFileSync(local)).digest("hex");
+  // A forma canônica é LF (o que o git guarda e o produtor publica do runner
+  // Linux); um checkout Windows com autocrlf entrega CRLF e o sha mudaria
+  // sem a tabela ter mudado.
+  const sha = createHash("sha256").update(readFileSync(local, "utf8").replace(/\r\n/g, "\n")).digest("hex");
   if (sha !== tables[name].sha256) {
     console.error(`tables-check: ${name} DIVERGE do produtor (local ${sha.slice(0, 12)}…, canal ${String(tables[name].sha256).slice(0, 12)}…)`);
     falhas++;
