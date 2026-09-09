@@ -143,9 +143,12 @@ export async function getDatabase(): Promise<DuckDBConnection> {
     }
     const connection = await instance.connect();
 
-    // Configura DuckDB para melhor performance com Parquet
+    // Threads do DuckDB: 4 por padrão (máquina local); SIH_DUCKDB_THREADS
+    // ajusta ao host — a imagem do container (1/4 vCPU, 1 GiB) fixa 1, que é
+    // também a variante de menor memória medida em 09/09/2026.
+    const threads = Math.max(1, parseInt(process.env.SIH_DUCKDB_THREADS ?? "", 10) || 4);
     try {
-      await connection.run("SET threads TO 4");
+      await connection.run(`SET threads TO ${threads}`);
     } catch {
       console.error("Aviso: não foi possível configurar threads");
     }
@@ -442,8 +445,85 @@ export async function queryIcsap<T = Record<string, unknown>>(options: {
 }): Promise<T[]> {
   // 0.9.0: toda agregação do cubo ICSAP passa por icsapAggregateSql (o
   // denominador por estratos distintos); `metrics` fica só pela assinatura —
-  // as seis medidas saem sempre.
-  return query<T>(icsapAggregateSql(options));
+  // as seis medidas saem sempre. 0.13.1: ano a ano (queryIcsapAggregate).
+  return queryIcsapAggregate<T>(options);
+}
+
+/** Anos que uma consulta ICSAP toca: os do filtro ou, sem filtro, todos os disponíveis. */
+function icsapYears(filters: IcsapFilters | undefined): number[] {
+  const years = filters?.years && filters.years.length > 0 ? filters.years : getAvailableYears();
+  return [...new Set(years)].sort((a, b) => a - b);
+}
+
+let icsapPartsSeq = 0;
+
+/**
+ * Agregação do cubo ICSAP executada UM ANO POR VEZ (0.13.1).
+ *
+ * O SQL de icsapAggregateSql lê a CTE `linhas` duas vezes (DISTINCT dos
+ * estratos e soma das ICSAP): o DuckDB a materializa inteira, com todas as
+ * colunas, e faz o DISTINCT sobre milhões de estratos. Nos 32 GB da máquina
+ * local isso é invisível (34 anos em 8 s a quente); no Cloudflare Container
+ * `basic` (1 GiB, disco de 4 GB) a memória do DuckDB fica em 819 MiB e o
+ * derrame para o disco temporário esgota o 1,5 GiB livre — medido em
+ * 09/09/2026 no primeiro deploy: 11 anos por UF falhavam em 210 s com "Out of
+ * Memory Error: failed to offload data block (1.5 GiB/1.5 GiB used)". Uma
+ * leitura só (sem CTE) não basta (falha igual sob 1 GiB); reescrever para um
+ * ano por vez cabe: 34 anos por UF em 62 s sob 1 GiB, mesmos números da
+ * execução de uma vez só sob 4 GiB.
+ *
+ * Cada ano entra numa tabela temporária com o agrupamento pedido MAIS `year`;
+ * a agregação final (somas, percentual, ORDER BY determinístico e LIMIT) é
+ * feita no DuckDB sobre essa tabela — as somas são aditivas por ano e o
+ * denominador continua sendo os estratos distintos, porque o ano é chave do
+ * estrato (nenhum estrato atravessa dois anos). Um ano só toma o caminho
+ * direto. A tabela tem nome único por chamada (a conexão é compartilhada).
+ */
+async function queryIcsapAggregate<T = Record<string, unknown>>(options: {
+  filters?: IcsapFilters;
+  groupBy?: string[];
+  orderBy?: string;
+  limit?: number;
+  universe?: IcsapUniverse;
+}): Promise<T[]> {
+  const years = icsapYears(options.filters);
+  if (years.length <= 1) return query<T>(icsapAggregateSql(options));
+
+  const groupBy = options.groupBy ?? [];
+  const perYearGroupBy = groupBy.includes("year") ? groupBy : [...groupBy, "year"];
+  const connection = await getDatabase();
+  const table = `icsap_parts_${++icsapPartsSeq}`;
+  try {
+    for (const [index, year] of years.entries()) {
+      const sql = icsapAggregateSql({
+        filters: { ...options.filters, years: [year] },
+        groupBy: perYearGroupBy,
+        universe: options.universe,
+      });
+      try {
+        await connection.run(index === 0 ? `CREATE TEMP TABLE ${table} AS ${sql}` : `INSERT INTO ${table} ${sql}`);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error(`Erro na query (ano ${year}): ${message}\nSQL: ${sql}`);
+      }
+    }
+    const groupCols = groupBy.length > 0 ? `${groupBy.join(", ")}, ` : "";
+    let sql = `
+    SELECT ${groupCols}
+      SUM(n_icsap) AS n_icsap,
+      SUM(n_total) AS n_total,
+      ROUND(SUM(n_icsap) * 100.0 / NULLIF(SUM(n_total), 0), 2) AS icsap_percentage,
+      SUM(total_days) AS total_days,
+      SUM(total_value) AS total_value,
+      SUM(deaths) AS deaths
+    FROM ${table}
+    ${groupBy.length > 0 ? `GROUP BY ${groupBy.join(", ")}` : ""}`;
+    sql += buildOrderBy(options.orderBy, groupBy);
+    if (options.limit) sql += ` LIMIT ${options.limit}`;
+    return await query<T>(sql);
+  } finally {
+    await connection.run(`DROP TABLE IF EXISTS ${table}`).catch(() => undefined);
+  }
 }
 
 /** Chaves do ESTRATO do cubo ICSAP: `n_total` é o total do estrato, repetido em cada linha dele. */
@@ -629,8 +709,8 @@ export async function calculateIcsapIndicators<T = Record<string, unknown>>(opti
   groupBy?: string[];
   universe?: IcsapUniverse;
 }): Promise<T[]> {
-  // 0.9.0: denominador por estratos distintos (ver icsapAggregateSql)
-  return query<T>(icsapAggregateSql({ filters: options.filters, groupBy: options.groupBy, universe: options.universe }));
+  // 0.9.0: denominador por estratos distintos (ver icsapAggregateSql); 0.13.1: ano a ano
+  return queryIcsapAggregate<T>({ filters: options.filters, groupBy: options.groupBy, universe: options.universe });
 }
 
 // =============================================================================

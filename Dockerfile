@@ -19,7 +19,8 @@ FROM node:22-slim
 ENV NODE_ENV=production \
     PORT=8080 \
     SIH_HTTP_HOST=0.0.0.0 \
-    SIH_CACHE_DIR=/data/cubos
+    SIH_CACHE_DIR=/data/cubos \
+    SIH_DUCKDB_THREADS=1
 WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
