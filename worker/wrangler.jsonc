@@ -1,0 +1,72 @@
+// Configuração do Worker de borda do sih-br-mcp — instância do template de
+// hosting da Fase 0 (mcp-br-commons/templates/cloudflare-worker), com o handler
+// MCP embutido trocado por um proxy ao Cloudflare Container (PLAN-004, F2).
+//
+// Campos de `containers`, `durable_objects` e `migrations` conferidos em
+// https://developers.cloudflare.com/workers/wrangler/configuration/#containers
+// e https://developers.cloudflare.com/containers/get-started/ (09/09/2026).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sih-br-mcp-edge",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+
+  // Domínio próprio — o endpoint MCP público é https://sih.sidneybissoli.com/mcp.
+  // O hostname também está em SERVER_CONFIG.allowedHostnames (src/config.ts):
+  // quem valida Host/Origin aqui é o Worker (o container não valida).
+  "routes": [{ "pattern": "sih.sidneybissoli.com", "custom_domain": true }],
+
+  "vars": {
+    // Origins de NAVEGADOR aceitas no /mcp além do próprio host e de localhost
+    // (lista separada por vírgula; "*" abre para qualquer Origin). Requisições
+    // SEM Origin — clientes MCP de servidor, como o conector do claude.ai —
+    // passam sempre. Ver src/mcp-proxy.ts.
+    "ALLOWED_ORIGIN": ""
+  },
+
+  // O servidor MCP de verdade: node:22-slim + dist/http.js + DuckDB nativo,
+  // que não roda no isolate do Worker. `image` aponta para o Dockerfile da RAIZ
+  // do repositório; o contexto de build é, por padrão, a pasta do Dockerfile
+  // (image_build_context) — ou seja, a raiz, de onde saem dist/ e package.json.
+  // `wrangler deploy` constrói a imagem LOCALMENTE (exige Docker rodando) e a
+  // envia ao registro da Cloudflare.
+  // https://developers.cloudflare.com/containers/guides/image-management/
+  "containers": [
+    {
+      "class_name": "SihContainer",
+      "image": "../Dockerfile",
+      // Uma instância só (getContainer(env.SIH, "sih-1")): cache de cubos
+      // compartilhado e custo previsível — PLAN-004 §3.
+      "max_instances": 1,
+      // basic = 1/4 vCPU, 1 GiB, 4 GB de disco. RSS medido do servidor com a
+      // série de 34 anos: 320 MB (PLAN-004 §1).
+      "instance_type": "basic"
+    }
+  ],
+
+  // Durable Objects: o container (SihContainer estende Container, que estende
+  // DurableObject) e o singleton de estatísticas de uso (src/usage.ts).
+  // Nenhum recurso precisa ser criado à mão: a migration provisiona as classes
+  // no deploy. Containers EXIGEM new_sqlite_classes (não new_classes).
+  "durable_objects": {
+    "bindings": [
+      { "name": "SIH", "class_name": "SihContainer" },
+      { "name": "USAGE", "class_name": "UsageTracker" }
+    ]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["SihContainer", "UsageTracker"] }],
+
+  // Telemetria de tool calls — tool/desfecho/país/AS/marcador self por chamada,
+  // consultável via SQL API do Analytics Engine. O dataset é criado no primeiro
+  // writeDataPoint. Esquema (o mesmo dos irmãos, lido pelo painel do
+  // portfólio) em src/analytics.ts.
+  "analytics_engine_datasets": [{ "binding": "ANALYTICS", "dataset": "sih_mcp_tool_calls" }],
+
+  // Metadados do último deploy (id/tag/timestamp) — expostos em GET /status.
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+
+  // Logs estruturados no painel da Cloudflare (Workers Logs).
+  "observability": { "enabled": true }
+}

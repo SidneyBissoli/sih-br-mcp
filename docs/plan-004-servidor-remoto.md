@@ -27,6 +27,14 @@ como está. Nenhum recurso pago é criado sem o usuário dizer.
 | RSS do processo | 74 MB ao subir; 236 MB após a série de 34 anos; ~320 MB após 4 consultas pesadas |
 | Cold start do stdio | ~1 s (DuckDB) + download sob demanda (2023 inteiro ≈ 66 MB em ~5 s) |
 
+**Remedido em 09/09/2026 pelo transporte HTTP local (0.13.0, `data/` com 34
+anos, cache do SO quente):** `initialize` 53 ms; `tools/list` 6 ms;
+`get_icsap_indicators` 2023/SP 71 ms; `get_hospitalizations` 2019–2025
+UF×capítulo 523 ms (112 kB); `compare_icsap_trends` 2000–2025 `rate_per_10k`
+1,3 s; 1992–2025 por grupo CSAP 5,2 s; 1992–2025 por TODAS as UFs 7,8 s
+(30 kB). Os 30,6 s de 08/09 não se reproduziram — provável leitura fria dos
+34 Parquet pelo SO; no container o pior caso inclui o download dos cubos.
+
 Consequências: instância de 1 GiB serve 1–2 usuários simultâneos; a série
 inteira precisa de resposta em SSE (conexão viva) e o timeout do cliente do
 claude.ai tem de ser MEDIDO na F4, não suposto; `initialize` nunca baixa nada
@@ -115,7 +123,7 @@ TAREFAS.
 
 ## 6. Riscos
 
-- Série de 34 anos (30 s) vs timeout do cliente — medir na F4; mitigação em
+- Série de 34 anos (8 s a quente, 30 s a frio) vs timeout do cliente — medir na F4; mitigação em
   duas camadas (progresso; cubo de série pronto no healthbr-data).
 - Disco efêmero: cada sono re-baixa os anos pedidos; mitigação `sleepAfter`
   longo + população na imagem; se doer, pré-aquecer os anos mais pedidos.
