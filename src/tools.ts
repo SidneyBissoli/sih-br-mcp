@@ -47,7 +47,7 @@ import {
   type EraAspects,
 } from "./provenance.js";
 import { getFreshness } from "./freshness.js";
-import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cubesCacheDir, ensurePopulation, ensureYears, loadCubesManifest, populationPresent, publishedYears, yearsFromArgs } from "./cache.js";
+import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cubesCacheDir, ensureEstratosYears, ensureIcsapSummary, ensurePopulation, ensureYears, icsapSummaryState, loadCubesManifest, populationPresent, publishedYears, yearsFromArgs } from "./cache.js";
 
 // =============================================================================
 // DEFINIÇÃO DAS FERRAMENTAS
@@ -1420,9 +1420,10 @@ async function handleCompareIcsapTrends(args: CompareIcsapTrendsArgs) {
     compare_by === "uf" ? v.toUpperCase() : v
   );
 
-  // Filtra anos pelos disponíveis no SIH
+  // Filtra anos pelos disponíveis no SIH: cubos locais MAIS os anos frescos
+  // do resumo pré-agregado (PLAN-005) — a série longa responde sem cubo local.
   const allYears = Array.from({ length: end_year - start_year + 1 }, (_, i) => start_year + i);
-  const availableYears = getAvailableYears();
+  const availableYears = icsapYearsAvailable();
   const years = allYears.filter(y => availableYears.includes(y));
 
   if (years.length === 0) {
@@ -1616,6 +1617,43 @@ async function handleCompareIcsapTrends(args: CompareIcsapTrendsArgs) {
 // população): não disparam download do cache.
 const TOOLS_WITHOUT_CUBES = new Set(["list_csap_groups", "list_cid_chapters", "get_available_years", "classify_as_csap"]);
 
+// Ferramentas cuja agregação passa por queryIcsapAggregate (PLAN-005): antes
+// delas o cache garante o RESUMO pré-agregado (276 KB) e, para os filtros
+// finos, os ESTRATOS dos anos pedidos. get_hospitalization_rates fica fora:
+// lê o cubo de CAUSAS (queryCausas), que o resumo não representa.
+const ICSAP_AGG_TOOLS = new Set(["get_icsap", "get_icsap_indicators", "compare_icsap_trends"]);
+
+/**
+ * A chamada cabe INTEIRA no resumo? (Espelho conservador de resumoEligible,
+ * sobre os argumentos crus.) Quando sim, o callTool nem baixa os cubos dos
+ * anos pedidos — é isto que faz a série de 34 anos funcionar A FRIO com
+ * manifesto + 276 KB, em vez de 1,5 GB de cubos.
+ */
+function resumoCoversCall(name: string, args: unknown): boolean {
+  if (!ICSAP_AGG_TOOLS.has(name)) return false;
+  const state = icsapSummaryState();
+  if (!state.resumoPath) return false;
+  const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+  if (a.municipality_code || a.sex || a.age_min !== undefined || a.age_max !== undefined) return false;
+  if (Array.isArray(a.race) && a.race.length > 0) return false;
+  const groupBy = Array.isArray(a.group_by) ? a.group_by.map(String) : [];
+  if (groupBy.some((g) => !["year", "uf", "csap_group", "cid_revision"].includes(g))) return false;
+  const years = yearsFromArgs(args);
+  if (!years || years.length === 0) return false;
+  return years.every((y) => state.freshYears.has(y));
+}
+
+/**
+ * Anos consultáveis da ICSAP: os cubos locais MAIS os anos frescos do resumo
+ * (uma chamada coberta pelo resumo não precisa de cubo nenhum no disco).
+ */
+function icsapYearsAvailable(): number[] {
+  const state = icsapSummaryState();
+  const set = new Set(getAvailableYears());
+  if (state.resumoPath) for (const y of state.freshYears) set.add(y);
+  return [...set].sort((a, b) => a - b);
+}
+
 // Ferramentas que precisam do denominador populacional (0.12.0): garantem os
 // arquivos de população no cache local antes de rodar — chamada própria, fora
 // do `if` dos cubos, porque get_available_years está em TOOLS_WITHOUT_CUBES e
@@ -1658,14 +1696,26 @@ export async function callTool(name: string, args: ToolArgs): Promise<CallToolRe
     // `if` dos cubos — get_available_years não lê cubo mas relata population_years.
     await ensurePopulationForTool(name);
 
+    // Pré-agregados da ICSAP (PLAN-005): o resumo (276 KB) entra antes da
+    // decisão de baixar cubos, porque uma chamada coberta por ele dispensa os
+    // cubos por completo. Nunca lança: sem resumo, tudo segue como antes.
+    if (CUBES_CACHE_ENABLED && ICSAP_AGG_TOOLS.has(name)) {
+      await ensureIcsapSummary(getDataDirectory(), (m) => console.error(`[cache] ${m}`));
+    }
+
     // Cache local dos cubos (src/cache.ts): ferramentas que leem cubo garantem
     // antes os anos pedidos — ou a série publicada inteira, quando a chamada
     // não diz ano. Só entra em ação quando a pasta de dados não tem cubos
     // (instalação pelo npm); com data/ cheio, ensureYears() não baixa nada.
-    if (CUBES_CACHE_ENABLED && !TOOLS_WITHOUT_CUBES.has(name)) {
+    // Chamada coberta pelo resumo pula o bloco: nada de cubo para responder.
+    if (CUBES_CACHE_ENABLED && !TOOLS_WITHOUT_CUBES.has(name) && !resumoCoversCall(name, args)) {
       const dir = getDataDirectory();
       const { downloaded, unavailable } = await ensureYears(dir, yearsFromArgs(args), (m) => console.error(`[cache] ${m}`));
       if (downloaded.length) console.error(`[cache] ano(s) ${downloaded.join(", ")} baixado(s) para ${dir}`);
+      // Estratos dos anos pedidos (PLAN-005): denominador fino sem DISTINCT.
+      if (ICSAP_AGG_TOOLS.has(name)) {
+        await ensureEstratosYears(dir, yearsFromArgs(args), (m) => console.error(`[cache] ${m}`));
+      }
       if (unavailable.length && downloaded.length === 0 && getAvailableYears().length === 0) {
         return {
           content: [{ type: "text", text: JSON.stringify({
