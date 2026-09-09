@@ -92,6 +92,12 @@ void startFreshnessCheck();
 
 async function shutdown(signal: string): Promise<void> {
   console.error(`[http] ${signal}: encerrando`);
+  // Saída garantida em 5 s: `closeDatabase()` espera a consulta em curso
+  // terminar (closeSync do DuckDB), e no rollout do Cloudflare Containers o
+  // SIGTERM chegou no meio da série de 34 anos — o processo velho drenou por
+  // minutos e o container novo não subia ("The container is not running,
+  // consider calling start()" em toda chamada). Medido em 09/09/2026.
+  setTimeout(() => process.exit(0), 5_000).unref();
   httpServer.close();
   await closeDatabase();
   process.exit(0);

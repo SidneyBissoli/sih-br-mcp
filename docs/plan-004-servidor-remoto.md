@@ -136,6 +136,52 @@ TAREFAS.
   lidos uma vez): correto porque o dado é igual para todos; sidecar de ano
   baixado DEPOIS do arranque não entra — conferir na F2 com o cache vazio.
 
+## 8. Execução (09/09/2026, 41ª sessão)
+
+**F2 deploy — FEITO.** `npx wrangler deploy` em `worker/` (Docker Desktop
+4.90 aberto; wrangler 4.130.0) em 72 s: Worker `sih-br-mcp-edge`, container
+`sih-br-mcp-edge-sihcontainer` (`basic`, imagem 571 MB), domínio
+`sih.sidneybissoli.com`. Inspector lista as 12 ferramentas pela URL pública.
+O primeiro build morreu no `npm ci` da imagem com ECONNRESET aos 434 s —
+transitório (repetido: 6,6 s; rede do container normal).
+
+| Medição pela borda | Valor |
+| --- | --- |
+| `GET /status` (só o Worker) | 0,35 s |
+| Cold start (handshake com o container dormindo) | 16,6 s |
+| `tools/list` a quente | 2,9 s |
+| `compare_icsap_trends` 2024–2025 por UF, cubos no disco | 25,5 s |
+| `compare_icsap_trends` 1992–2025 por UF, cubos no disco | 310 s |
+| idem a frio (baixa 1,5 GB de cubos antes) | conexão caiu em ~322 s sem resposta |
+
+**Defeito 1 — memória (corrigido na 0.13.1, CONTEXT decisão 30).** A série
+longa e até 2015–2025 falhavam com `Out of Memory Error: failed to offload
+data block (1.5 GiB/1.5 GiB used)`: a CTE `linhas` materializada duas vezes
++ DISTINCT dos estratos não cabem em 819 MiB de DuckDB + 1,5 GiB de disco
+temporário. Reproduzido em Docker local (`--memory=1g`, cubos do canal);
+ano a ano passa sob 1 GiB (34 anos em 62 s a 0,5 CPU), mesmos números da
+execução única sob 4 GiB. `queryIcsapAggregate` executa um ano por vez numa
+tabela temporária e agrega no DuckDB. A imagem fixa `SIH_DUCKDB_THREADS=1`.
+
+**Defeito 2 — rollout travado (corrigido).** SIGTERM no meio da série:
+`shutdown()` esperava o DuckDB, o processo velho drenou ~10 min e o
+container novo não subia ("The container is not running, consider calling
+start()"). Agora `shutdown()` sai em 5 s.
+
+**O que a medição diz.** A memória cabe no `basic`; o limite agora é CPU:
+1/4 vCPU faz a série de 34 anos levar 5 min (5× o bench local a 0,5 CPU),
+fora do alcance de qualquer timeout de cliente. Opções, decisão do usuário:
+(a) instância maior (`standard-2`, 1 vCPU, 6 GiB, 12 GB: ~75 s estimados;
+memória cobrada por hora ligada, 6 GiB × US$ 0,0000025/s ≈ US$ 0,054/h);
+(b) `sih:serie-pre-agregada` — gravar por ano os estratos distintos (ou os
+totais por chaves) no produtor (healthbr-data) ou no consumidor ao baixar o
+ano: a consulta vira soma corrida, milissegundos por ano, e resolve também
+a memória. (b) é a mitigação prevista no §6.
+
+**F3 — FEITO.** `host = "sih.sidneybissoli.com"` em `config.R:47` do monitor.
+
+**F4 — ver TAREFAS.md do monitor.**
+
 ## 7. Fora de escopo
 
 `outputSchema`/`structuredContent` tipado por ferramenta (o bloco de
