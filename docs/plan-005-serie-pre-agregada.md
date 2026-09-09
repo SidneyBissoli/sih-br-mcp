@@ -101,6 +101,32 @@ HTTP.
   na derivação (mesma lição do funil, docs do 0.9.0).
 - Dois universos duplicam o resumo → 295 KB no total; irrelevante.
 
+## 7. Execução (09/09/2026, mesma sessão — as fases todas)
+
+**F1 produtor:** healthbr-data PR #5 mesclado; `build-sih-summary.yml` run
+34382683131 publicou resumo (276.347 B), 34 estratos e sidecar; manifesto
+1.3.0 no ar com `derived_from` batendo nos 34 anos.
+
+**F2 consumidor:** sih 0.14.0 — roteamento + estratos + pulo do download de
+cubos quando o resumo cobre; equivalência byte a byte em 10 cenários na
+fixture E nos 34 cubos do canal; golden só citação.
+
+**F3 medições pela borda (deploy 0a561234):**
+
+| Medição | 0.13.1 | 0.14.0 |
+| --- | --- | --- |
+| Série 34 anos, A FRIO (dormindo + disco vazio) | conexão caía ~322 s | **6,4 s** (4,8 cold start + 1,1 consulta) |
+| Série 34 anos, a quente | 310 s | **1,1 s** |
+| RR/2023 (um ano, uma UF) | 25,5 s* | 0,9 s |
+| Fina (2 anos, sexo F, por UF), a frio | — | 31 s (baixa os 2 cubos) |
+
+\* 25,5 s era a janela 2024–2025; um ano quente na 0.13.1 ficava na casa de
+segundos com cubo no disco.
+
+Alvos do §4 cumpridos com folga (quente < 5 s: 1,1 s; frio < 20 s: 6,4 s;
+fina < 100 s: 31 s). Células de 1992 e 2025 conferidas contra a 0.13.1:
+idênticas. Sobra deliberada: encadeamento rebuild→derive segue manual (§6).
+
 ## 6. Fora de escopo
 
 Encadeamento automático rebuild→derive (fica manual com regra escrita);
