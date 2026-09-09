@@ -11,6 +11,7 @@
 // @duckdb/node-bindings): zero node-gyp, zero tar. A API é toda de Promise;
 // o funil `query()` continua sendo o único ponto que toca a conexão.
 import { DuckDBConnection, DuckDBInstance } from "@duckdb/node-api";
+import { icsapSummaryState } from "../cache.js";
 import { fileURLToPath } from "url";
 import { dirname, join, resolve } from "path";
 import { existsSync, mkdirSync, readdirSync } from "fs";
@@ -479,6 +480,93 @@ let icsapPartsSeq = 0;
  * estrato (nenhum estrato atravessa dois anos). Um ano só toma o caminho
  * direto. A tabela tem nome único por chamada (a conexão é compartilhada).
  */
+/**
+ * A consulta cabe no RESUMO pré-agregado (PLAN-005)? Sim quando não há filtro
+ * nem agrupamento fora do grão universe × year × uf × cid_revision ×
+ * csap_group E o resumo baixado vale (fresco) para todos os anos pedidos.
+ * Conservador de propósito: qualquer coisa fora do grão cai no caminho fino.
+ */
+const RESUMO_GROUP_COLS = new Set(["year", "uf", "csap_group", "cid_revision"]);
+
+function resumoEligible(options: { filters?: IcsapFilters; groupBy?: string[] }, years: number[]): string | null {
+  const state = icsapSummaryState();
+  if (!state.resumoPath) return null;
+  if (years.length === 0) return null;
+  const f = options.filters ?? {};
+  const fine =
+    (f.municipalityCodes && f.municipalityCodes.length > 0) ||
+    f.sex !== undefined ||
+    f.ageMin !== undefined ||
+    f.ageMax !== undefined ||
+    (f.races && f.races.length > 0);
+  if (fine) return null;
+  if ((options.groupBy ?? []).some((g) => !RESUMO_GROUP_COLS.has(g))) return null;
+  if (!years.every((y) => state.freshYears.has(y))) return null;
+  return state.resumoPath;
+}
+
+/**
+ * Agregação ICSAP lida do RESUMO (sih_icsap_resumo.parquet): numerador são as
+ * linhas com csap_group; o denominador são os n_total DISTINTOS por
+ * (universe, year, uf, cid_revision) — o produtor grava um n_total por essa
+ * chave, repetido nas linhas de grupo. Mesma forma do SQL clássico (join,
+ * COALESCE, ORDER BY determinístico), mas sobre ~1 mil linhas/ano em vez de
+ * 1,3 M: a série de 34 anos cai de 310 s para ~1 s na borda.
+ */
+function resumoAggregateSql(
+  options: { filters?: IcsapFilters; groupBy?: string[]; orderBy?: string; limit?: number; universe?: IcsapUniverse },
+  resumoPath: string,
+  years: number[],
+): string {
+  const src = `read_parquet('${resumoPath.replace(/\\/g, "/")}')`;
+  const universe = options.universe ?? "csapaih";
+  const f = options.filters ?? {};
+  const conds = [`universe = '${universe}'`, `year IN (${years.join(", ")})`];
+  if (f.ufs && f.ufs.length > 0) conds.push(`uf IN (${f.ufs.map((u) => `'${u}'`).join(", ")})`);
+  const where = conds.join(" AND ");
+  const csapCond = f.csapGroups && f.csapGroups.length > 0 ? `AND csap_group IN (${f.csapGroups.map((g) => `'${g}'`).join(", ")})` : "";
+  const groupBy = options.groupBy ?? [];
+  const byGroup = groupBy.includes("csap_group");
+  const strataGroup = groupBy.filter((g) => g !== "csap_group");
+  const groupClause = (cols: string[]) => (cols.length > 0 ? `GROUP BY ${cols.join(", ")}` : "");
+  const joinOn =
+    strataGroup.length > 0 ? strataGroup.map((k) => `icsap.${k} IS NOT DISTINCT FROM total.${k}`).join(" AND ") : "TRUE";
+  const fromClause = byGroup ? `icsap JOIN total ON ${joinOn}` : `total LEFT JOIN icsap ON ${joinOn}`;
+  const selectCols = groupBy
+    .map((g) => (byGroup || g === "csap_group" ? `icsap.${g} AS ${g}` : `total.${g} AS ${g}`))
+    .join(", ");
+  let sql = `
+    WITH denom AS (SELECT DISTINCT year, uf, cid_revision, n_total FROM ${src} WHERE ${where}),
+    total AS (
+      SELECT ${strataGroup.length > 0 ? strataGroup.join(", ") + ", " : ""}SUM(n_total) AS n_total
+      FROM denom ${groupClause(strataGroup)}
+    ),
+    icsap AS (
+      SELECT ${groupBy.length > 0 ? groupBy.join(", ") + ", " : ""}SUM(n_icsap) AS n_icsap, SUM(total_days) AS total_days, SUM(total_value) AS total_value, SUM(deaths) AS deaths
+      FROM ${src}
+      WHERE ${where} AND csap_group IS NOT NULL ${csapCond}
+      ${groupClause(groupBy)}
+    )
+    SELECT ${selectCols}${groupBy.length > 0 ? ", " : ""}
+      COALESCE(icsap.n_icsap, 0) AS n_icsap,
+      total.n_total AS n_total,
+      ROUND(COALESCE(icsap.n_icsap, 0) * 100.0 / NULLIF(total.n_total, 0), 2) AS icsap_percentage,
+      COALESCE(icsap.total_days, 0) AS total_days,
+      COALESCE(icsap.total_value, 0) AS total_value,
+      COALESCE(icsap.deaths, 0) AS deaths
+    FROM ${fromClause}
+  `;
+  sql += buildOrderBy(options.orderBy, groupBy);
+  if (options.limit) sql += ` LIMIT ${options.limit}`;
+  return sql;
+}
+
+/** Rota tomada pela ÚLTIMA agregação ICSAP — diagnóstico (equivalência, logs). */
+let lastIcsapPath: "resumo" | "estratos" | "classic" = "classic";
+export function lastIcsapAggregatePath(): "resumo" | "estratos" | "classic" {
+  return lastIcsapPath;
+}
+
 async function queryIcsapAggregate<T = Record<string, unknown>>(options: {
   filters?: IcsapFilters;
   groupBy?: string[];
@@ -487,7 +575,20 @@ async function queryIcsapAggregate<T = Record<string, unknown>>(options: {
   universe?: IcsapUniverse;
 }): Promise<T[]> {
   const years = icsapYears(options.filters);
-  if (years.length <= 1) return query<T>(icsapAggregateSql(options));
+
+  // Caminho rápido (PLAN-005): tudo no grão do resumo e resumo fresco para
+  // todos os anos → uma consulta de milissegundos, sem tocar os cubos.
+  const resumoPath = resumoEligible(options, years);
+  if (resumoPath) {
+    lastIcsapPath = "resumo";
+    return query<T>(resumoAggregateSql(options, resumoPath, years));
+  }
+
+  const estratosFor = (year: number | undefined) =>
+    year !== undefined ? icsapSummaryState().estratosPaths.get(year) : undefined;
+  lastIcsapPath = years.some((y) => estratosFor(y) !== undefined) ? "estratos" : "classic";
+
+  if (years.length <= 1) return query<T>(icsapAggregateSql({ ...options, estratosPath: estratosFor(years[0]) }));
 
   const groupBy = options.groupBy ?? [];
   const perYearGroupBy = groupBy.includes("year") ? groupBy : [...groupBy, "year"];
@@ -499,6 +600,7 @@ async function queryIcsapAggregate<T = Record<string, unknown>>(options: {
         filters: { ...options.filters, years: [year] },
         groupBy: perYearGroupBy,
         universe: options.universe,
+        estratosPath: estratosFor(year),
       });
       try {
         await connection.run(index === 0 ? `CREATE TEMP TABLE ${table} AS ${sql}` : `INSERT INTO ${table} ${sql}`);
@@ -567,6 +669,13 @@ function icsapAggregateSql(options: {
   orderBy?: string;
   limit?: number;
   universe?: IcsapUniverse;
+  /**
+   * PLAN-005: caminho de sih_icsap_estratos_<ano>.parquet — o DISTINCT dos
+   * estratos gravado pelo produtor. Quando presente, o denominador lê dele
+   * (mesmas colunas, um registro por estrato) em vez de refazer o DISTINCT
+   * sobre o cubo (26,5 s → 5,9 s na série local com 1 thread).
+   */
+  estratosPath?: string;
 }): string {
   const pattern = getParquetPattern("icsap");
   const { csapGroups, ...strataFilters } = options.filters ?? {};
@@ -587,12 +696,18 @@ function icsapAggregateSql(options: {
     .join(", ");
   const strataKeys = ICSAP_STRATUM_KEYS.map(groupSelect);
 
+  // Denominador: dos estratos pré-gravados quando o chamador os tem (mesmo
+  // filtro de estratos — as colunas são as do cubo, menos csap_group e as
+  // medidas), senão o DISTINCT clássico sobre a CTE.
+  const estratosCte = options.estratosPath
+    ? `estratos AS (SELECT ${strataKeys.join(", ")}, n_total FROM read_parquet('${options.estratosPath.replace(/\\/g, "/")}') WHERE ${whereStrata})`
+    : `estratos AS (SELECT DISTINCT ${strataKeys.join(", ")}, n_total FROM linhas)`;
   let sql = `
     WITH linhas AS (
       SELECT * FROM read_parquet('${pattern}', union_by_name = true)
       WHERE ${whereStrata}
     ),
-    estratos AS (SELECT DISTINCT ${strataKeys.join(", ")}, n_total FROM linhas),
+    ${estratosCte},
     total AS (
       SELECT ${strataGroup.length > 0 ? strataGroup.join(", ") + ", " : ""}SUM(n_total) AS n_total
       FROM estratos ${groupClause(strataGroup)}

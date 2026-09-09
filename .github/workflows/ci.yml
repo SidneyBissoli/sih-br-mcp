@@ -100,6 +100,11 @@ jobs:
       # MESMO commit, e dizer no commit por que os valores mudaram.
       - run: npm run golden:tools
 
+      # Equivalência dos pré-agregados da ICSAP (PLAN-005): resumo e estratos
+      # derivados da fixture têm de devolver byte a byte o caminho clássico,
+      # nas rotas resumo/estratos e no fallback de ano velho.
+      - run: npm run equiv:summary
+
       # Frescor dos cubos (sih:cubos-frescor (a), 05/09/2026): o servidor
       # sonda o manifesto do espelho na inicialização e marca a proveniência
       # quando um cubo está atrás. Smoke e golden rodam com a sonda DESLIGADA
