@@ -101,6 +101,12 @@ HTTP.
   na derivação (mesma lição do funil, docs do 0.9.0).
 - Dois universos duplicam o resumo → 295 KB no total; irrelevante.
 
+## 6. Fora de escopo
+
+Encadeamento automático rebuild→derive (fica manual com regra escrita);
+pré-agregação por município (grão explode; o caminho fino cobre); instância
+maior (opção (a), descartada pelo usuário).
+
 ## 7. Execução (09/09/2026, mesma sessão — as fases todas)
 
 **F1 produtor:** healthbr-data PR #5 mesclado; `build-sih-summary.yml` run
@@ -126,9 +132,3 @@ segundos com cubo no disco.
 Alvos do §4 cumpridos com folga (quente < 5 s: 1,1 s; frio < 20 s: 6,4 s;
 fina < 100 s: 31 s). Células de 1992 e 2025 conferidas contra a 0.13.1:
 idênticas. Sobra deliberada: encadeamento rebuild→derive segue manual (§6).
-
-## 6. Fora de escopo
-
-Encadeamento automático rebuild→derive (fica manual com regra escrita);
-pré-agregação por município (grão explode; o caminho fino cobre); instância
-maior (opção (a), descartada pelo usuário).
