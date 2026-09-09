@@ -73,11 +73,27 @@ Variáveis: `SIH_DATA_DIR` (pasta com cubos já prontos, em vez do cache),
 `SIH_CACHE_DIR`, `SIH_CUBES_BASE_URL`, `SIH_CUBES_CACHE=off`,
 `SIH_FRESHNESS_CHECK=off`.
 
+### Servidor remoto (Streamable HTTP)
+
+As mesmas 12 ferramentas por HTTP, para conectores remotos (claude.ai):
+
+```bash
+npm run start:http          # http://localhost:8080/mcp  (GET /healthz para sondar)
+```
+
+`PORT` e `SIH_HTTP_HOST` além das variáveis acima. Sem sessão: cada request
+cria servidor e transporte novos, então qualquer instância atende qualquer
+chamada. Em produção roda num Cloudflare Container (`Dockerfile`, população
+pré-baixada na imagem) atrás do Worker de borda em `worker/`, que cuida de
+domínio, rate limit, autenticação opcional e medição — desenho e custos em
+`docs/plan-004-servidor-remoto.md`.
+
 ## Verificação
 
 ```bash
 npm ci && npm run build
 npm run smoke:stdio         # superfície das ferramentas × baselines/surface-stdio.json
+npm run smoke:http          # mesma superfície e chamadas pelo transporte HTTP (dist/http.js)
 npm run golden:tools        # 12 ferramentas byte a byte × baselines/golden-tools.json (fixture 2023/RR)
 npm run freshness:selftest  # frescor offline sobre um trecho versionado do manifesto
 npm run cache:selftest      # cache local (download + SHA-256) contra um canal falso
@@ -90,10 +106,11 @@ O CI (`.github/workflows/ci.yml`) roda tudo isso em Node 22 e 24. A fixture
 
 ## Documentação
 
-- `CONTEXT.md` — decisões arquiteturais numeradas (a 27 é a migração do produtor).
+- `CONTEXT.md` — decisões arquiteturais numeradas (a 27 é a migração do produtor; a 29, o servidor remoto).
 - `docs/analise-001` (janela de competências), `analise-002` (era CID-9, 1992–1997),
   `analise-003` (lista ICSAP em CID-9 derivada), `plan-002` (DuckDB Node Neo),
-  `plan-003` (rebuild automático, hoje no healthbr-data), `tool-specifications.md`.
+  `plan-003` (rebuild automático, hoje no healthbr-data), `plan-004` (servidor remoto
+  HTTPS para o claude.ai), `tool-specifications.md`.
 
 ## Licença
 

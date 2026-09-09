@@ -35,11 +35,11 @@
 // caminho sem depender de onde o corte cai.
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { Client } from "@modelcontextprotocol/client";
 import {
   StdioClientTransport,
   getDefaultEnvironment,
-} from "@modelcontextprotocol/sdk/client/stdio.js";
+} from "@modelcontextprotocol/client/stdio";
 
 const args = process.argv.slice(2);
 const opt = (flag) => {

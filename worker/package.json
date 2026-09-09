@@ -1,0 +1,27 @@
+{
+  "name": "sih-br-mcp-edge",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "description": "Cloudflare Worker de borda do sih-br-mcp: rotas públicas, bearer opcional, rate limit e Analytics Engine na frente de um Cloudflare Container que roda o servidor MCP por Streamable HTTP (PLAN-004, F2)",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@cloudflare/containers": "^0.3.7"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260908.1",
+    "@types/node": "^26.4.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0",
+    "wrangler": "^4.130.0"
+  }
+}

@@ -15,13 +15,14 @@
 // de um checkout sem dado nenhum; foi assim que a 1ª rodada do smoke no CI
 // reprovou em 04/09/2026. Sem a flag, o servidor lê data/ como sempre.
 // O ano consultado vem de `get_available_years`, não de literal.
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import {
-  StdioClientTransport,
-  getDefaultEnvironment,
-} from "@modelcontextprotocol/sdk/client/stdio.js";
+//
+// As verificações (superfície, anotações, três chamadas) vivem em
+// lib/smoke-checks.mjs, compartilhadas com smoke-http.mjs (PLAN-004): os dois
+// transportes são medidos pela mesma régua.
+import { resolve } from "node:path";
+import { Client } from "@modelcontextprotocol/client";
+import { StdioClientTransport, getDefaultEnvironment } from "@modelcontextprotocol/client/stdio";
+import { checkAnnotations, checkSurface, surfaceOf, threeCalls } from "./lib/smoke-checks.mjs";
 
 const args = process.argv.slice(2);
 const opt = (flag) => {
@@ -62,67 +63,13 @@ try {
 } catch (e) {
   fail(`servidor não subiu ou não respondeu ao tools/list: ${e?.message ?? e}`);
 }
-if (!Array.isArray(tools) || tools.length === 0) fail("tools/list vazio");
-for (const t of tools) {
-  if (!t.inputSchema || t.inputSchema.type !== "object")
-    fail(`ferramenta ${t.name} sem inputSchema de objeto`);
+try {
+  console.log(`tools/list: ${tools.length} ferramentas`);
+  checkSurface(surfaceOf(tools), { baseline, writeTo });
+  checkAnnotations(tools);
+  const year = await threeCalls(client);
+  await client.close();
+  console.log(`SMOKE OK (ano consultado: ${year})`);
+} catch (e) {
+  fail(e?.message ?? String(e));
 }
-const surface = [...tools]
-  .sort((a, b) => a.name.localeCompare(b.name))
-  .map(({ name, description, inputSchema }) => ({ name, description, inputSchema }));
-const surfaceJson = JSON.stringify(surface, null, 2) + "\n";
-console.log(`tools/list: ${tools.length} ferramentas`);
-
-if (baseline) {
-  // Forma canônica LF: num checkout Windows com autocrlf (i/lf w/crlf) o
-  // baseline chega com CRLF e a comparação byte a byte reprovava sem a
-  // superfície ter mudado (mesma classe do tables-check, 2026-09-08).
-  const expected = readFileSync(baseline, "utf8").replace(/\r\n/g, "\n");
-  if (expected !== surfaceJson) {
-    const before = new Set(JSON.parse(expected).map((t) => t.name));
-    const after = new Set(surface.map((t) => t.name));
-    const gone = [...before].filter((n) => !after.has(n));
-    const novo = [...after].filter((n) => !before.has(n));
-    fail(
-      `superfície difere do baseline ${baseline}` +
-        (gone.length ? ` | sumiram: ${gone.join(", ")}` : "") +
-        (novo.length ? ` | novas: ${novo.join(", ")}` : "") +
-        (!gone.length && !novo.length ? " | mesmos nomes, descrição ou schema mudou" : ""),
-    );
-  }
-  console.log(`superfície == ${baseline}`);
-}
-if (writeTo) {
-  mkdirSync(dirname(writeTo), { recursive: true });
-  writeFileSync(writeTo, surfaceJson);
-  console.log(`superfície gravada em ${writeTo}`);
-}
-
-const call = async (name, args = {}) => {
-  const res = await client.callTool({ name, arguments: args });
-  if (res.isError) fail(`${name} devolveu isError: ${JSON.stringify(res.content).slice(0, 300)}`);
-  const text = (res.content ?? []).filter((c) => c.type === "text").map((c) => c.text).join("\n");
-  if (!text.trim()) fail(`${name} devolveu conteúdo vazio`);
-  console.log(`${name}: ok (${text.length} chars)`);
-  return text;
-};
-
-const csap = await call("list_csap_groups");
-if (!/g01/i.test(csap)) fail("list_csap_groups não menciona g01");
-
-const yearsText = await call("get_available_years");
-// Lê o campo estrutural `years`; o texto inteiro não serve porque o bloco de
-// proveniência traz outros anos (safra, citação) e o regex pegaria o maior.
-let yearsJson = null;
-try { yearsJson = JSON.parse(yearsText); } catch { /* texto não JSON: cai no regex */ }
-const years = Array.isArray(yearsJson?.years)
-  ? yearsJson.years.map(Number).filter(Number.isInteger)
-  : [...yearsText.matchAll(/(19|20)\d{2}/g)].map((m) => Number(m[0]));
-if (years.length === 0) fail("get_available_years não devolveu nenhum ano");
-const year = Math.max(...years);
-
-const rank = await call("rank_csap_groups", { year: [year], limit: 3 });
-if (!/g\d{2}/i.test(rank)) fail(`rank_csap_groups(${year}) não devolveu grupo nenhum`);
-
-await client.close();
-console.log(`SMOKE OK (ano consultado: ${year})`);
