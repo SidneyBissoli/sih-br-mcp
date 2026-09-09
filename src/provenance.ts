@@ -15,6 +15,7 @@
  * gravá-lo.
  */
 
+import { createRequire } from "node:module";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
@@ -29,7 +30,9 @@ import csapGroups from "./data/csap-groups.json" with { type: "json" };
 import csapGroupsCid9 from "./data/csap-groups-cid9.json" with { type: "json" };
 import cidChapters from "./data/cid-chapters.json" with { type: "json" };
 
-export const SERVER_VERSION = "0.10.0";
+// Versão lida do package.json (fonte única). O literal "0.10.0" ficou parado
+// nas 0.11 e 0.12 e o handshake anunciava versão errada (achado em 08/09/2026).
+export const SERVER_VERSION: string = createRequire(import.meta.url)("../package.json").version;
 
 export const provenance = createProvenanceContext({
   metaNamespace: "br.sbissoli.sih",

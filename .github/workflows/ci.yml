@@ -85,6 +85,12 @@ jobs:
       # `npm run smoke:stdio:baseline` no MESMO commit que muda as ferramentas.
       - run: npm run smoke:stdio
 
+      # Mesma superfície e mesmas três chamadas, pelo transporte Streamable
+      # HTTP (dist/http.js, o que roda no container do PLAN-004), contra o
+      # MESMO baseline: prova que trocar o transporte não muda o que o cliente
+      # vê. Sobe numa porta local; sem rede (cache e sonda de frescor off).
+      - run: npm run smoke:http
+
       # Chama as doze ferramentas com argumentos fixos e compara o resultado
       # byte a byte com `baselines/golden-tools.json`. Gravado em 05/09/2026
       # com o binding `duckdb` legado, ANTES da migração para @duckdb/node-api

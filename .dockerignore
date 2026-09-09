@@ -1,0 +1,8 @@
+# O Dockerfile copia caminhos explícitos; isto evita que `wrangler deploy`
+# mande o contexto inteiro (data/ tem 1,6 GB de cubos) ao daemon do Docker.
+*
+!package.json
+!package-lock.json
+!tsconfig.json
+!src/
+!scripts/warm-cache.mjs

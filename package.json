@@ -1,6 +1,6 @@
 {
   "name": "sih-br-mcp",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "mcpName": "io.github.SidneyBissoli/sih-br-mcp",
   "description": "Servidor MCP do SIH/SUS (internações hospitalares do Brasil, 1992–2025): causas, séries mensais, ICSAP e taxas por 100 mil, lendo cubos agregados e denominadores populacionais do canal público healthbr-data sob demanda",
   "repository": {
@@ -30,7 +30,9 @@
     "freshness:excerpt": "node scripts/freshness-check.mjs --fixtures tests/fixtures/sih --write-excerpt",
     "cache:selftest": "node scripts/cache-selftest.mjs",
     "tables:check": "node scripts/tables-check.mjs",
-    "tables:check:offline": "node scripts/tables-check.mjs --manifest tests/fixtures/sih/cubes-manifest-excerpt.json"
+    "tables:check:offline": "node scripts/tables-check.mjs --manifest tests/fixtures/sih/cubes-manifest-excerpt.json",
+    "start:http": "node dist/http.js",
+    "smoke:http": "node scripts/smoke-http.mjs --fixtures tests/fixtures/sih --baseline baselines/surface-stdio.json"
   },
   "keywords": [
     "mcp",
@@ -46,10 +48,12 @@
   "license": "MIT",
   "dependencies": {
     "@duckdb/node-api": "^1.5.5-r.4",
-    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@modelcontextprotocol/node": "^2.0.0",
+    "@modelcontextprotocol/server": "^2.0.0",
     "@sbissoli/mcp-provenance": "^0.1.0"
   },
   "devDependencies": {
+    "@modelcontextprotocol/client": "^2.0.0",
     "@types/node": "^26.4.0",
     "typescript": "^7.0.2"
   },
