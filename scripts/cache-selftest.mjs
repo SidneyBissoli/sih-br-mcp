@@ -7,7 +7,12 @@
 //   4. yearsFromArgs() lê year/years/start_year..end_year e devolve null sem ano;
 //   5. ensurePopulation() (0.12.0) baixa os três pop_*.parquet + pop_provenance.json
 //      do bloco `population`, é idempotente, RECUSA arquivo adulterado e responde
-//      available=false quando o manifesto não tem o bloco (canal anterior a 1.2.0).
+//      available=false quando o manifesto não tem o bloco (canal anterior a 1.2.0);
+//   6. ensureSidecars() confere o sidecar já presente por SHA-256, e não só pelo
+//      tamanho: desde 10/09/2026 os 34 sidecars vêm PRÉ-ASSADOS na imagem do
+//      container, e um sidecar reescrito por um rebuild que por acaso mantenha o
+//      mesmo número de bytes passaria batido pela checagem de tamanho — a
+//      resposta sairia com a nota de era do build anterior.
 // Sem tocar em data.sidneybissoli.com — o CI roda isto sem rede externa.
 import { createHash } from "node:crypto";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -115,6 +120,27 @@ ok(rk2.downloaded.length === 0, "kinds=[series]: segunda chamada não baixa de n
 const rk3 = await mod.ensureYears(cacheKinds, [2001], undefined, ["icsap"]);
 ok(rk3.downloaded.length === 1 && existsSync(join(cacheKinds, "sih_icsap_2001.parquet")), "kinds=[icsap] depois: completa só o icsap");
 rmSync(cacheKinds, { recursive: true, force: true });
+
+// 6. sidecars: o que já está na pasta é conferido por SHA-256, não só por tamanho
+const cacheSide = mkdtempSync(join(tmpdir(), "sih-cache-side-"));
+const s1 = await mod.ensureSidecars(cacheSide, [2001]);
+ok(JSON.stringify(s1.downloaded) === "[2001]", "sidecars: pasta vazia baixa o ano");
+const s2 = await mod.ensureSidecars(cacheSide, [2001]);
+ok(s2.downloaded.length === 0, "sidecars: segunda chamada não baixa de novo");
+// PRÉ-ASSADO E VELHO: mesmo TAMANHO (18 bytes), conteúdo diferente. Só o
+// SHA-256 pega; com a checagem de tamanho, a nota de era sairia do build velho.
+const cacheAssado = mkdtempSync(join(tmpdir(), "sih-cache-assado-"));
+const bom = JSON.stringify({ cube_year: 2001 });
+const velho = '{"cube_year":2OO1}';
+ok(velho.length === bom.length, `sidecar adulterado tem o mesmo tamanho (${velho.length} bytes)`);
+writeFileSync(join(cacheAssado, "sih_provenance_2001.json"), velho);
+const s3 = await mod.ensureSidecars(cacheAssado, [2001]);
+ok(JSON.stringify(s3.downloaded) === "[2001]", "sidecar pré-assado VELHO é recusado e rebaixado do canal");
+ok(readFileSync(join(cacheAssado, "sih_provenance_2001.json"), "utf8") === bom, "sidecar pré-assado velho foi SUBSTITUÍDO pelo do canal");
+const s4 = await mod.ensureSidecars(cacheAssado, [2001]);
+ok(s4.downloaded.length === 0, "sidecar já conferido não é baixado a cada chamada");
+rmSync(cacheSide, { recursive: true, force: true });
+rmSync(cacheAssado, { recursive: true, force: true });
 
 // 5. população: baixa os quatro, idempotente, verifica SHA-256, e "sem bloco" = available=false
 ok(mod.populationPresent(cache) === false, "populationPresent: cache sem população");

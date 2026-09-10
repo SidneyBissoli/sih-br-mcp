@@ -87,8 +87,13 @@ arranque e reconstruída com `[r]`).
   disco inclusos.
 - `basic` (1/4 vCPU, 1 GiB, 4 GB) ligado 24 h ≈ 720 GiB-h/mês ≈ US$ 6 além do
   incluso; com `sleepAfter = 1h` e uso esporádico, perto de zero.
-- Disco **efêmero**: ao dormir, o cache de cubos some; a próxima chamada paga
-  cold start (1–3 s) + download do ano pedido do canal público (R2, egresso 0).
+- Disco **efêmero**: ao dormir, o cache some. Desde 10/09/2026 a imagem já traz
+  o que TODA chamada precisa e é pequeno — população (13 MB), os 34 sidecars de
+  proveniência (9,7 MB, de onde saem as notas de era) e os dois resumos
+  pré-agregados (845 KB) —, então a série longa responde a frio sem baixar
+  nada: 2,5 s contra 13,4 s antes, medido na imagem sob os limites do `basic`.
+  O que sobra para o canal são os cubos por ano (23–72 MB) e os estratos do
+  grão B, pedidos sob demanda (R2, egresso 0). Ver `../scripts/warm-cache.mjs`.
 
 ## Testes
 

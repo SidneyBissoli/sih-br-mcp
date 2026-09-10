@@ -248,3 +248,38 @@ com a população, resolveria.
   opções na terceira posição, como no SDK antigo, não dá erro: elas são
   ignoradas em silêncio e o teto de 60 s continua valendo. Isso fez as três
   primeiras medições saírem como "Request timed out".
+
+### Sobra atacada na mesma sessão: sidecars pré-assados na imagem
+
+A F3 deixou escrito que os sidecars, e não o grão A, eram quase todo o custo
+frio: **9,7 dos 10,3 MB**. Eles são o oposto do cubo — pequenos, muitos, SEMPRE
+pedidos (é deles que saem as notas de era) e baixados em SÉRIE. O disco do
+container é efêmero, então isso se pagava a cada nascimento de instância.
+
+`scripts/warm-cache.mjs` passa a assar na imagem, ao lado da população que já
+ia: os **34 sidecars** (9,7 MB) e os **dois resumos** (ICSAP 276 KB, grão A das
+causas 569 KB). Fora ficam os cubos por ano e os estratos do grão B: são por
+ano e sob demanda, e assar 34 de cada engorda a imagem para servir uma pergunta
+que talvez não venha.
+
+Medido na IMAGEM DE VERDADE, com os limites do `basic`
+(`docker run --memory=1g --cpus=0.25`), container recém-nascido nos dois casos,
+mesma pergunta de 34 anos:
+
+| Imagem | Tempo | Baixou |
+| --- | --- | --- |
+| Sem os sidecars assados | 13,4 s | 10,3 MB |
+| Com os sidecars assados | **2,5 s** | **nada** |
+
+Mesma resposta nos dois: 420.103.883 internações e as 4 notas, incluindo a de
+fronteira da moeda. A imagem passou de 571 MB para 584 MB.
+
+**Assar exigiu endurecer a conferência antes.** `ensureSidecars()` aceitava o
+arquivo já presente comparando só o TAMANHO. Enquanto o sidecar era sempre
+baixado do canal isso não incomodava; pré-assado, um sidecar reescrito por um
+rebuild que por acaso mantivesse o mesmo número de bytes viveria na imagem até
+o próximo build, e a resposta sairia com a nota de era do build anterior —
+número certo, ressalva errada. Agora confere por **SHA-256**, memoizado por
+processo e por arquivo (o hash de 10 MB se paga uma vez por instância, não a
+cada chamada). O `cache:selftest` ganhou o caso: um sidecar pré-assado com o
+MESMO tamanho e conteúdo diferente tem de ser recusado e rebaixado do canal.

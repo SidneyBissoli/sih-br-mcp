@@ -327,6 +327,18 @@ export async function ensureYears(dir: string, years: number[] | null, log?: (ms
  * aviso que o torna interpretável. 0,3 MB por ano; nunca lança (a ressalva é
  * importante, mas derrubar a consulta por causa dela seria pior).
  */
+/**
+ * Sidecars já conferidos por SHA-256 NESTE processo: caminho → sha do
+ * manifesto que bateu. Existe por causa dos sidecars PRÉ-ASSADOS na imagem do
+ * container: um arquivo que veio da imagem precisa ser conferido pelo hash (o
+ * tamanho sozinho não distingue um sidecar reescrito por um rebuild que por
+ * acaso manteve o mesmo número de bytes), mas conferir os 34 a cada chamada
+ * seria pagar o hash de 10 MB toda vez. Confere uma vez por processo e por
+ * arquivo; se o manifesto passar a assinar outro sha, o memo não bate e o
+ * arquivo é rebaixado.
+ */
+const sidecarVerificado = new Map<string, string>();
+
 export async function ensureSidecars(dir: string, years: number[] | null, log: (msg: string) => void = () => {}): Promise<{ downloaded: number[] }> {
   const downloaded: number[] = [];
   try {
@@ -338,8 +350,13 @@ export async function ensureSidecars(dir: string, years: number[] | null, log: (
       const f = manifest.years[String(y)]?.files?.provenance;
       if (!f) continue;
       const path = join(dir, f.name);
-      if (existsSync(path) && statSync(path).size === f.size_bytes) continue;
+      if (sidecarVerificado.get(path) === f.sha256) continue;
+      if (existsSync(path) && statSync(path).size === f.size_bytes && (await sha256File(path)) === f.sha256) {
+        sidecarVerificado.set(path, f.sha256);
+        continue;
+      }
       await downloadVerified(f, dir, 60 * 1000);
+      sidecarVerificado.set(path, f.sha256);
       log(`  ${f.name} ok (SHA-256 confere)`);
       downloaded.push(y);
     }
