@@ -110,12 +110,16 @@ export function cubesCacheDir(): string {
   return process.env.SIH_CACHE_DIR ? resolve(process.env.SIH_CACHE_DIR) : join(homedir(), ".cache", "sih-br-mcp", "cubos");
 }
 
-/** Anos com os três cubos presentes numa pasta. */
-export function yearsPresent(dir: string): number[] {
+/**
+ * Anos com os cubos dos TIPOS pedidos presentes numa pasta (0.14.1: o cache é
+ * ciente do tipo — quem consulta séries não precisa dos cubos de causas).
+ * Sem `kinds`, os três, como sempre.
+ */
+export function yearsPresent(dir: string, kinds: CubeKind[] = CUBE_KINDS): number[] {
   if (!existsSync(dir)) return [];
   const years = new Set<number>();
   for (let y = 1990; y <= 2100; y++) {
-    if (CUBE_KINDS.every((k) => existsSync(join(dir, `sih_${k}_${y}.parquet`)))) years.add(y);
+    if (kinds.every((k) => existsSync(join(dir, `sih_${k}_${y}.parquet`)))) years.add(y);
   }
   return [...years].sort((a, b) => a - b);
 }
@@ -232,17 +236,27 @@ async function downloadVerified(file: CubesManifestFile, dir: string, timeoutMs:
   renameSync(tmp, final);
 }
 
-const inFlight = new Map<number, Promise<void>>();
+const inFlight = new Map<string, Promise<void>>();
 
-/** Um ano completo = três cubos + sidecar, todos verificados. Idempotente e sem corrida. */
-export function ensureYear(dir: string, year: number, manifest: CubesManifest, log: (msg: string) => void = () => {}): Promise<void> {
+/**
+ * Um ano = os cubos dos TIPOS pedidos + sidecar, todos verificados (0.14.1:
+ * ciente do tipo — a série anual de 34 anos precisa de ~1,3 MB de cubos de
+ * séries, não dos 1,6 GB dos três tipos; medido em 09/09/2026, a pergunta do
+ * usuário no chat levou 4 min só baixando cubo que a consulta não lê).
+ * Idempotente e sem corrida; sem `kinds`, os três, como sempre.
+ */
+export function ensureYear(dir: string, year: number, manifest: CubesManifest, log: (msg: string) => void = () => {}, kinds: CubeKind[] = CUBE_KINDS): Promise<void> {
   const entry = manifest.years[String(year)];
   if (!entry) return Promise.reject(new Error(`ano ${year} não está no canal ${CUBES_BASE_URL}`));
-  const have = inFlight.get(year);
+  const key = `${year}|${[...kinds].sort().join(",")}`;
+  const have = inFlight.get(key);
   if (have) return have;
   const p = (async () => {
     mkdirSync(dir, { recursive: true });
-    const wanted: CubesManifestFile[] = [...CUBE_KINDS.map((k) => entry.files[k]), entry.files.provenance].filter(Boolean);
+    const wanted: CubesManifestFile[] = [...kinds.map((k) => entry.files[k]), entry.files.provenance].filter(Boolean);
+    // Arquivos do ano em SEQUÊNCIA (contrato do selftest: ano recusado não
+    // deixa rastro novo); o paralelismo fica no LOTE de anos do ensureYears —
+    // é lá que a latência por requisição dominava (68 arquivos ≈ 68 s).
     for (const f of wanted) {
       const path = join(dir, f.name);
       if (existsSync(path) && statSync(path).size === f.size_bytes) continue;
@@ -251,8 +265,8 @@ export function ensureYear(dir: string, year: number, manifest: CubesManifest, l
       await downloadVerified(f, dir, 10 * 60 * 1000);
       log(`  ${f.name} ok em ${((Date.now() - t0) / 1000).toFixed(1)} s (SHA-256 confere)`);
     }
-  })().finally(() => inFlight.delete(year));
-  inFlight.set(year, p);
+  })().finally(() => inFlight.delete(key));
+  inFlight.set(key, p);
   return p;
 }
 
@@ -261,20 +275,27 @@ export function ensureYear(dir: string, year: number, manifest: CubesManifest, l
  * sem ano explícito varre a série inteira). Devolve o que baixou e o que não
  * existe no canal. Falha de rede num ano lança — o handler decide a mensagem.
  */
-export async function ensureYears(dir: string, years: number[] | null, log?: (msg: string) => void): Promise<{ downloaded: number[]; unavailable: number[] }> {
+export async function ensureYears(dir: string, years: number[] | null, log?: (msg: string) => void, kinds: CubeKind[] = CUBE_KINDS): Promise<{ downloaded: number[]; unavailable: number[] }> {
   const { manifest } = await loadCubesManifest();
   if (!manifest) throw new Error(`manifesto dos cubos indisponível (${CUBES_BASE_URL}manifest.json) e sem cópia local`);
-  const present = new Set(yearsPresent(dir));
+  const present = new Set(yearsPresent(dir, kinds));
   const wanted = (years ?? publishedYears(manifest)).filter((y) => !present.has(y));
   const downloaded: number[] = [];
   const unavailable: number[] = [];
-  for (const y of wanted) {
+  const fila = wanted.filter((y) => {
     if (!manifest.years[String(y)]) {
       unavailable.push(y);
-      continue;
+      return false;
     }
-    await ensureYear(dir, y, manifest, log);
-    downloaded.push(y);
+    return true;
+  });
+  // Anos em lotes de 4 (0.14.1): latência por requisição domina o custo dos
+  // arquivos pequenos; a primeira falha aborta o lote e propaga (como antes).
+  const LOTE = 4;
+  for (let i = 0; i < fila.length; i += LOTE) {
+    const lote = fila.slice(i, i + LOTE);
+    await Promise.all(lote.map((y) => ensureYear(dir, y, manifest, log, kinds)));
+    downloaded.push(...lote);
   }
   return { downloaded, unavailable };
 }
@@ -436,11 +457,19 @@ export function yearsFromArgs(args: unknown): number[] | null {
   };
   push(a.year);
   push(a.years);
-  if (typeof a.start_year === "number" && typeof a.end_year === "number" && a.end_year >= a.start_year) {
-    for (let y = a.start_year; y <= a.end_year; y++) out.add(y);
-  } else {
-    push(a.start_year);
-    push(a.end_year);
+  // Dois pares de nomes no schema das ferramentas: start_year/end_year
+  // (compare_icsap_trends) e year_start/year_end (get_hospitalization_trends).
+  // Sem o segundo par (até a 0.14.0), o trends caía no "sem ano" e baixava a
+  // SÉRIE INTEIRA do canal — parte dos 4 min da pergunta do chat em 09/09.
+  for (const [ini, fim] of [["start_year", "end_year"], ["year_start", "year_end"]] as const) {
+    const a0 = a[ini];
+    const a1 = a[fim];
+    if (typeof a0 === "number" && typeof a1 === "number" && a1 >= a0) {
+      for (let y = a0; y <= a1; y++) out.add(y);
+    } else {
+      push(a0);
+      push(a1);
+    }
   }
   return out.size ? [...out].sort((x, y) => x - y) : null;
 }

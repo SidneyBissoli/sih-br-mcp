@@ -16,6 +16,7 @@ import {
   queryCausas,
   queryIcsap,
   querySeries,
+  querySeriesYearly,
   rankCsapGroups,
   calculateIcsapIndicators,
   hasPopulationData,
@@ -48,6 +49,7 @@ import {
 } from "./provenance.js";
 import { getFreshness } from "./freshness.js";
 import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cubesCacheDir, ensureEstratosYears, ensureIcsapSummary, ensurePopulation, ensureYears, icsapSummaryState, loadCubesManifest, populationPresent, publishedYears, yearsFromArgs } from "./cache.js";
+import type { CubeKind } from "./cache.js";
 
 // =============================================================================
 // DEFINIÇÃO DAS FERRAMENTAS
@@ -896,21 +898,19 @@ async function handleGetHospitalizationTrends(args: GetTrendsArgs) {
         ...notesField(yearsFromArgs(args) ?? undefined, { month: true }),
       };
     } else {
-      // Agregação anual do cubo de causas
+      // Agregação anual do CUBO DE SÉRIES (0.14.1; era do de causas): mesma
+      // resposta, provada grupo a grupo — e o cache baixa ~40 KB/ano em vez
+      // dos três cubos (~70 MB/ano). Foi a pergunta "total do Brasil desde
+      // 1992" levando 4 min no chat que expôs a diferença.
       const years = [];
       for (let y = year_start; y <= year_end; y++) {
         years.push(y);
       }
 
-      const data = await queryCausas({
-        filters: {
-          years,
-          ufs: uf,
-          cidChapters: cid_chapter ? [cid_chapter] : undefined,
-        },
-        groupBy: ["year"],
-        metrics: ["n", "deaths"],
-        orderBy: "year",
+      const data = await querySeriesYearly({
+        years,
+        ufs: uf,
+        cidChapters: cid_chapter ? [cid_chapter] : undefined,
       });
 
       return {
@@ -1624,6 +1624,23 @@ const TOOLS_WITHOUT_CUBES = new Set(["list_csap_groups", "list_cid_chapters", "g
 const ICSAP_AGG_TOOLS = new Set(["get_icsap", "get_icsap_indicators", "compare_icsap_trends"]);
 
 /**
+ * Qual TIPO de cubo cada ferramenta lê (0.14.1): o cache baixa só esse tipo.
+ * A pergunta "total do Brasil desde 1992" no chat levou 4 min porque o cache
+ * baixava os três cubos de cada ano (~1,6 GB) para uma consulta que lê ~1,3 MB
+ * de séries. Ferramenta fora do mapa (futura) baixa os três, como antes.
+ */
+const TOOL_CUBES: Record<string, CubeKind[]> = {
+  get_hospitalizations: ["causas"],
+  get_hospitalization_trends: ["series"],
+  compare_regions: ["causas"],
+  get_hospitalization_rates: ["causas"],
+  get_icsap: ["icsap"],
+  get_icsap_indicators: ["icsap"],
+  compare_icsap_trends: ["icsap"],
+  rank_csap_groups: ["icsap"],
+};
+
+/**
  * A chamada cabe INTEIRA no resumo? (Espelho conservador de resumoEligible,
  * sobre os argumentos crus.) Quando sim, o callTool nem baixa os cubos dos
  * anos pedidos — é isto que faz a série de 34 anos funcionar A FRIO com
@@ -1710,7 +1727,7 @@ export async function callTool(name: string, args: ToolArgs): Promise<CallToolRe
     // Chamada coberta pelo resumo pula o bloco: nada de cubo para responder.
     if (CUBES_CACHE_ENABLED && !TOOLS_WITHOUT_CUBES.has(name) && !resumoCoversCall(name, args)) {
       const dir = getDataDirectory();
-      const { downloaded, unavailable } = await ensureYears(dir, yearsFromArgs(args), (m) => console.error(`[cache] ${m}`));
+      const { downloaded, unavailable } = await ensureYears(dir, yearsFromArgs(args), (m) => console.error(`[cache] ${m}`), TOOL_CUBES[name]);
       if (downloaded.length) console.error(`[cache] ano(s) ${downloaded.join(", ")} baixado(s) para ${dir}`);
       // Estratos dos anos pedidos (PLAN-005): denominador fino sem DISTINCT.
       if (ICSAP_AGG_TOOLS.has(name)) {
