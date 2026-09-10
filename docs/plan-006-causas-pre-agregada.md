@@ -147,3 +147,58 @@ Categoria CID de 3 dígitos, mês, município, idade ano a ano e grupo CSAP no
 resumo (o grão C mede o custo de tentar). Encadeamento automático entre o
 rebuild dos cubos e a derivação, que segue manual com regra escrita. Instância
 maior, já descartada pelo usuário.
+
+## 8. Execução (2026-09-10, 42ª sessão)
+
+### O que o canal ganhou (F1)
+
+Produtor em `healthbr-data/scripts/pipeline/sih-cubos/`: `derive-causas-summary.mjs`
+novo, `summary-lib.mjs` com a máquina de download compartilhada pelos dois
+derivadores, `cubes-manifest.mjs` com `--causas-summary` e o bloco
+`causas_summary` (manifesto **1.4.0**), `publish-cubes.sh` com a 6ª posição, e
+`build-sih-summary.yml` derivando e publicando os DOIS resumos no mesmo run.
+
+Medido nos 34 anos do canal, e não no `data/` local — que estava defasado (só
+1992–1997 tinham `cid_revision` e `exclusion`), o que explica a diferença para
+as estimativas do §2:
+
+| Grão | Linhas | Tamanho | §2 estimava |
+| --- | --- | --- | --- |
+| A (um arquivo, 1992–2025) | 47.790 | **0,57 MB** | 34.733 / 0,4 MB |
+| B (34 arquivos) | ~2,6 M | **18,8 MB** | 8,3 M / 55,9 MB |
+| cubos de causas | — | 1.252,9 MB | 1.253 MB |
+
+Derivação inteira, incluindo baixar 1,25 GB do canal: **48,7 s**.
+
+Velocidade da pergunta do §2, com uma thread: **0,01 s pelo grão A contra
+5,50 s pelos cubos**, resposta idêntica. (O §2 media 12,62 s no `data/` local;
+os cubos do canal, em ZSTD, leem mais rápido.)
+
+### O que o servidor ganhou (F2)
+
+`causasRoute()` em `src/db/duckdb.ts` decide a fonte e `causasSummaryCoversCall()`
+em `src/tools.ts` é o espelho no nível dos ARGUMENTOS — é lá que se decide
+baixar 1,25 GB ou 569 KB. `seriesFitsCall` tem precedência: o cubo leve de
+séries (1,2 MB) é mais barato que o grão A. `cache.ts` ganhou
+`ensureCausasSummary` e `ensureCausasEstratosYears`, e a máquina de frescor
+passou a ser uma só, parametrizada pelo bloco e pelo cubo-fonte.
+
+A regra da idade não precisou de código novo: `aggregatedAgeGroupsFor()`, que já
+decidia o recorte da taxa antes de 2000, decide também esta rota.
+
+Prova: `scripts/causas-routing-equivalence.mjs` (`npm run equiv:causas`, no CI)
+exige resposta byte a byte igual à do cubo em **24 cenários** e confere **21
+decisões de rota** — verde na fixture de 2023 e nos **34 anos do canal**. Golden
+inalterado exceto a versão na citação.
+
+**O risco do §6 virou código.** O grão A torna trivial somar 1992 com 2025 sem
+perceber que um está em cruzeiro: a nota de era passa a dizer explicitamente
+quando a consulta CRUZA a fronteira da moeda e que o `total_value` do `summary`
+não tem significado econômico. Medido: 1992 + 2025 devolve R$ 18,5 trilhões.
+
+### Cobertura real
+
+As 13 chamadas do golden nas três ferramentas de causas roteiam como o §2
+previa. O que continua no cubo, por desenho: mês, categoria CID de 3 dígitos,
+grupo CSAP, idade simples agrupada e recorte etário que não alinha nas faixas
+quinquenais.

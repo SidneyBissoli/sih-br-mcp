@@ -11,7 +11,7 @@
 // @duckdb/node-bindings): zero node-gyp, zero tar. A API é toda de Promise;
 // o funil `query()` continua sendo o único ponto que toca a conexão.
 import { DuckDBConnection, DuckDBInstance } from "@duckdb/node-api";
-import { icsapSummaryState } from "../cache.js";
+import { causasSummaryState, icsapSummaryState } from "../cache.js";
 import { fileURLToPath } from "url";
 import { dirname, join, resolve } from "path";
 import { existsSync, mkdirSync, readdirSync } from "fs";
@@ -387,8 +387,110 @@ function buildOrderBy(orderBy: string | undefined, groupBy: string[]): string {
   return parts.length > 0 ? ` ORDER BY ${parts.join(", ")}` : "";
 }
 
+// ---------------------------------------------------------------------------
+// Roteamento do cubo de CAUSAS para os pré-agregados (PLAN-006).
+//
+// O cubo de causas pesa 1.253 MB nos 34 anos e responde as perguntas mais
+// naturais do servidor. O canal publica dois atalhos derivados dele, com as
+// MESMAS colunas (chaves e medidas com os mesmos nomes), o que deixa esta
+// função trocar só a FONTE e manter filtros, agrupamento e ordenação:
+//
+// - GRÃO A, `sih_causas_resumo.parquet` (569 KB, todos os anos):
+//   year × uf × cid_chapter × cid_revision × is_csap × exclusion.
+// - GRÃO B, `sih_causas_estratos_YYYY.parquet` (~0,55 MB/ano): o grão A mais
+//   sex, age_group (faixa quinquenal) e race.
+//
+// Conservador por desenho: o que não cabe EXATAMENTE cai no cubo, com o número
+// certo. O risco de errar a rota é desempenho, nunca número errado.
+export const CAUSAS_RESUMO_GROUP_COLS = new Set(["year", "uf", "cid_chapter", "cid_revision", "is_csap", "exclusion"]);
+// O grão B acrescenta sexo e raça. `age` NÃO entra: o grão B só tem a idade em
+// FAIXA, então agrupar por idade simples continua sendo pergunta para o cubo.
+export const CAUSAS_ESTRATOS_GROUP_COLS = new Set([...CAUSAS_RESUMO_GROUP_COLS, "sex", "race"]);
+
+export type CausasPath = "resumo" | "estratos" | "cubo";
+
+/** Rota tomada pela ÚLTIMA consulta de causas — diagnóstico (equivalência, logs). */
+let lastCausasPath: CausasPath = "cubo";
+export function lastCausasQueryPath(): CausasPath {
+  return lastCausasPath;
+}
+
+/** Anos que uma consulta de causas toca: os do filtro ou, sem filtro, todos os disponíveis. */
+function causasYears(filters: CausasFilters | undefined): number[] {
+  const years = filters?.years && filters.years.length > 0 ? filters.years : getAvailableYears();
+  return [...new Set(years)].sort((a, b) => a - b);
+}
+
+interface CausasRoute {
+  kind: CausasPath;
+  /** Primeiro argumento do read_parquet, já como expressão SQL ('glob' ou ['a','b']). */
+  source: string;
+  filters: CausasFilters;
+  /** Condições que não saem de buildWhereClause (hoje só a faixa etária). */
+  extraWhere: string[];
+}
+
+function sqlPath(p: string): string {
+  return `'${p.replace(/\\/g, "/")}'`;
+}
+
+function causasRoute(
+  options: { filters?: CausasFilters; groupBy?: string[] },
+  years: number[],
+): CausasRoute {
+  const f = options.filters ?? {};
+  const groupBy = options.groupBy ?? [];
+  const cubo: CausasRoute = { kind: "cubo", source: sqlPath(getParquetPattern("causas")), filters: f, extraWhere: [] };
+
+  // Fora do grão dos DOIS pré-agregados (PLAN-006 §7, medido e rejeitado): mês,
+  // categoria CID de 3 dígitos e grupo CSAP. `municipality_code` nem existe no
+  // cubo de causas, mas o filtro é aceito pela interface — trate como fino.
+  if (f.months?.length) return cubo;
+  if (f.cidGroups?.length) return cubo;
+  if (f.csapGroups?.length) return cubo;
+  if (f.municipalityCodes?.length) return cubo;
+  if (groupBy.some((g) => g === "month" || g === "cid_group" || g === "csap_group")) return cubo;
+  if (years.length === 0) return cubo;
+
+  const state = causasSummaryState();
+  const pedeDemografia =
+    f.sex !== undefined ||
+    (f.races?.length ?? 0) > 0 ||
+    f.ageMin !== undefined ||
+    f.ageMax !== undefined ||
+    groupBy.includes("sex") ||
+    groupBy.includes("race");
+
+  // 1. Grão A: nenhum recorte demográfico e tudo dentro do grão grosso.
+  if (!pedeDemografia) {
+    if (!state.resumoPath) return cubo;
+    if (groupBy.some((g) => !CAUSAS_RESUMO_GROUP_COLS.has(g))) return cubo;
+    if (!years.every((y) => state.freshYears.has(y))) return cubo;
+    return { kind: "resumo", source: sqlPath(state.resumoPath), filters: { ...f, years }, extraWhere: [] };
+  }
+
+  // 2. Grão B: sexo, raça e idade — esta em FAIXA QUINQUENAL, o que só atende
+  // recorte alinhado às faixas (múltiplo de 5 até terminar em 4 ou 9, ou 80 e
+  // mais). É a MESMA regra que a taxa antes de 2000 já impõe, e a mesma função
+  // decide as duas — um recorte que não alinha não é recusado, cai no cubo e
+  // sai com o número exato.
+  if (groupBy.some((g) => !CAUSAS_ESTRATOS_GROUP_COLS.has(g))) return cubo;
+  const paths = years.map((y) => state.estratosPaths.get(y));
+  if (paths.some((p) => p === undefined)) return cubo;
+  if (!years.every((y) => state.freshYears.has(y))) return cubo;
+  const ageGroups = aggregatedAgeGroupsFor(f.ageMin, f.ageMax);
+  if (ageGroups === null) return cubo;
+  return {
+    kind: "estratos",
+    source: `[${paths.map((p) => sqlPath(p as string)).join(", ")}]`,
+    filters: { ...f, years, ageMin: undefined, ageMax: undefined },
+    extraWhere: ageGroups ? [`age_group IN (${ageGroups.map((g) => `'${g}'`).join(", ")})`] : [],
+  };
+}
+
 /**
- * Query no cubo de causas com agregação flexível
+ * Query no cubo de causas com agregação flexível — servida pelo pré-agregado
+ * quando o recorte cabe nele (PLAN-006), e pelo cubo quando não cabe.
  */
 export async function queryCausas<T = Record<string, unknown>>(options: {
   filters?: CausasFilters;
@@ -397,10 +499,14 @@ export async function queryCausas<T = Record<string, unknown>>(options: {
   orderBy?: string;
   limit?: number;
 }): Promise<T[]> {
-  const pattern = getParquetPattern("causas");
-  const whereClause = buildWhereClause(options.filters || {});
+  const route = causasRoute(options, causasYears(options.filters));
+  lastCausasPath = route.kind;
+  const conds = [buildWhereClause(route.filters), ...route.extraWhere].filter((c) => c && c !== "1=1");
+  const whereClause = conds.length > 0 ? conds.join(" AND ") : "1=1";
 
-  // Métricas a calcular
+  // Métricas a calcular. No pré-agregado as colunas têm os MESMOS nomes e as
+  // somas são aditivas, então a expressão não muda: `value` já chega como
+  // DECIMAL(18,2) e o CAST vira identidade.
   const metricsMap: Record<string, string> = {
     n: "SUM(n) as n_hospitalizations",
     days: "SUM(days) as total_days",
@@ -418,7 +524,7 @@ export async function queryCausas<T = Record<string, unknown>>(options: {
 
   let sql = `
     SELECT ${selectGroups}${selectMetrics}
-    FROM read_parquet('${pattern}', union_by_name = true)
+    FROM read_parquet(${route.source}, union_by_name = true)
     WHERE ${whereClause}
     ${groupByClause}
   `;

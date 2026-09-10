@@ -32,6 +32,18 @@ em `healthbr-data/scripts/pipeline/sih-cubos/README.md` e no card
 - **Frescor:** `src/freshness.ts` compara o sidecar com `sih/rd/manifest-summary.json`
   e avisa quando um cubo está atrás do espelho; quem reconstrói é o produtor
   (`rebuild-sih-cubes.yml`, toda terça e após cada manutenção do espelho).
+- **Pré-agregados** (blocos `icsap_summary`, desde a 0.14.0, e `causas_summary`,
+  desde a 0.15.0): atalhos DERIVADOS dos cubos publicados, no mesmo canal. O da
+  ICSAP é um resumo de 276 KB mais os estratos por ano; o de causas é o **grão A**
+  (`sih_causas_resumo.parquet`, 569 KB com os 34 anos: `year × uf × cid_chapter ×
+  cid_revision × is_csap × exclusion` com internações, dias, valor e óbitos) mais o
+  **grão B** por ano, que acrescenta sexo, faixa etária quinquenal e raça. Uma
+  chamada que cabe no grão responde sem baixar cubo nenhum — "internações e gasto
+  por ano desde 1992" custa 569 KB em vez de 1,25 GB. O roteamento é conservador:
+  o que não cabe (mês, categoria CID de 3 dígitos, grupo CSAP, idade fora das
+  faixas quinquenais) cai no cubo e sai exato. Cada ano só usa o pré-agregado se o
+  `derived_from` do manifesto ainda bater com o SHA-256 do cubo publicado; rebuild
+  sem nova derivação devolve aquele ano ao caminho lento, nunca ao número errado.
 - **Tabelas de classificação** (`src/data/`): cópias do contrato publicado em
   `sih/cubos/tables/`; `npm run tables:check` confere o SHA-256 contra o manifesto
   (roda no CI). Nunca edite aqui — a fonte é o produtor.
@@ -98,6 +110,9 @@ npm run golden:tools        # 12 ferramentas byte a byte × baselines/golden-too
 npm run freshness:selftest  # frescor offline sobre um trecho versionado do manifesto
 npm run cache:selftest      # cache local (download + SHA-256) contra um canal falso
 npm run tables:check        # tabelas de src/data × manifesto do canal
+npm run equiv:summary       # pré-agregados da ICSAP × caminho clássico, byte a byte
+npm run equiv:series        # roteamento para o cubo leve de séries
+npm run equiv:causas        # pré-agregados de causas (grão A e B) × cubo, byte a byte
 ```
 
 O CI (`.github/workflows/ci.yml`) roda tudo isso em Node 22 e 24. A fixture
@@ -110,7 +125,8 @@ O CI (`.github/workflows/ci.yml`) roda tudo isso em Node 22 e 24. A fixture
 - `docs/analise-001` (janela de competências), `analise-002` (era CID-9, 1992–1997),
   `analise-003` (lista ICSAP em CID-9 derivada), `plan-002` (DuckDB Node Neo),
   `plan-003` (rebuild automático, hoje no healthbr-data), `plan-004` (servidor remoto
-  HTTPS para o claude.ai), `tool-specifications.md`.
+  HTTPS para o claude.ai), `plan-005` (série pré-agregada da ICSAP), `plan-006`
+  (cubo de causas pré-agregado), `tool-specifications.md`.
 
 ## Licença
 
