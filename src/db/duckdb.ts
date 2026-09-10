@@ -12,6 +12,7 @@
 // o funil `query()` continua sendo o único ponto que toca a conexão.
 import { DuckDBConnection, DuckDBInstance } from "@duckdb/node-api";
 import { causasSummaryState, icsapSummaryState } from "../cache.js";
+import type { CubeKind } from "../cache.js";
 import { fileURLToPath } from "url";
 import { dirname, join, resolve } from "path";
 import { existsSync, mkdirSync, readdirSync } from "fs";
@@ -98,12 +99,53 @@ export function getDataDirectory(): string {
   );
 }
 
+/** Caminho com barra normal — o DuckDB não aceita a barra invertida do Windows. */
+const posixPath = (p: string): string => p.split("\\").join("/");
+
+/** Nome de cubo de ANO, e só ele: `sih_<tipo>_<AAAA>.parquet`. */
+const cubeYearFile = (cube: CubeKind) => new RegExp(`^sih_${cube}_(\\d{4})\\.parquet$`);
+
 /**
- * Retorna o padrão glob para um tipo de cubo
+ * Os arquivos de CUBO de um tipo, listados por nome exato e em ordem de ano.
+ *
+ * NÃO use glob aqui. O glob `sih_<tipo>_*.parquet` também casa com os
+ * PRÉ-AGREGADOS que o servidor baixa para a MESMA pasta —
+ * `sih_causas_resumo.parquet`, `sih_causas_estratos_2023.parquet` e os
+ * equivalentes da ICSAP. Com `union_by_name` eles entravam na leitura do cubo
+ * e somavam junto, em silêncio: em 10/09/2026, `get_hospitalizations` agrupado
+ * por ano e mês devolveu 26.648.728 internações em 2023, exatamente o DOBRO
+ * das 13.324.364 reais, numa linha de mês NULO que não deveria existir (os
+ * pré-agregados não têm a coluna `month`). Anos com resumo E estratos em disco
+ * dobravam; os demais ganhavam uma linha fantasma com o total do ano.
+ *
+ * O defeito era invisível para as provas porque todas elas derivam os
+ * pré-agregados numa pasta TEMPORÁRIA: os dois lados nunca conviviam na mesma
+ * pasta durante um teste. É o que `scripts/cube-isolation.mjs` passa a exigir.
  */
-export function getParquetPattern(cube: "causas" | "series" | "icsap"): string {
+export function cubeFiles(cube: CubeKind): string[] {
   const dir = getDataDirectory();
-  return join(dir, `sih_${cube}_*.parquet`).replace(/\\/g, "/");
+  const re = cubeYearFile(cube);
+  return readdirSync(dir)
+    .filter((f) => re.test(f))
+    .sort()
+    .map((f) => join(dir, f).replace(/\\/g, "/"));
+}
+
+/**
+ * Primeiro argumento de `read_parquet` para um tipo de cubo: a LISTA dos
+ * arquivos de ano (`['a','b']`), não um glob. Lança quando não há cubo daquele
+ * tipo na pasta — antes, o glob vazio dava "No files found", e o glob com só
+ * um pré-agregado dava algo pior: respondia lendo o arquivo errado.
+ */
+export function cubeSource(cube: CubeKind): string {
+  const files = cubeFiles(cube);
+  if (files.length === 0) {
+    throw new Error(
+      `Nenhum cubo de ${cube} em ${getDataDirectory()} (esperado sih_${cube}_<ano>.parquet). ` +
+        `Com o cache ligado, os anos são baixados do canal antes da consulta; com SIH_CUBES_CACHE=off, a pasta precisa tê-los.`,
+    );
+  }
+  return `[${files.map((f) => `'${f}'`).join(", ")}]`;
 }
 
 /**
@@ -440,17 +482,21 @@ function causasRoute(
 ): CausasRoute {
   const f = options.filters ?? {};
   const groupBy = options.groupBy ?? [];
-  const cubo: CausasRoute = { kind: "cubo", source: sqlPath(getParquetPattern("causas")), filters: f, extraWhere: [] };
+  // PREGUIÇOSO de propósito: `cubeSource` lança quando não há cubo de ano na
+  // pasta, e uma chamada COBERTA pelo grão A responde justamente sem cubo
+  // nenhum em disco — montar a rota de fallback na entrada derrubaria o
+  // caminho rápido que é o motivo do PLAN-006 existir.
+  const cubo = (): CausasRoute => ({ kind: "cubo", source: cubeSource("causas"), filters: f, extraWhere: [] });
 
   // Fora do grão dos DOIS pré-agregados (PLAN-006 §7, medido e rejeitado): mês,
   // categoria CID de 3 dígitos e grupo CSAP. `municipality_code` nem existe no
   // cubo de causas, mas o filtro é aceito pela interface — trate como fino.
-  if (f.months?.length) return cubo;
-  if (f.cidGroups?.length) return cubo;
-  if (f.csapGroups?.length) return cubo;
-  if (f.municipalityCodes?.length) return cubo;
-  if (groupBy.some((g) => g === "month" || g === "cid_group" || g === "csap_group")) return cubo;
-  if (years.length === 0) return cubo;
+  if (f.months?.length) return cubo();
+  if (f.cidGroups?.length) return cubo();
+  if (f.csapGroups?.length) return cubo();
+  if (f.municipalityCodes?.length) return cubo();
+  if (groupBy.some((g) => g === "month" || g === "cid_group" || g === "csap_group")) return cubo();
+  if (years.length === 0) return cubo();
 
   const state = causasSummaryState();
   const pedeDemografia =
@@ -463,9 +509,9 @@ function causasRoute(
 
   // 1. Grão A: nenhum recorte demográfico e tudo dentro do grão grosso.
   if (!pedeDemografia) {
-    if (!state.resumoPath) return cubo;
-    if (groupBy.some((g) => !CAUSAS_RESUMO_GROUP_COLS.has(g))) return cubo;
-    if (!years.every((y) => state.freshYears.has(y))) return cubo;
+    if (!state.resumoPath) return cubo();
+    if (groupBy.some((g) => !CAUSAS_RESUMO_GROUP_COLS.has(g))) return cubo();
+    if (!years.every((y) => state.freshYears.has(y))) return cubo();
     return { kind: "resumo", source: sqlPath(state.resumoPath), filters: { ...f, years }, extraWhere: [] };
   }
 
@@ -474,12 +520,12 @@ function causasRoute(
   // mais). É a MESMA regra que a taxa antes de 2000 já impõe, e a mesma função
   // decide as duas — um recorte que não alinha não é recusado, cai no cubo e
   // sai com o número exato.
-  if (groupBy.some((g) => !CAUSAS_ESTRATOS_GROUP_COLS.has(g))) return cubo;
+  if (groupBy.some((g) => !CAUSAS_ESTRATOS_GROUP_COLS.has(g))) return cubo();
   const paths = years.map((y) => state.estratosPaths.get(y));
-  if (paths.some((p) => p === undefined)) return cubo;
-  if (!years.every((y) => state.freshYears.has(y))) return cubo;
+  if (paths.some((p) => p === undefined)) return cubo();
+  if (!years.every((y) => state.freshYears.has(y))) return cubo();
   const ageGroups = aggregatedAgeGroupsFor(f.ageMin, f.ageMax);
-  if (ageGroups === null) return cubo;
+  if (ageGroups === null) return cubo();
   return {
     kind: "estratos",
     source: `[${paths.map((p) => sqlPath(p as string)).join(", ")}]`,
@@ -782,7 +828,7 @@ function icsapAggregateSql(options: {
    */
   estratosPath?: string;
 }): string {
-  const pattern = getParquetPattern("icsap");
+  const pattern = cubeSource("icsap");
   const { csapGroups, ...strataFilters } = options.filters ?? {};
   const whereStrata = `${buildWhereClause(strataFilters)} ${universeCondition(options.universe)}`;
   const csapCond =
@@ -809,7 +855,7 @@ function icsapAggregateSql(options: {
     : `estratos AS (SELECT DISTINCT ${strataKeys.join(", ")}, n_total FROM linhas)`;
   let sql = `
     WITH linhas AS (
-      SELECT * FROM read_parquet('${pattern}', union_by_name = true)
+      SELECT * FROM read_parquet(${pattern}, union_by_name = true)
       WHERE ${whereStrata}
     ),
     ${estratosCte},
@@ -845,7 +891,7 @@ export async function querySeries<T = Record<string, unknown>>(options: {
   groupBy?: string[];
   orderBy?: string;
 }): Promise<T[]> {
-  const pattern = getParquetPattern("series");
+  const pattern = cubeSource("series");
   const conditions: string[] = [];
 
   if (options.filters) {
@@ -873,7 +919,7 @@ export async function querySeries<T = Record<string, unknown>>(options: {
 
   let sql = `
     SELECT ${selectGroups}SUM(n) as n, SUM(deaths) as deaths
-    FROM read_parquet('${pattern}', union_by_name = true)
+    FROM read_parquet(${pattern}, union_by_name = true)
     WHERE ${whereClause}
     ${groupByClause}
   `;
@@ -900,7 +946,7 @@ export async function querySeriesYearly<T = Record<string, unknown>>(options: {
   orderBy?: string;
   limit?: number;
 }): Promise<T[]> {
-  const pattern = getParquetPattern("series");
+  const pattern = cubeSource("series");
   // Lista de anos VAZIA = sem filtro de ano (como no cubo de causas), e não
   // `IN ()`, que é erro de sintaxe.
   const conditions =
@@ -921,7 +967,7 @@ export async function querySeriesYearly<T = Record<string, unknown>>(options: {
   const selectGroups = groupBy.length > 0 ? groupBy.map((g) => `${expr(g)} AS ${g}`).join(", ") + ", " : "";
   let sql = `
     SELECT ${selectGroups}SUM(n) as n_hospitalizations, SUM(deaths) as deaths
-    FROM read_parquet('${pattern}', union_by_name = true)
+    FROM read_parquet(${pattern}, union_by_name = true)
     WHERE ${conditions.join(" AND ")}
     ${groupBy.length > 0 ? `GROUP BY ${groupBy.map(expr).join(", ")}` : ""}
   `;
@@ -946,7 +992,7 @@ export async function rankCsapGroups<T = Record<string, unknown>>(options: {
   limit?: number;
   universe?: IcsapUniverse;
 }): Promise<T[]> {
-  const pattern = getParquetPattern("icsap");
+  const pattern = cubeSource("icsap");
   const whereClause = `${buildWhereClause(options.filters || {})} ${universeCondition(options.universe)}`;
   const metric = options.metric || "n";
 
@@ -965,7 +1011,7 @@ export async function rankCsapGroups<T = Record<string, unknown>>(options: {
       SUM(days) as total_days,
       SUM(CAST(value AS DECIMAL(18,2))) as total_value,
       SUM(deaths) as deaths
-    FROM read_parquet('${pattern}', union_by_name = true)
+    FROM read_parquet(${pattern}, union_by_name = true)
     WHERE ${whereClause} AND csap_group IS NOT NULL
     GROUP BY csap_group
     ORDER BY metric_value DESC, csap_group
