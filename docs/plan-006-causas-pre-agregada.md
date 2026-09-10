@@ -202,3 +202,49 @@ As 13 chamadas do golden nas três ferramentas de causas roteiam como o §2
 previa. O que continua no cubo, por desenho: mês, categoria CID de 3 dígitos,
 grupo CSAP, idade simples agrupada e recorte etário que não alinha nas faixas
 quinquenais.
+
+### O que a borda ganhou (F3)
+
+Canal publicado pelo `build-sih-summary.yml` (run 34476056654): manifesto
+**1.4.0**, os dois blocos frescos nos 34 anos, com os MESMOS números da
+derivação local (47.790 linhas e 569.486 bytes no grão A; 420.103.883
+internações conferidas contra os cubos). O resumo da ICSAP saiu com 276.347
+bytes, o mesmo tamanho de antes da refatoração.
+
+Servidor **0.15.0** no ar em `sih.sidneybissoli.com`. Medido com
+`scripts/borda-plan-006.mjs` contra o endpoint público, antes e depois:
+
+| Pergunta | 0.14.2 | 0.15.0 |
+| --- | --- | --- |
+| Internações, dias, gasto e óbitos por ano, 34 anos | 54,7 s | 0,6 s |
+| A mesma pergunta, repetida | 55,3 s | 0,3 s |
+| Principais capítulos CID na série longa | 58,7 s | 0,2 s |
+| Sexo × ano, 2023–2025 | 8,4 s | 1,4 s |
+| Taxa por 100 mil, 60 anos e mais, por UF (2024) | 1,6 s | 0,5 s |
+| Recorte 0–17, que NÃO alinha nas faixas | 1,8 s | 8,4 s |
+
+**Cada número devolvido é idêntico nas duas versões** — internações, dias,
+valor e óbitos, ano a ano. É a comparação que o §5 pedia antes de fechar.
+
+A última linha é a única que piorou, e não é regressão: esse recorte cai no
+cubo por desenho, e a 0.14.2 já tinha o cubo de 2024 em disco enquanto a
+0.15.0 partiu de disco novo. É o custo de baixar o cubo, o mesmo de sempre.
+
+**Custo frio, medido sem depender do estado da instância**
+(`scripts/frio-local.mjs`, cache vazio contra o canal real, uma thread): a
+série de 34 anos custa **9,7 s** e baixa **10,3 MB** — o grão A (569 KB) e os
+34 sidecars (9,7 MB), nenhum cubo. Abaixo do alvo de 10 s do §5. A repetição
+custa 0,0 s. Sobra evidente para uma próxima volta: os sidecars, e não o grão
+A, são hoje quase todo o custo frio; pré-assá-los na imagem, como já se faz
+com a população, resolveria.
+
+**Armadilhas desta fase.**
+- A primeira sonda depois do deploy travou 900 s e depois devolveu "container
+  is not running" em todas as chamadas: era a TROCA DE IMAGEM, não o caminho
+  novo. Provado pelo `frio-local.mjs` (9,7 s, 10,3 MB, nenhum cubo baixado) e
+  pela borda logo depois (34 anos em 0,6 s). Medir logo após um `wrangler
+  deploy` mede o rollout.
+- No cliente MCP 2.0.0 a assinatura é `callTool(params, options)`. Passar as
+  opções na terceira posição, como no SDK antigo, não dá erro: elas são
+  ignoradas em silêncio e o teto de 60 s continua valendo. Isso fez as três
+  primeiras medições saírem como "Request timed out".
