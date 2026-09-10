@@ -15,8 +15,19 @@ try {
     { name: tool, arguments: JSON.parse(argsJson) },
     { timeout: Number(secs) * 1000, maxTotalTimeout: Number(secs) * 1000 },
   );
-  const b = JSON.parse(r.content[0].text);
+  const bruto = r.content[0].text;
   const dt = ((Date.now() - t0) / 1000).toFixed(1);
+  // Nem todo servidor responde JSON: o ibge devolve markdown. Assumir JSON
+  // fazia a sonda "falhar" numa chamada que tinha dado certo.
+  let b;
+  try {
+    b = JSON.parse(bruto);
+  } catch {
+    console.log(`${dt} s | resposta em TEXTO (${bruto.length} chars)`);
+    console.log("  " + bruto.slice(0, 300).split("\n").join("\n  "));
+    await client.close();
+    process.exit(0);
+  }
   const linhas = b.data ?? b.ranking ?? b.series ?? [];
   console.log(`${dt} s | ${Array.isArray(linhas) ? linhas.length : "?"} linhas | erro: ${b.error ?? "nenhum"}`);
   console.log(`  summary: ${JSON.stringify(b.summary ?? null)}`);
