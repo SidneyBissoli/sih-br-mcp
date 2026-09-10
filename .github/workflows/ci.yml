@@ -109,6 +109,13 @@ jobs:
       # cubo de causas nos recortes que cabem, e recusa dos que não cabem.
       - run: npm run equiv:series
 
+      # Equivalência dos pré-agregados do cubo de causas (PLAN-006): grão A e
+      # grão B derivados da fixture têm de devolver byte a byte o que o cubo
+      # devolve, e o que não cabe no grão (mês, categoria CID de 3 dígitos,
+      # grupo CSAP, idade fora das faixas) tem de cair no cubo — inclusive no
+      # nível dos ARGUMENTOS, que é onde se decide baixar 1,25 GB ou 569 KB.
+      - run: npm run equiv:causas
+
       # Frescor dos cubos (sih:cubos-frescor (a), 05/09/2026): o servidor
       # sonda o manifesto do espelho na inicialização e marca a proveniência
       # quando um cubo está atrás. Smoke e golden rodam com a sonda DESLIGADA

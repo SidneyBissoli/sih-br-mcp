@@ -1,6 +1,6 @@
 {
   "name": "sih-br-mcp",
-  "version": "0.14.2",
+  "version": "0.15.0",
   "mcpName": "io.github.SidneyBissoli/sih-br-mcp",
   "description": "Servidor MCP do SIH/SUS (internações hospitalares do Brasil, 1992–2025): causas, séries mensais, ICSAP e taxas por 100 mil, lendo cubos agregados e denominadores populacionais do canal público healthbr-data sob demanda",
   "repository": {
@@ -27,6 +27,7 @@
     "golden:tools:baseline": "node scripts/golden-tools.mjs --fixtures tests/fixtures/sih --write baselines/golden-tools.json",
     "equiv:summary": "node scripts/summary-equivalence.mjs --fixtures tests/fixtures/sih",
     "equiv:series": "node scripts/series-routing-equivalence.mjs --fixtures tests/fixtures/sih",
+    "equiv:causas": "node scripts/causas-routing-equivalence.mjs --fixtures tests/fixtures/sih",
     "freshness": "node scripts/freshness-check.mjs",
     "freshness:selftest": "node scripts/freshness-check.mjs --fixtures tests/fixtures/sih --selftest",
     "freshness:excerpt": "node scripts/freshness-check.mjs --fixtures tests/fixtures/sih --write-excerpt",

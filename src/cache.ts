@@ -71,15 +71,23 @@ export interface CubesManifestPopulation {
 }
 
 /**
- * >= 1.3.0 (2026-09-09, sih:serie-pre-agregada / PLAN-005): os PRÉ-AGREGADOS
- * da ICSAP derivados dos cubos publicados (healthbr-data
- * derive-icsap-summary.mjs): sih_icsap_resumo.parquet (universe × year × uf ×
- * cid_revision × csap_group + n_total do denominador, TODOS os anos, ~276 KB),
- * sih_icsap_estratos_YYYY.parquet (o DISTINCT dos estratos gravado por ano) e
- * o sidecar. `derived_from` traz o sha256 do cubo-fonte POR ANO — o contrato
- * de frescor: ano cujo cubo publicado não é o da derivação NÃO usa o resumo.
+ * Bloco de PRÉ-AGREGADOS do manifesto. Os dois blocos têm a MESMA forma —
+ * um resumo (um arquivo, todos os anos), estratos por ano e um sidecar — e o
+ * MESMO contrato de frescor: `derived_from` traz o sha256 do cubo-fonte POR
+ * ANO, e ano cujo cubo publicado não é o da derivação NÃO usa o pré-agregado.
+ *
+ * - `icsap_summary` (>= 1.3.0, 2026-09-09, sih:serie-pre-agregada / PLAN-005),
+ *   derivado dos cubos sih_icsap_*: sih_icsap_resumo.parquet (universe × year ×
+ *   uf × cid_revision × csap_group + n_total do denominador, ~276 KB) e
+ *   sih_icsap_estratos_YYYY.parquet (o DISTINCT dos estratos gravado por ano).
+ * - `causas_summary` (>= 1.4.0, 2026-09-10, sih:causas-pre-agregada /
+ *   PLAN-006), derivado dos cubos sih_causas_* (1.253 MB nos 34 anos):
+ *   sih_causas_resumo.parquet — GRÃO A, year × uf × cid_chapter ×
+ *   cid_revision × is_csap × exclusion com n, days, value e deaths, 569 KB nos
+ *   34 anos — e sih_causas_estratos_YYYY.parquet — GRÃO B, o grão A mais sex,
+ *   age_group (faixa quinquenal de pop_uf_agregado) e race.
  */
-export interface CubesManifestIcsapSummary {
+export interface CubesManifestSummary {
   built_at: string | null;
   builder_version: string | null;
   derived_from: Record<string, string>;
@@ -89,6 +97,9 @@ export interface CubesManifestIcsapSummary {
     provenance: CubesManifestFile;
   };
 }
+
+/** Nome histórico do bloco da ICSAP, mantido para quem já importava. */
+export type CubesManifestIcsapSummary = CubesManifestSummary;
 
 export interface CubesManifest {
   manifest_version: string;
@@ -102,7 +113,9 @@ export interface CubesManifest {
   /** >= 1.2.0: denominadores populacionais; null/ausente em manifesto anterior à população (não é erro do canal). */
   population?: CubesManifestPopulation | null;
   /** >= 1.3.0: pré-agregados da ICSAP; null/ausente em manifesto anterior (não é erro do canal). */
-  icsap_summary?: CubesManifestIcsapSummary | null;
+  icsap_summary?: CubesManifestSummary | null;
+  /** >= 1.4.0: pré-agregados do cubo de causas; null/ausente em manifesto anterior. */
+  causas_summary?: CubesManifestSummary | null;
   years: Record<string, CubesManifestYear>;
 }
 
@@ -374,12 +387,14 @@ export function ensurePopulation(dir: string, log: (msg: string) => void = () =>
 }
 
 // ---------------------------------------------------------------------------
-// Pré-agregados da ICSAP (PLAN-005). O estado abaixo é o que o roteamento em
-// src/db/duckdb.ts consulta de forma SÍNCRONA: caminhos dos arquivos já
-// baixados E frescos. Com o cache desligado (fixture, golden) fica vazio e
-// toda consulta cai no caminho clássico — o baseline não muda.
+// Pré-agregados: ICSAP (PLAN-005) e cubo de causas (PLAN-006). O estado abaixo
+// é o que o roteamento em src/db/duckdb.ts consulta de forma SÍNCRONA:
+// caminhos dos arquivos já baixados E frescos. Com o cache desligado (fixture,
+// golden) fica vazio e toda consulta cai no caminho clássico — o baseline não
+// muda. Os dois blocos têm a mesma forma e o mesmo contrato, então a máquina
+// abaixo é UMA só, parametrizada pelo bloco e pelo cubo-fonte.
 
-export interface IcsapSummaryState {
+export interface SummaryState {
   /** Caminho do resumo baixado, ou null. */
   resumoPath: string | null;
   /** Anos cujo derived_from bate com o cubo publicado (o resumo VALE para eles). */
@@ -388,45 +403,79 @@ export interface IcsapSummaryState {
   estratosPaths: Map<number, string>;
 }
 
-const summaryState: IcsapSummaryState = { resumoPath: null, freshYears: new Set(), estratosPaths: new Map() };
+/** Nome histórico do estado da ICSAP, mantido para quem já importava. */
+export type IcsapSummaryState = SummaryState;
 
-export function icsapSummaryState(): IcsapSummaryState {
-  return summaryState;
+const emptyState = (): SummaryState => ({ resumoPath: null, freshYears: new Set(), estratosPaths: new Map() });
+
+const icsapState: SummaryState = emptyState();
+const causasState: SummaryState = emptyState();
+
+export function icsapSummaryState(): SummaryState {
+  return icsapState;
+}
+
+export function causasSummaryState(): SummaryState {
+  return causasState;
+}
+
+function setStateForTests(target: SummaryState, state: Partial<SummaryState> | null): void {
+  target.resumoPath = state?.resumoPath ?? null;
+  target.freshYears = state?.freshYears ?? new Set();
+  target.estratosPaths = state?.estratosPaths ?? new Map();
 }
 
 /** Só para testes: injeta o estado dos pré-agregados (equivalência). */
-export function setIcsapSummaryStateForTests(state: Partial<IcsapSummaryState> | null): void {
-  summaryState.resumoPath = state?.resumoPath ?? null;
-  summaryState.freshYears = state?.freshYears ?? new Set();
-  summaryState.estratosPaths = state?.estratosPaths ?? new Map();
+export function setIcsapSummaryStateForTests(state: Partial<SummaryState> | null): void {
+  setStateForTests(icsapState, state);
 }
 
-/** Anos frescos do bloco: derived_from[y] = sha256 do cubo ICSAP publicado. */
-function summaryFreshYears(manifest: CubesManifest): Set<number> {
-  const block = manifest.icsap_summary;
+export function setCausasSummaryStateForTests(state: Partial<SummaryState> | null): void {
+  setStateForTests(causasState, state);
+}
+
+/**
+ * Qual bloco do manifesto e qual cubo-fonte cada pré-agregado usa. É a única
+ * coisa que difere entre os dois: o contrato de frescor, o download e o
+ * registro do estado são idênticos.
+ */
+interface SummaryKind {
+  block: (m: CubesManifest) => CubesManifestSummary | null | undefined;
+  cube: CubeKind;
+  state: SummaryState;
+  rotulo: string;
+}
+
+const ICSAP_SUMMARY: SummaryKind = { block: (m) => m.icsap_summary, cube: "icsap", state: icsapState, rotulo: "resumo ICSAP" };
+const CAUSAS_SUMMARY: SummaryKind = { block: (m) => m.causas_summary, cube: "causas", state: causasState, rotulo: "resumo de causas" };
+
+/** Anos frescos do bloco: derived_from[y] = sha256 do cubo-fonte publicado. */
+function summaryFreshYears(manifest: CubesManifest, kind: SummaryKind): Set<number> {
+  const block = kind.block(manifest);
   const fresh = new Set<number>();
   if (!block?.derived_from) return fresh;
   for (const [y, entry] of Object.entries(manifest.years)) {
-    if (block.derived_from[y] && block.derived_from[y] === entry.files?.icsap?.sha256) fresh.add(Number(y));
+    if (block.derived_from[y] && block.derived_from[y] === entry.files?.[kind.cube]?.sha256) fresh.add(Number(y));
   }
   return fresh;
 }
 
-let summaryInFlight: Promise<{ available: boolean }> | null = null;
+const summaryInFlight = new Map<CubeKind, Promise<{ available: boolean }>>();
 
 /**
- * Garante o RESUMO da ICSAP na pasta (um arquivo, todos os anos) e registra o
- * estado para o roteamento. Baixa de novo quando o sha do manifesto mudou
- * (rebuild + nova derivação). `available = false` quando o manifesto não tem o
- * bloco (anterior a 1.3.0) — não é erro. Nunca lança: resumo é otimização, e
+ * Garante o RESUMO na pasta (um arquivo, todos os anos) e registra o estado
+ * para o roteamento. Baixa de novo quando o sha do manifesto mudou (rebuild +
+ * nova derivação). `available = false` quando o manifesto não tem o bloco
+ * (anterior a 1.3.0 / 1.4.0) — não é erro. Nunca lança: resumo é otimização, e
  * falha de rede aqui só deixa a consulta no caminho clássico.
  */
-export function ensureIcsapSummary(dir: string, log: (msg: string) => void = () => {}): Promise<{ available: boolean }> {
-  if (summaryInFlight) return summaryInFlight;
+function ensureSummary(kind: SummaryKind, dir: string, log: (msg: string) => void): Promise<{ available: boolean }> {
+  const running = summaryInFlight.get(kind.cube);
+  if (running) return running;
   const p = (async () => {
     try {
       const { manifest } = await loadCubesManifest();
-      const block = manifest?.icsap_summary;
+      const block = manifest ? kind.block(manifest) : null;
       if (!manifest || !block?.files?.resumo) return { available: false };
       mkdirSync(dir, { recursive: true });
       const f = block.files.resumo;
@@ -438,30 +487,31 @@ export function ensureIcsapSummary(dir: string, log: (msg: string) => void = () 
         await downloadVerified(f, dir, 60 * 1000);
         log(`  ${f.name} ok em ${((Date.now() - t0) / 1000).toFixed(1)} s (SHA-256 confere)`);
       }
-      summaryState.resumoPath = path;
-      summaryState.freshYears = summaryFreshYears(manifest);
+      kind.state.resumoPath = path;
+      kind.state.freshYears = summaryFreshYears(manifest, kind);
       return { available: true };
     } catch (err) {
-      log(`resumo ICSAP indisponível (${err instanceof Error ? err.message : String(err)}) — consultas seguem pelo caminho clássico`);
+      log(`${kind.rotulo} indisponível (${err instanceof Error ? err.message : String(err)}) — consultas seguem pelo caminho clássico`);
       return { available: false };
     }
   })().finally(() => {
-    summaryInFlight = null;
+    summaryInFlight.delete(kind.cube);
   });
-  summaryInFlight = p;
+  summaryInFlight.set(kind.cube, p);
   return p;
 }
 
 /**
- * Garante os ESTRATOS dos anos pedidos (denominador dos filtros finos).
+ * Garante os ESTRATOS dos anos pedidos (na ICSAP, o denominador dos filtros
+ * finos; nas causas, o grão B com sexo, faixa etária e raça).
  * Baixa só anos FRESCOS (derived_from = cubo publicado); nunca lança.
  */
-export async function ensureEstratosYears(dir: string, years: number[] | null, log: (msg: string) => void = () => {}): Promise<void> {
+async function ensureEstratos(kind: SummaryKind, dir: string, years: number[] | null, log: (msg: string) => void): Promise<void> {
   try {
     const { manifest } = await loadCubesManifest();
-    const block = manifest?.icsap_summary;
+    const block = manifest ? kind.block(manifest) : null;
     if (!manifest || !block?.files?.estratos) return;
-    const fresh = summaryFreshYears(manifest);
+    const fresh = summaryFreshYears(manifest, kind);
     const wanted = (years ?? publishedYears(manifest)).filter((y) => fresh.has(y));
     mkdirSync(dir, { recursive: true });
     for (const y of wanted) {
@@ -474,11 +524,27 @@ export async function ensureEstratosYears(dir: string, years: number[] | null, l
         await downloadVerified(f, dir, 5 * 60 * 1000);
         log(`  ${f.name} ok em ${((Date.now() - t0) / 1000).toFixed(1)} s (SHA-256 confere)`);
       }
-      summaryState.estratosPaths.set(y, path);
+      kind.state.estratosPaths.set(y, path);
     }
   } catch (err) {
-    log(`estratos ICSAP indisponíveis (${err instanceof Error ? err.message : String(err)}) — denominador segue pelo DISTINCT`);
+    log(`estratos do ${kind.rotulo} indisponíveis (${err instanceof Error ? err.message : String(err)}) — a consulta segue pelo cubo`);
   }
+}
+
+export function ensureIcsapSummary(dir: string, log: (msg: string) => void = () => {}): Promise<{ available: boolean }> {
+  return ensureSummary(ICSAP_SUMMARY, dir, log);
+}
+
+export function ensureCausasSummary(dir: string, log: (msg: string) => void = () => {}): Promise<{ available: boolean }> {
+  return ensureSummary(CAUSAS_SUMMARY, dir, log);
+}
+
+export function ensureEstratosYears(dir: string, years: number[] | null, log: (msg: string) => void = () => {}): Promise<void> {
+  return ensureEstratos(ICSAP_SUMMARY, dir, years, log);
+}
+
+export function ensureCausasEstratosYears(dir: string, years: number[] | null, log: (msg: string) => void = () => {}): Promise<void> {
+  return ensureEstratos(CAUSAS_SUMMARY, dir, years, log);
 }
 
 /** Anos que uma chamada de ferramenta pede, lidos dos argumentos; null = não diz. */

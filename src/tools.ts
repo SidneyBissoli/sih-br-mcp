@@ -18,6 +18,8 @@ import {
   querySeries,
   querySeriesYearly,
   SERIES_GROUP_COLS,
+  CAUSAS_RESUMO_GROUP_COLS,
+  CAUSAS_ESTRATOS_GROUP_COLS,
   rankCsapGroups,
   calculateIcsapIndicators,
   hasPopulationData,
@@ -50,7 +52,7 @@ import {
   type EraAspects,
 } from "./provenance.js";
 import { getFreshness } from "./freshness.js";
-import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cubesCacheDir, ensureEstratosYears, ensureIcsapSummary, ensurePopulation, ensureSidecars, ensureYears, icsapSummaryState, loadCubesManifest, populationPresent, publishedYears, yearsFromArgs } from "./cache.js";
+import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, causasSummaryState, cubesCacheDir, ensureCausasEstratosYears, ensureCausasSummary, ensureEstratosYears, ensureIcsapSummary, ensurePopulation, ensureSidecars, ensureYears, icsapSummaryState, loadCubesManifest, populationPresent, publishedYears, yearsFromArgs } from "./cache.js";
 import type { CubeKind } from "./cache.js";
 
 // =============================================================================
@@ -845,7 +847,7 @@ async function handleGetHospitalizations(args: GetHospitalizationsArgs) {
       { n: 0, days: 0, value: 0, deaths: 0 }
     );
 
-    const raceN = args.race?.length || args.group_by?.includes("race") ? raceNotes(args.year, getAvailableYears()) : [];
+    const raceN = args.race?.length || args.group_by?.includes("race") ? raceNotes(args.year, causasYearsAvailable()) : [];
     return {
       data,
       ...notesField(args.year, { value: true, month: !!args.month?.length || !!args.group_by?.includes("month") }, raceN),
@@ -1245,8 +1247,10 @@ async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) 
   // Normaliza UFs para uppercase
   const normalizedUfs = args.uf?.map(u => u.toUpperCase());
 
-  // Verifica se os anos solicitados existem nos dados SIH
-  const availableYears = getAvailableYears();
+  // Verifica se os anos solicitados existem nos dados SIH: cubos locais MAIS
+  // os anos frescos do pré-agregado de causas (PLAN-006) — uma chamada coberta
+  // pelo grão A responde sem cubo nenhum no disco.
+  const availableYears = causasYearsAvailable();
   const requestedYears = args.year || availableYears;
   const validYears = requestedYears.filter(y => availableYears.includes(y));
 
@@ -1754,6 +1758,57 @@ function icsapYearsAvailable(): number[] {
   return [...set].sort((a, b) => a - b);
 }
 
+/** O mesmo para as ferramentas de CAUSAS (PLAN-006), pela mesma razão. */
+function causasYearsAvailable(): number[] {
+  const state = causasSummaryState();
+  const set = new Set(getAvailableYears());
+  if (state.resumoPath) for (const y of state.freshYears) set.add(y);
+  return [...set].sort((a, b) => a - b);
+}
+
+// Ferramentas que leem o cubo de CAUSAS (PLAN-006). `rank_csap_groups` e as de
+// ICSAP ficam de fora: leem o cubo ICSAP, que tem o resumo do PLAN-005.
+const CAUSAS_TOOLS = new Set(["get_hospitalizations", "compare_regions", "get_hospitalization_rates"]);
+
+/**
+ * A chamada cabe INTEIRA num pré-agregado de causas? (Espelho conservador de
+ * `causasRoute`, sobre os argumentos crus.) Quando sim, o callTool nem baixa os
+ * cubos dos anos pedidos — é isto que faz "internações e gasto por ano desde
+ * 1992" responder com 569 KB em vez de 1,25 GB.
+ *
+ * Devolve qual grão cobre, ou null. `seriesFitsCall` tem precedência: o cubo
+ * leve de séries (1,2 MB nos 34 anos) já é mais barato que o grão A.
+ */
+function causasSummaryCoversCall(name: string, args: unknown): "resumo" | "estratos" | null {
+  if (!CAUSAS_TOOLS.has(name)) return null;
+  if (seriesFitsCall(name, args)) return null;
+  const state = causasSummaryState();
+  if (!state.resumoPath) return null;
+  const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+  if (Array.isArray(a.month) && a.month.length > 0) return null;
+  if (a.municipality_code) return null;
+  const years = yearsFromArgs(args);
+  if (!years || years.length === 0) return null;
+  if (!years.every((y) => state.freshYears.has(y))) return null;
+
+  const groupBy = Array.isArray(a.group_by) ? a.group_by.map(String) : [];
+  const pedeDemografia =
+    a.sex !== undefined ||
+    a.age_min !== undefined ||
+    a.age_max !== undefined ||
+    (Array.isArray(a.race) && a.race.length > 0) ||
+    groupBy.includes("sex") ||
+    groupBy.includes("race");
+
+  if (!pedeDemografia) return groupBy.every((g) => CAUSAS_RESUMO_GROUP_COLS.has(g)) ? "resumo" : null;
+  if (!groupBy.every((g) => CAUSAS_ESTRATOS_GROUP_COLS.has(g))) return null;
+  if (aggregatedAgeGroupsFor(a.age_min as number | undefined, a.age_max as number | undefined) === null) return null;
+  return "estratos";
+}
+
+/** Só para a prova de equivalência (scripts/causas-routing-equivalence.mjs). */
+export const __causasSummaryCoversCallForTests = causasSummaryCoversCall;
+
 // Ferramentas que precisam do denominador populacional (0.12.0): garantem os
 // arquivos de população no cache local antes de rodar — chamada própria, fora
 // do `if` dos cubos, porque get_available_years está em TOOLS_WITHOUT_CUBES e
@@ -1803,6 +1858,26 @@ export async function callTool(name: string, args: ToolArgs): Promise<CallToolRe
       await ensureIcsapSummary(getDataDirectory(), (m) => console.error(`[cache] ${m}`));
     }
 
+    // Pré-agregados do cubo de CAUSAS (PLAN-006), pela mesma razão: o grão A
+    // (569 KB) chega antes da decisão de baixar 1,25 GB de cubos. Quando a
+    // chamada pede sexo, raça ou faixa etária alinhada, os estratos dos anos
+    // pedidos (~0,55 MB/ano) vêm junto — e só então a cobertura é confirmada:
+    // arquivo que não chegou não cobre chamada nenhuma.
+    let causasCoverage: "resumo" | "estratos" | null = null;
+    if (CUBES_CACHE_ENABLED && CAUSAS_TOOLS.has(name)) {
+      const dir = getDataDirectory();
+      await ensureCausasSummary(dir, (m) => console.error(`[cache] ${m}`));
+      causasCoverage = causasSummaryCoversCall(name, args);
+      if (causasCoverage === "estratos") {
+        const years = yearsFromArgs(args) ?? [];
+        await ensureCausasEstratosYears(dir, years, (m) => console.error(`[cache] ${m}`));
+        const paths = causasSummaryState().estratosPaths;
+        if (!years.every((y) => paths.has(y))) causasCoverage = null;
+      }
+    }
+    // Coberta por um pré-agregado = nenhum cubo precisa ir para o disco.
+    const semCubos = resumoCoversCall(name, args) || causasCoverage !== null;
+
     // Cache local dos cubos (src/cache.ts): ferramentas que leem cubo garantem
     // antes os anos pedidos — ou a série publicada inteira, quando a chamada
     // não diz ano. Só entra em ação quando a pasta de dados não tem cubos
@@ -1811,12 +1886,12 @@ export async function callTool(name: string, args: ToolArgs): Promise<CallToolRe
     // Chamada coberta pelo resumo não precisa de cubo, mas PRECISA do sidecar:
     // é dele que saem as notas de era (0.14.2). Sem isto, a série de 34 anos
     // respondia sem dizer que 1992–1997 usa lista CID-9 derivada e não oficial.
-    if (CUBES_CACHE_ENABLED && !TOOLS_WITHOUT_CUBES.has(name) && resumoCoversCall(name, args)) {
+    if (CUBES_CACHE_ENABLED && !TOOLS_WITHOUT_CUBES.has(name) && semCubos) {
       const { downloaded } = await ensureSidecars(getDataDirectory(), yearsFromArgs(args), (m) => console.error(`[cache] ${m}`));
       if (downloaded.length) resetSidecars();
     }
 
-    if (CUBES_CACHE_ENABLED && !TOOLS_WITHOUT_CUBES.has(name) && !resumoCoversCall(name, args)) {
+    if (CUBES_CACHE_ENABLED && !TOOLS_WITHOUT_CUBES.has(name) && !semCubos) {
       const dir = getDataDirectory();
       const { downloaded, unavailable } = await ensureYears(dir, yearsFromArgs(args), (m) => console.error(`[cache] ${m}`), cubesForCall(name, args));
       if (downloaded.length) {

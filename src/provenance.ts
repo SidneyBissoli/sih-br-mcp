@@ -297,6 +297,19 @@ export function eraNotes(years: number[] | undefined, loadedYears: number[], asp
       notes.push(
         `\`value\` em ${pr.join(", ")} é NOMINAL na moeda da competência de faturamento (Cr$ cruzeiro até 1993-06, CR$ cruzeiro real 1993-07..1994-06, R$ desde 1994-07; sidecar currency): não somar nem comparar entre moedas nem com anos posteriores.`,
       );
+      // A consulta CRUZA a fronteira da moeda. Isto ficou mais fácil de fazer
+      // sem perceber depois do PLAN-006: a série longa de gasto responde num
+      // pulo pelo grão A, e o `total_value` do `summary` é uma soma de
+      // cruzeiros com reais. O aviso acima diz "não somar"; este diz que o
+      // número já somado está na resposta e não significa nada.
+      const asked = years && years.length > 0 ? years : loadedYears;
+      const depois = [...new Set(asked.filter((y) => !pr.includes(y)))].sort((a, b) => a - b);
+      if (depois.length > 0) {
+        const faixa = depois.length === 1 ? String(depois[0]) : `${depois[0]}–${depois[depois.length - 1]}`;
+        notes.push(
+          `Esta consulta CRUZA a fronteira da moeda: ${pr.join(", ")} em cruzeiro ou cruzeiro real, ${faixa} em real. Qualquer soma de \`value\` que junte os dois lados — inclusive o \`total_value\` de \`summary\` — não tem significado econômico. Agrupe por \`year\` e leia cada lado na sua moeda, ou restrinja a consulta a um lado da fronteira.`,
+        );
+      }
     }
   }
   if (aspects.month) {
