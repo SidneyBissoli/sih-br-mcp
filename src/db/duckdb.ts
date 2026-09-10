@@ -110,17 +110,16 @@ export function getParquetPattern(cube: "causas" | "series" | "icsap"): string {
  * Lista os anos disponíveis nos dados
  */
 export function getAvailableYears(): number[] {
+  // União dos três tipos de cubo (0.14.1): com o cache ciente do tipo, um ano
+  // pode ter só o cubo que a ferramenta usou (ex.: séries). "Disponível" é ter
+  // QUALQUER um; quem precisa de um tipo específico garante-o no cache antes.
   const dir = getDataDirectory();
-  const files = readdirSync(dir).filter((f) => f.startsWith("sih_causas_"));
-  const years = files
-    .map((f) => {
-      const match = f.match(/sih_causas_(\d{4})\.parquet/);
-      return match ? parseInt(match[1]) : null;
-    })
-    .filter((y): y is number => y !== null)
-    .sort((a, b) => a - b);
-
-  return years;
+  const years = new Set<number>();
+  for (const f of readdirSync(dir)) {
+    const match = f.match(/^sih_(?:causas|series|icsap)_(\d{4})\.parquet$/);
+    if (match) years.add(parseInt(match[1]));
+  }
+  return [...years].sort((a, b) => a - b);
 }
 
 /**
@@ -775,6 +774,37 @@ export async function querySeries<T = Record<string, unknown>>(options: {
 
   sql += buildOrderBy(options.orderBy, groupBy);
 
+  return query<T>(sql);
+}
+
+/**
+ * Série ANUAL do cubo de séries (0.14.1): SUM(n) e SUM(deaths) por ano, com a
+ * MESMA forma de saída da agregação anual que antes vinha do cubo de causas
+ * (year, n_hospitalizations, deaths) — provado igual grupo a grupo
+ * (year × uf × cid_chapter, EXCEPT = 0 nos 34 anos e na fixture; o manifesto
+ * do canal já verifica SUM(n) causas = séries = records_in_cube por ano).
+ * O ganho é o cache: séries têm ~40 KB/ano contra ~70 MB/ano dos três cubos.
+ */
+export async function querySeriesYearly<T = Record<string, unknown>>(options: {
+  years: number[];
+  ufs?: string[];
+  cidChapters?: number[];
+}): Promise<T[]> {
+  const pattern = getParquetPattern("series");
+  const conditions = [`CAST(substr(year_month, 1, 4) AS INTEGER) IN (${options.years.join(", ")})`];
+  if (options.ufs && options.ufs.length > 0) {
+    conditions.push(`uf IN (${options.ufs.map((u) => `'${u}'`).join(", ")})`);
+  }
+  if (options.cidChapters && options.cidChapters.length > 0) {
+    conditions.push(`cid_chapter IN (${options.cidChapters.join(", ")})`);
+  }
+  const sql = `
+    SELECT CAST(substr(year_month, 1, 4) AS INTEGER) AS year, SUM(n) as n_hospitalizations, SUM(deaths) as deaths
+    FROM read_parquet('${pattern}', union_by_name = true)
+    WHERE ${conditions.join(" AND ")}
+    GROUP BY 1
+    ORDER BY year
+  `;
   return query<T>(sql);
 }
 

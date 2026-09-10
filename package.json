@@ -1,6 +1,6 @@
 {
   "name": "sih-br-mcp",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "mcpName": "io.github.SidneyBissoli/sih-br-mcp",
   "description": "Servidor MCP do SIH/SUS (internações hospitalares do Brasil, 1992–2025): causas, séries mensais, ICSAP e taxas por 100 mil, lendo cubos agregados e denominadores populacionais do canal público healthbr-data sob demanda",
   "repository": {

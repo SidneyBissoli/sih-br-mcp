@@ -103,6 +103,19 @@ ok(!existsSync(join(cache, "sih_causas_2002.parquet")) && !readdirSync(cache).so
 const r3 = await mod.ensureYears(cache, [1999]);
 ok(JSON.stringify(r3.unavailable) === "[1999]", "ano fora do canal vai para unavailable");
 
+// 4b. cache ciente do TIPO (0.14.1): pedir só séries baixa só séries + sidecar
+const cacheKinds = mkdtempSync(join(tmpdir(), "sih-cache-kinds-"));
+const rk = await mod.ensureYears(cacheKinds, [2001], undefined, ["series"]);
+ok(JSON.stringify(rk.downloaded) === "[2001]", "kinds=[series]: baixou 2001");
+ok(existsSync(join(cacheKinds, "sih_series_2001.parquet")) && existsSync(join(cacheKinds, "sih_provenance_2001.json")), "kinds=[series]: série + sidecar presentes");
+ok(!existsSync(join(cacheKinds, "sih_causas_2001.parquet")) && !existsSync(join(cacheKinds, "sih_icsap_2001.parquet")), "kinds=[series]: causas e icsap NÃO baixados");
+ok(JSON.stringify(mod.yearsPresent(cacheKinds, ["series"])) === "[2001]" && JSON.stringify(mod.yearsPresent(cacheKinds)) === "[]", "yearsPresent por tipo: série sim, os três não");
+const rk2 = await mod.ensureYears(cacheKinds, [2001], undefined, ["series"]);
+ok(rk2.downloaded.length === 0, "kinds=[series]: segunda chamada não baixa de novo");
+const rk3 = await mod.ensureYears(cacheKinds, [2001], undefined, ["icsap"]);
+ok(rk3.downloaded.length === 1 && existsSync(join(cacheKinds, "sih_icsap_2001.parquet")), "kinds=[icsap] depois: completa só o icsap");
+rmSync(cacheKinds, { recursive: true, force: true });
+
 // 5. população: baixa os quatro, idempotente, verifica SHA-256, e "sem bloco" = available=false
 ok(mod.populationPresent(cache) === false, "populationPresent: cache sem população");
 const p1 = await mod.ensurePopulation(cache);
