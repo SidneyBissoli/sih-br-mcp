@@ -789,24 +789,47 @@ export async function querySeriesYearly<T = Record<string, unknown>>(options: {
   years: number[];
   ufs?: string[];
   cidChapters?: number[];
+  /** Colunas de agrupamento entre year, uf, cid_chapter e cid_revision. Padrão: year. */
+  groupBy?: string[];
+  orderBy?: string;
+  limit?: number;
 }): Promise<T[]> {
   const pattern = getParquetPattern("series");
-  const conditions = [`CAST(substr(year_month, 1, 4) AS INTEGER) IN (${options.years.join(", ")})`];
+  // Lista de anos VAZIA = sem filtro de ano (como no cubo de causas), e não
+  // `IN ()`, que é erro de sintaxe.
+  const conditions =
+    options.years.length > 0 ? [`CAST(substr(year_month, 1, 4) AS INTEGER) IN (${options.years.join(", ")})`] : ["1=1"];
   if (options.ufs && options.ufs.length > 0) {
     conditions.push(`uf IN (${options.ufs.map((u) => `'${u}'`).join(", ")})`);
   }
   if (options.cidChapters && options.cidChapters.length > 0) {
     conditions.push(`cid_chapter IN (${options.cidChapters.join(", ")})`);
   }
-  const sql = `
-    SELECT CAST(substr(year_month, 1, 4) AS INTEGER) AS year, SUM(n) as n_hospitalizations, SUM(deaths) as deaths
+  // `groupBy` AUSENTE = por ano (o uso do trends). `groupBy` vazio EXPLÍCITO =
+  // sem agrupamento, uma linha só — é o contrato de queryCausas, que as taxas
+  // usam quando a chamada não pede recorte.
+  const groupBy = options.groupBy ?? ["year"];
+  // `year` no cubo de séries é derivado de year_month; as demais são colunas.
+  const expr = (g: string) =>
+    g === "year" ? "CAST(substr(year_month, 1, 4) AS INTEGER)" : g === "cid_revision" ? "COALESCE(cid_revision, 10)" : g;
+  const selectGroups = groupBy.length > 0 ? groupBy.map((g) => `${expr(g)} AS ${g}`).join(", ") + ", " : "";
+  let sql = `
+    SELECT ${selectGroups}SUM(n) as n_hospitalizations, SUM(deaths) as deaths
     FROM read_parquet('${pattern}', union_by_name = true)
     WHERE ${conditions.join(" AND ")}
-    GROUP BY 1
-    ORDER BY year
+    ${groupBy.length > 0 ? `GROUP BY ${groupBy.map(expr).join(", ")}` : ""}
   `;
+  sql += buildOrderBy(options.orderBy, groupBy);
+  if (options.limit) sql += ` LIMIT ${options.limit}`;
   return query<T>(sql);
 }
+
+/**
+ * Colunas e medidas que o cubo LEVE de séries (~1,2 MB nos 34 anos) cobre,
+ * contra o de causas (~1.253 MB). Quem consulta só isto não precisa do pesado
+ * — PLAN-006 §1 / decisão 33.
+ */
+export const SERIES_GROUP_COLS = new Set(["year", "uf", "cid_chapter", "cid_revision"]);
 
 /**
  * Query para ranking de grupos CSAP

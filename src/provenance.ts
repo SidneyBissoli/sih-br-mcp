@@ -135,7 +135,15 @@ let sidecars: SihSidecar[] | null = null;
 
 /** Lê os sidecars da pasta de cubos em uso (uma vez por processo). */
 export function loadSidecars(): SihSidecar[] {
-  if (sidecars) return sidecars;
+  // Memoiza só resultado NÃO VAZIO (0.14.2). Um array vazio é truthy: quando a
+  // primeira leitura acontecia com o cache ainda sem sidecar — o caso normal no
+  // container recém-acordado, e SEMPRE no caminho do resumo pré-agregado, que
+  // não baixa cubo nenhum — o vazio ficava memoizado para o resto do processo e
+  // as notas de era (CID-9 derivada e não oficial, `uf` do arquivo, moeda
+  // nominal, datas imputadas) sumiam da resposta em silêncio. Medido em
+  // 09/09/2026 contra produção: 1992–1997 devolveu ZERO notas de era. O risco
+  // estava escrito no PLAN-004 §6 e não tinha sido verificado.
+  if (sidecars && sidecars.length > 0) return sidecars;
   // Sem Parquet na pasta configurada (SIH_DATA_DIR só com sidecars — é assim
   // que o job `decide` do produtor, no healthbr-data, mede o frescor dos
   // cubos publicados), o sidecar ainda vale: é o registro de safra, e é dele
