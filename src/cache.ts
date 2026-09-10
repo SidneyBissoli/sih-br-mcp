@@ -117,6 +117,9 @@ export function cubesCacheDir(): string {
  */
 export function yearsPresent(dir: string, kinds: CubeKind[] = CUBE_KINDS): number[] {
   if (!existsSync(dir)) return [];
+  // `[].every()` é true: sem esta guarda, kinds vazio diria que TODO ano está
+  // presente e o cache nunca baixaria nada. Sidecar sozinho é ensureSidecars().
+  if (kinds.length === 0) return [];
   const years = new Set<number>();
   for (let y = 1990; y <= 2100; y++) {
     if (kinds.every((k) => existsSync(join(dir, `sih_${k}_${y}.parquet`)))) years.add(y);
@@ -298,6 +301,39 @@ export async function ensureYears(dir: string, years: number[] | null, log?: (ms
     downloaded.push(...lote);
   }
   return { downloaded, unavailable };
+}
+
+/**
+ * Garante SÓ os sidecars de proveniência dos anos pedidos (0.14.2).
+ *
+ * As notas de era — CID-9 derivada e não oficial em 1992–1997, `uf` do
+ * ARQUIVO e não de residência, `value` nominal em moeda pré-real, datas
+ * imputadas — saem do sidecar, não do cubo nem do manifesto. O caminho do
+ * resumo pré-agregado (PLAN-005) responde a série inteira sem baixar cubo
+ * algum, e com isso as ressalvas sumiam da resposta: o número certo sem o
+ * aviso que o torna interpretável. 0,3 MB por ano; nunca lança (a ressalva é
+ * importante, mas derrubar a consulta por causa dela seria pior).
+ */
+export async function ensureSidecars(dir: string, years: number[] | null, log: (msg: string) => void = () => {}): Promise<{ downloaded: number[] }> {
+  const downloaded: number[] = [];
+  try {
+    const { manifest } = await loadCubesManifest();
+    if (!manifest) return { downloaded };
+    const wanted = years ?? publishedYears(manifest);
+    mkdirSync(dir, { recursive: true });
+    for (const y of wanted) {
+      const f = manifest.years[String(y)]?.files?.provenance;
+      if (!f) continue;
+      const path = join(dir, f.name);
+      if (existsSync(path) && statSync(path).size === f.size_bytes) continue;
+      await downloadVerified(f, dir, 60 * 1000);
+      log(`  ${f.name} ok (SHA-256 confere)`);
+      downloaded.push(y);
+    }
+  } catch (err) {
+    log(`sidecars indisponíveis (${err instanceof Error ? err.message : String(err)}) — a resposta pode sair sem as notas de era`);
+  }
+  return { downloaded };
 }
 
 let populationInFlight: Promise<{ downloaded: string[]; available: boolean }> | null = null;

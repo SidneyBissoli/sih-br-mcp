@@ -17,6 +17,7 @@ import {
   queryIcsap,
   querySeries,
   querySeriesYearly,
+  SERIES_GROUP_COLS,
   rankCsapGroups,
   calculateIcsapIndicators,
   hasPopulationData,
@@ -38,6 +39,7 @@ import brazilRegions from "./data/brazil-regions.json" with { type: "json" };
 import {
   SERVER_VERSION,
   eraNotes,
+  resetSidecars,
   loadSidecars,
   provenanceFor,
   raceNotes,
@@ -48,7 +50,7 @@ import {
   type EraAspects,
 } from "./provenance.js";
 import { getFreshness } from "./freshness.js";
-import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cubesCacheDir, ensureEstratosYears, ensureIcsapSummary, ensurePopulation, ensureYears, icsapSummaryState, loadCubesManifest, populationPresent, publishedYears, yearsFromArgs } from "./cache.js";
+import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cubesCacheDir, ensureEstratosYears, ensureIcsapSummary, ensurePopulation, ensureSidecars, ensureYears, icsapSummaryState, loadCubesManifest, populationPresent, publishedYears, yearsFromArgs } from "./cache.js";
 import type { CubeKind } from "./cache.js";
 
 // =============================================================================
@@ -943,17 +945,28 @@ async function handleCompareRegions(args: CompareRegionsArgs) {
   try {
     const groupByField = compare_by === "region" ? "uf" : "uf"; // TODO: agregar por região
 
-    const data = await queryCausas({
-      filters: {
-        years: year,
-        cidChapters: cid_chapter ? [cid_chapter] : undefined,
-        isCsap: is_csap,
-      },
-      groupBy: [groupByField],
-      metrics: ["n", "deaths"],
-      orderBy: metric === "n" ? "n_hospitalizations DESC" : "deaths DESC",
-      limit,
-    });
+    // Cubo LEVE quando o recorte cabe nele (0.14.2): esta ferramenta devolve só
+    // contagem e óbitos, que as séries têm — 1,2 MB nos 34 anos contra 1.253 MB.
+    const orderBy = metric === "n" ? "n_hospitalizations DESC" : "deaths DESC";
+    const data = seriesFitsCall("compare_regions", args)
+      ? await querySeriesYearly({
+          years: year ?? [],
+          cidChapters: cid_chapter ? [cid_chapter] : undefined,
+          groupBy: [groupByField],
+          orderBy,
+          limit,
+        })
+      : await queryCausas({
+          filters: {
+            years: year,
+            cidChapters: cid_chapter ? [cid_chapter] : undefined,
+            isCsap: is_csap,
+          },
+          groupBy: [groupByField],
+          metrics: ["n", "deaths"],
+          orderBy,
+          limit,
+        });
 
     // Adiciona ranking
     const ranking = data.map((row: Record<string, unknown>, index: number) => ({
@@ -1274,12 +1287,22 @@ async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) 
     const hasUfGrouping = groupBy.includes("uf");
     const hasYearGrouping = groupBy.includes("year");
 
-    // Busca internações
-    const hospData = await queryCausas({
-      filters,
-      groupBy,
-      metrics: ["n", "deaths"],
-    });
+    // Busca internações — cubo LEVE quando o recorte cabe (0.14.2): a taxa usa
+    // contagem e óbitos, que as séries têm. É o caminho da pergunta longa
+    // ("taxa por 100 mil ao longo do tempo"), que no cubo de causas custava
+    // 1.253 MB de download.
+    const hospData = seriesFitsCall("get_hospitalization_rates", args)
+      ? await querySeriesYearly({
+          years: validYears,
+          ufs: normalizedUfs,
+          cidChapters: args.cid_chapter,
+          groupBy,
+        })
+      : await queryCausas({
+          filters,
+          groupBy,
+          metrics: ["n", "deaths"],
+        });
 
     // Filtra resultados nulos (quando GROUP BY vazio e sem dados, retorna {null, null})
     const validHospData = (hospData as Array<Record<string, unknown>>).filter(
@@ -1641,6 +1664,66 @@ const TOOL_CUBES: Record<string, CubeKind[]> = {
 };
 
 /**
+ * A chamada cabe no cubo LEVE de séries? (0.14.2, decisão 33.)
+ *
+ * `compare_regions` e `get_hospitalization_rates` devolvem só contagem e
+ * óbitos, que o cubo de séries tem por year/uf/cid_chapter/cid_revision —
+ * 1,2 MB nos 34 anos contra 1.253 MB do de causas. Cabe quando a chamada não
+ * pede nenhuma dimensão que só existe no pesado (sexo, idade, raça, município,
+ * categoria CID de 3 dígitos) nem o filtro de sensíveis. `get_hospitalizations`
+ * NÃO entra: devolve dias e valor, que o cubo leve não carrega.
+ */
+function seriesFitsCall(name: string, args: unknown): boolean {
+  const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+  const fino =
+    a.sex !== undefined ||
+    a.age_min !== undefined ||
+    a.age_max !== undefined ||
+    a.is_csap !== undefined ||
+    a.municipality_code !== undefined ||
+    (Array.isArray(a.race) && a.race.length > 0);
+  if (fino) return false;
+  const groupBy = Array.isArray(a.group_by) ? a.group_by.map(String) : [];
+  if (groupBy.some((g) => !SERIES_GROUP_COLS.has(g))) return false;
+  if (name === "compare_regions") return true;
+  if (name === "get_hospitalization_rates") return true;
+  return false;
+}
+
+/** Só para a prova de equivalência (scripts/series-routing-equivalence.mjs). */
+export const __seriesFitsCallForTests = seriesFitsCall;
+
+/** Tipos de cubo que ESTA chamada precisa: o roteamento decide, não só o nome. */
+function cubesForCall(name: string, args: unknown): CubeKind[] | undefined {
+  if (seriesFitsCall(name, args)) return ["series"];
+  return TOOL_CUBES[name];
+}
+
+/**
+ * Teto de linhas na resposta (0.14.2). Agrupar por município explode: medido
+ * em 09/09/2026, `get_icsap` por município × grupo CSAP em UM ano devolveu
+ * 83.769 linhas e 17,9 MB — resposta que nenhum cliente lê e que afoga o
+ * contexto de quem perguntou. A maior resposta do golden tem 5,3 KB, então o
+ * teto não encosta em nada que já existe. Não trunca em silêncio: corta pela
+ * ordenação que a consulta já tem (determinística) e diz quanto ficou de fora.
+ */
+const MAX_ROWS = 5000;
+
+function capData(result: unknown): unknown {
+  if (!result || typeof result !== "object") return result;
+  const r = result as Record<string, unknown>;
+  const data = r.data;
+  if (!Array.isArray(data) || data.length <= MAX_ROWS) return result;
+  const omitidas = data.length - MAX_ROWS;
+  const nota =
+    `Resposta TRUNCADA: ${data.length.toLocaleString("pt-BR")} linhas encontradas, ${MAX_ROWS.toLocaleString("pt-BR")} devolvidas ` +
+    `(as primeiras da ordenação da consulta; ${omitidas.toLocaleString("pt-BR")} ficaram de fora). Os totais em \`summary\`, quando presentes, ` +
+    `são do conjunto INTEIRO e não do trecho. Para ver o resto, estreite a pergunta (menos anos, uma UF, um grupo) ou use \`limit\` com ordenação explícita.`;
+  const notes = Array.isArray(r.notes) ? [nota, ...(r.notes as string[])] : [nota];
+  return { ...r, data: data.slice(0, MAX_ROWS), notes, truncated: { returned: MAX_ROWS, total: data.length } };
+}
+
+/**
  * A chamada cabe INTEIRA no resumo? (Espelho conservador de resumoEligible,
  * sobre os argumentos crus.) Quando sim, o callTool nem baixa os cubos dos
  * anos pedidos — é isto que faz a série de 34 anos funcionar A FRIO com
@@ -1725,10 +1808,22 @@ export async function callTool(name: string, args: ToolArgs): Promise<CallToolRe
     // não diz ano. Só entra em ação quando a pasta de dados não tem cubos
     // (instalação pelo npm); com data/ cheio, ensureYears() não baixa nada.
     // Chamada coberta pelo resumo pula o bloco: nada de cubo para responder.
+    // Chamada coberta pelo resumo não precisa de cubo, mas PRECISA do sidecar:
+    // é dele que saem as notas de era (0.14.2). Sem isto, a série de 34 anos
+    // respondia sem dizer que 1992–1997 usa lista CID-9 derivada e não oficial.
+    if (CUBES_CACHE_ENABLED && !TOOLS_WITHOUT_CUBES.has(name) && resumoCoversCall(name, args)) {
+      const { downloaded } = await ensureSidecars(getDataDirectory(), yearsFromArgs(args), (m) => console.error(`[cache] ${m}`));
+      if (downloaded.length) resetSidecars();
+    }
+
     if (CUBES_CACHE_ENABLED && !TOOLS_WITHOUT_CUBES.has(name) && !resumoCoversCall(name, args)) {
       const dir = getDataDirectory();
-      const { downloaded, unavailable } = await ensureYears(dir, yearsFromArgs(args), (m) => console.error(`[cache] ${m}`), TOOL_CUBES[name]);
-      if (downloaded.length) console.error(`[cache] ano(s) ${downloaded.join(", ")} baixado(s) para ${dir}`);
+      const { downloaded, unavailable } = await ensureYears(dir, yearsFromArgs(args), (m) => console.error(`[cache] ${m}`), cubesForCall(name, args));
+      if (downloaded.length) {
+        console.error(`[cache] ano(s) ${downloaded.join(", ")} baixado(s) para ${dir}`);
+        // Sidecar novo no disco: relê, senão as notas de era ficam do estado antigo.
+        resetSidecars();
+      }
       // Estratos dos anos pedidos (PLAN-005): denominador fino sem DISTINCT.
       if (ICSAP_AGG_TOOLS.has(name)) {
         await ensureEstratosYears(dir, yearsFromArgs(args), (m) => console.error(`[cache] ${m}`));
@@ -1798,7 +1893,9 @@ export async function callTool(name: string, args: ToolArgs): Promise<CallToolRe
 
     // Toda resposta sai com o bloco de proveniência do contrato (concise):
     // fonte, URL, safra, retrieved_at, citação e licença — ver src/provenance.ts.
-    return withProvenance(result, provenanceFor(name, args)) as CallToolResult;
+    // O teto de linhas é aplicado aqui, no funil: vale para as 12 ferramentas e
+    // para as que vierem, sem depender de cada handler lembrar (0.14.2).
+    return withProvenance(capData(result), provenanceFor(name, args)) as CallToolResult;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return {
