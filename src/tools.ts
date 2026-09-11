@@ -79,6 +79,7 @@ export const tools: Tool[] = [
           description: "Se true, inclui lista de códigos CID-10 (default: false)",
         },
       },
+      additionalProperties: false,
     },
   },
   {
@@ -90,6 +91,7 @@ export const tools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {},
+      additionalProperties: false,
     },
   },
   {
@@ -104,6 +106,7 @@ export const tools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {},
+      additionalProperties: false,
     },
   },
 
@@ -176,6 +179,7 @@ export const tools: Tool[] = [
           description: "Limitar número de resultados",
         },
       },
+      additionalProperties: false,
     },
   },
   {
@@ -212,6 +216,7 @@ export const tools: Tool[] = [
         },
       },
       required: ["year_start", "year_end"],
+      additionalProperties: false,
     },
   },
   {
@@ -251,6 +256,7 @@ export const tools: Tool[] = [
           description: "Número de resultados (default: 10)",
         },
       },
+      additionalProperties: false,
     },
   },
 
@@ -319,6 +325,7 @@ export const tools: Tool[] = [
           description: "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações.",
         },
       },
+      additionalProperties: false,
     },
   },
   {
@@ -374,6 +381,7 @@ export const tools: Tool[] = [
           description: "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações.",
         },
       },
+      additionalProperties: false,
     },
   },
   {
@@ -427,6 +435,7 @@ export const tools: Tool[] = [
           maximum: 19,
         },
       },
+      additionalProperties: false,
     },
   },
   {
@@ -446,6 +455,7 @@ export const tools: Tool[] = [
         },
       },
       required: ["cid_codes"],
+      additionalProperties: false,
     },
   },
 
@@ -511,6 +521,7 @@ export const tools: Tool[] = [
           description: "Dimensões para agrupamento",
         },
       },
+      additionalProperties: false,
     },
   },
   {
@@ -559,6 +570,7 @@ export const tools: Tool[] = [
         },
       },
       required: ["start_year", "end_year"],
+      additionalProperties: false,
     },
   },
 ];

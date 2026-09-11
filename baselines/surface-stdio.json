@@ -15,7 +15,8 @@
       },
       "required": [
         "cid_codes"
-      ]
+      ],
+      "additionalProperties": false
     }
   },
   {
@@ -72,7 +73,8 @@
       "required": [
         "start_year",
         "end_year"
-      ]
+      ],
+      "additionalProperties": false
     }
   },
   {
@@ -116,7 +118,8 @@
           "type": "integer",
           "description": "Número de resultados (default: 10)"
         }
-      }
+      },
+      "additionalProperties": false
     }
   },
   {
@@ -124,7 +127,8 @@
     "description": "Retorna os anos disponíveis nos dados do SIH-SUS carregados e o frescor dos cubos em relação ao espelho healthbr-data (`freshness.status`: current, stale, unknown, pending ou disabled; quando stale, lista por ano as partições reeditadas pelo MS, regeneradas, retiradas ou novas na janela). Por ano, o que muda entre as eras do SIH: `race_available` (raça/cor só de 2008), `cid_revision` (9 = CID-9 de 6 dígitos em 1992–1997, 10 = CID-10; 1997 tem as duas), `icsap_list_revision` (cid9-derivada, não oficial, em 1992–1997), `uf_basis` (arquivo em 1992–1997, residencia de 1998), `municipality_available`, `currency` e `records_date_imputed`.",
     "inputSchema": {
       "type": "object",
-      "properties": {}
+      "properties": {},
+      "additionalProperties": false
     }
   },
   {
@@ -203,7 +207,8 @@
           },
           "description": "Dimensões para agrupamento"
         }
-      }
+      },
+      "additionalProperties": false
     }
   },
   {
@@ -243,7 +248,8 @@
       "required": [
         "year_start",
         "year_end"
-      ]
+      ],
+      "additionalProperties": false
     }
   },
   {
@@ -332,7 +338,8 @@
           "type": "integer",
           "description": "Limitar número de resultados"
         }
-      }
+      },
+      "additionalProperties": false
     }
   },
   {
@@ -414,7 +421,8 @@
           ],
           "description": "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações."
         }
-      }
+      },
+      "additionalProperties": false
     }
   },
   {
@@ -479,7 +487,8 @@
           ],
           "description": "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações."
         }
-      }
+      },
+      "additionalProperties": false
     }
   },
   {
@@ -487,7 +496,8 @@
     "description": "Lista os 22 capítulos da CID-10 com seus códigos e faixas de diagnóstico. Os cubos de 1992–1997 (diagnóstico em CID-9) trazem `cid_chapter` como o capítulo CID-10 equivalente (mapa por categoria em src/data/cid9-chapters.json).",
     "inputSchema": {
       "type": "object",
-      "properties": {}
+      "properties": {},
+      "additionalProperties": false
     }
   },
   {
@@ -504,7 +514,8 @@
           "type": "boolean",
           "description": "Se true, inclui lista de códigos CID-10 (default: false)"
         }
-      }
+      },
+      "additionalProperties": false
     }
   },
   {
@@ -567,7 +578,8 @@
           "minimum": 1,
           "maximum": 19
         }
-      }
+      },
+      "additionalProperties": false
     }
   }
 ]

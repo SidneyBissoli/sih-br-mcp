@@ -2490,7 +2490,7 @@
       "limit": 50
     },
     "isError": true,
-    "result": "Input validation error: Invalid arguments for tool rank_csap_groups: data/limit must be <= 19"
+    "result": "Input validation error: Invalid arguments for tool rank_csap_groups: #: Property \"limit\" does not match schema.; #/limit: 50 is greater than 19."
   },
   {
     "tool": "rank_csap_groups",
