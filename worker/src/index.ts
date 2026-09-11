@@ -11,7 +11,7 @@
 
 import { getContainer } from "@cloudflare/containers";
 
-import { tagRequest, withAnalytics } from "./analytics.js";
+import { SELF_ROUTE, tagRequest, withAnalytics } from "./analytics.js";
 import { checkAuth } from "./auth.js";
 import { getServerCard } from "./card.js";
 import { CONTAINER_INSTANCE, HEALTH_PROBE_TIMEOUT_MS, SERVER_CONFIG } from "./config.js";
@@ -105,7 +105,11 @@ export default {
       });
     }
 
-    if (url.pathname !== SERVER_CONFIG.mcpRoute) {
+    // A rota privada do dono (SELF_ROUTE) serve EXATAMENTE a mesma coisa; o
+    // que muda e o registro — tagRequest marca self por ela, ver
+    // src/analytics.ts. O container continua recebendo /mcp: a separacao e
+    // assunto da borda, e ele nao precisa saber que a rota existe.
+    if (url.pathname !== SERVER_CONFIG.mcpRoute && url.pathname !== SELF_ROUTE) {
       return text("Not Found", 404);
     }
 
