@@ -39,7 +39,7 @@ Quem trabalha com SIH/SUS em R ou Python já tem ferramentas consolidadas, e est
 servidor **não substitui nenhuma delas** — ele ocupa um lugar diferente da cadeia:
 responde a pergunta agregada no ponto onde ela é feita, dentro do assistente, sem
 ETL e sem download de microdado. Detalhe, exemplos lado a lado e os números medidos
-em [`docs/comparativo-alternativas.md`](docs/comparativo-alternativas.md).
+em [`docs/comparativo-alternativas.md`](https://github.com/SidneyBissoli/sih-br-mcp/blob/master/docs/comparativo-alternativas.md).
 
 | Ferramenta | O que faz | Quando preferir |
 | --- | --- | --- |
@@ -57,7 +57,7 @@ caráter de atendimento, diagnóstico secundário) ou outro sistema do DATASUS (
 SINASC, SIA, SINAN) — nesses casos o caminho é microdatasus, PySUS ou o espelho
 Parquet do [healthbr-data](https://github.com/SidneyBissoli/healthbr-data). O que os
 cubos carregam por estrato está em
-[`docs/tool-specifications.md`](docs/tool-specifications.md): internações, dias de
+[`docs/tool-specifications.md`](https://github.com/SidneyBissoli/sih-br-mcp/blob/master/docs/tool-specifications.md): internações, dias de
 permanência, valor pago (R$) e óbitos, por ano, mês, UF, município, capítulo e grupo
 CID, sexo, idade, raça/cor e grupo ICSAP.
 
