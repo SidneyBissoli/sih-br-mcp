@@ -1,19 +1,19 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.SidneyBissoli/sih-br-mcp",
-  "title": "SIH/SUS Brasil MCP",
-  "description": "Brazil hospital admissions (SIH/SUS, 1992-2025): causes, series, ICSAP, rates per 100k. 12 tools.",
+  "title": "DATASUS SIH/SUS — Brazil Hospital Admissions (AIH) MCP",
+  "description": "DATASUS SIH/SUS hospital admissions in Brazil (AIH, 1992-2025): ICD-10 causes, ICSAP, rates.",
   "repository": {
     "url": "https://github.com/SidneyBissoli/sih-br-mcp",
     "source": "github"
   },
-  "version": "0.15.3",
+  "version": "0.15.4",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "sih-br-mcp",
-      "version": "0.15.3",
+      "version": "0.15.4",
       "transport": {
         "type": "stdio"
       },

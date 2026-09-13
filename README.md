@@ -1,10 +1,65 @@
-# sih-br-mcp
+# DATASUS SIH/SUS — MCP Server de internações hospitalares (AIH) do Brasil, 1992–2025
 
-Servidor MCP (Model Context Protocol) para análise das internações hospitalares do
-SUS (SIH/SUS, AIH reduzida) com foco em ICSAP — internações por condições sensíveis
-à atenção primária. Doze ferramentas sobre cubos anuais de 1992 a 2025 (causas por
-capítulo/grupo CID, séries mensais, ICSAP por município, taxas por 100 mil), com a
-proveniência da safra em cada resposta.
+Servidor MCP (Model Context Protocol) que responde perguntas sobre as **internações
+hospitalares do SUS** — o SIH/SUS do DATASUS, AIH reduzida — dentro do assistente de
+IA, sem TabNet, sem baixar `.dbc` do FTP e sem escrever SQL. Doze ferramentas sobre
+**34 anos** (1992 a 2025, 420.103.883 internações): causas por capítulo e grupo da
+CID-10 (CID-9 antes de 1998), séries mensais, **ICSAP** — internações por condições
+sensíveis à atenção primária, lista brasileira — e **taxas** brutas, específicas ou
+padronizadas por idade, por UF e por município. Cada estrato traz internações, dias de
+permanência, **valor pago pelo SUS** e óbitos, com a proveniência da safra e a citação
+da fonte em cada resposta.
+
+> **In English.** MCP server for **Brazilian hospital admissions** (DATASUS SIH/SUS,
+> "AIH" records), 1992–2025: causes by ICD-10 chapter and group (ICD-9 before 1998),
+> monthly series, **ambulatory care sensitive conditions** (ICSAP/ACSC, Brazilian
+> list) and crude, age-specific or age-standardized **rates** by state and
+> municipality — answered inside Claude, ChatGPT or any MCP client, with provenance
+> and a citation in every answer. No FTP download, no DBC decoding, no SQL:
+> `npx -y sih-br-mcp`.
+
+## Perguntas que ele responde
+
+Em linguagem comum, no cliente MCP: quem escolhe a ferramenta e os parâmetros é o
+assistente.
+
+- "Quantas internações por pneumonia houve no Espírito Santo em 2024, por faixa de
+  idade?" (`get_hospitalizations`)
+- "A taxa de ICSAP de Roraima caiu entre 2010 e 2023?" (`get_icsap_indicators`)
+- "Compare a internação por 100 mil habitantes entre Norte e Sudeste em 2023,
+  padronizada por idade." (`get_hospitalization_rates`, `compare_regions`)
+- "Quais condições sensíveis à atenção primária mais internam no meu município?"
+  (`rank_csap_groups`)
+- "Série mensal de internações por dengue desde 1998." (`get_hospitalization_trends`)
+- "J18.9 é condição sensível à atenção primária?" (`classify_as_csap`)
+
+## Comparação com as alternativas
+
+Quem trabalha com SIH/SUS em R ou Python já tem ferramentas consolidadas, e este
+servidor **não substitui nenhuma delas** — ele ocupa um lugar diferente da cadeia:
+responde a pergunta agregada no ponto onde ela é feita, dentro do assistente, sem
+ETL e sem download de microdado. Detalhe, exemplos lado a lado e os números medidos
+em [`docs/comparativo-alternativas.md`](https://github.com/SidneyBissoli/sih-br-mcp/blob/master/docs/comparativo-alternativas.md).
+
+| Ferramenta | O que faz | Quando preferir |
+| --- | --- | --- |
+| **sih-br-mcp** (este) | Responde agregados de 34 anos direto no assistente de IA, com ICSAP, taxas padronizadas e proveniência por resposta | A pergunta é agregada (UF, município, ano, mês, CID, idade, sexo, raça, ICSAP) e a resposta tem de ser auditável |
+| [microdatasus](https://github.com/rfsaldanha/microdatasus) 3.0.0 (R, CRAN) | Baixa e processa microdados do DATASUS (SIH, SIM, SINASC, SIA, CNES, SINAN): trata o DBC e rotula as variáveis | Você precisa do **registro individual** da AIH, de variáveis fora dos cubos ou de outro sistema do DATASUS |
+| [PySUS](https://github.com/AlertaDengue/PySUS) 2.11.2 (Python) | Ferramentas para os dados públicos de saúde brasileiros; lê DBC/DBF do FTP do DATASUS | Seu pipeline é Python e você quer ETL próprio sobre o microdado |
+| [read.dbc](https://cran.r-project.org/package=read.dbc) 1.2.0 (R, CRAN) | Lê e descomprime o formato `.dbc` do Ministério da Saúde | Você já tem os arquivos e só precisa abri-los |
+| [csapAIH](https://fulvionedel.github.io/csapAIH/) (R, GitHub) | Classifica AIH em ICSAP pela lista brasileira (é a referência que este servidor confere) | A classificação é sobre o **seu** microdado, em R |
+| [brpop](https://cran.r-project.org/package=brpop) 0.7.0 (R, CRAN) | Estimativas populacionais brasileiras por município, UF, sexo e faixa | Você calcula as próprias taxas e quer o denominador em R |
+| [healthbR](https://cran.r-project.org/package=healthbR) 0.4.0 (R, CRAN) | Irmão em R deste servidor: acessa dados públicos de saúde do Brasil pelo mesmo espelho Parquet | Você está em R e quer o dado numa `data.frame` para seguir analisando |
+
+**Não use este servidor quando** a pergunta exigir o registro individual da AIH,
+variáveis que os cubos não carregam (procedimento realizado, CNES do estabelecimento,
+caráter de atendimento, diagnóstico secundário) ou outro sistema do DATASUS (SIM,
+SINASC, SIA, SINAN) — nesses casos o caminho é microdatasus, PySUS ou o espelho
+Parquet do [healthbr-data](https://github.com/SidneyBissoli/healthbr-data). O que os
+cubos carregam por estrato está em
+[`docs/tool-specifications.md`](https://github.com/SidneyBissoli/sih-br-mcp/blob/master/docs/tool-specifications.md): internações, dias de
+permanência, valor pago (R$) e óbitos, por ano, mês, UF, município, capítulo e grupo
+CID, sexo, idade, raça/cor e grupo ICSAP.
 
 ## De onde vêm os dados
 
