@@ -13,10 +13,11 @@ name: CI
 # dos cubos com o manifesto do espelho healthbr-data (`src/freshness.ts`)
 # ainda distingue "em dia" de "atrás", OFFLINE, sobre um trecho versionado do
 # manifesto. Isso é smoke + golden + autoteste, não uma
-# suíte: não afirma que os NÚMEROS estão certos, só que o caminho inteiro
+# suíte: não afirmam que os NÚMEROS estão certos, só que o caminho inteiro
 # (binário nativo do DuckDB incluído) ainda anda e que os números não se
-# moveram depois de um bump. O conserto de verdade continua sendo
-# `campanha:contrato-vitest`, e é projeto, não tarefa.
+# moveram depois de um bump. Desde 14/09/2026 eles dividem o trabalho com uma
+# suíte de verdade (`npm test`, vitest), que interroga a DECISÃO de rota e o
+# ENVELOPE de saída — invariantes, não valores. Ver a decisão 37 do CONTEXT.md.
 #
 # POR QUE EXISTIR MESMO ASSIM, num repositório privado e parado. Até 31/08/2026
 # o único workflow aqui era o `publish.yml`, que roda em tag: nenhum push era
@@ -79,6 +80,28 @@ jobs:
       # limpeza perfeitamente razoável. Aqui a compilação é um passo com nome
       # próprio, que falha por si e aparece sozinho no log.
       - run: npm run build
+
+      # A SUÍTE (campanha:contrato-vitest, 14/09/2026). Roda antes dos gates de
+      # ponta a ponta porque é a mais barata (~1,5 s) e porque falha apontando a
+      # LINHA, e não um diff de baseline de 127 KB. Duas frentes:
+      #
+      # - tests/routing.test.ts interroga a DECISÃO pura: qual cubo responde a
+      #   pergunta, que WHERE e que ORDER BY são montados. É onde este
+      #   repositório já se machucou duas vezes (cubo errado escolhido; glob
+      #   lendo o artefato vizinho), e nenhum gate abaixo alcança a regra em si:
+      #   equivalência só flagra quando os dois caminhos existem e discordam.
+      # - tests/output-contract.test.ts prova o ENVELOPE das doze, com um caso
+      #   CHEIO e um caso MAGRO cada. O golden pina VALORES do caminho feliz com
+      #   fixture cheia; o defeito mora na resposta com os campos opcionais
+      #   AUSENTES, que é onde `JSON.stringify` apaga a chave e o cliente vê
+      #   "missing required property". Não há `outputSchema` a validar (o sih
+      #   não declara nenhum, medido em 14/09) — o que se afirma é o envelope:
+      #   structuredContent presente, proveniência completa, atribuição, e o
+      #   texto sendo exatamente o JSON da estrutura depois do fio.
+      #
+      # Os dois arquivos afirmam INVARIANTES, não números: republicar um cubo
+      # não os move, e por isso eles não competem com os baselines.
+      - run: npm test
 
       # Sobe o dist/ pelo stdio, compara a superfície com o baseline gravado e
       # chama três ferramentas. Mudou a superfície de propósito? Regravar com

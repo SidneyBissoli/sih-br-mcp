@@ -159,6 +159,7 @@ domínio, rate limit, autenticação opcional e medição — desenho e custos e
 
 ```bash
 npm ci && npm run build
+npm test                    # vitest: decisão de rota (puro) + envelope das 12 (caso cheio e caso magro)
 npm run smoke:stdio         # superfície das ferramentas × baselines/surface-stdio.json
 npm run smoke:http          # mesma superfície e chamadas pelo transporte HTTP (dist/http.js)
 npm run golden:tools        # 12 ferramentas byte a byte × baselines/golden-tools.json (fixture 2023/RR)
@@ -173,6 +174,14 @@ npm run equiv:causas        # pré-agregados de causas (grão A e B) × cubo, by
 O CI (`.github/workflows/ci.yml`) roda tudo isso em Node 22 e 24. A fixture
 `tests/fixtures/sih/` é uma cópia real dos cubos de 2023/RR gerados pelo builder
 (hoje no healthbr-data) — é o que torna medível qualquer bump.
+
+A divisão de trabalho entre as duas famílias: os scripts em `scripts/*.mjs`
+pinam VALORES (mudou um número, o baseline acusa); a suíte de `tests/*.test.ts`
+afirma INVARIANTES (qual cubo responde a pergunta; toda resposta sai com
+proveniência e com o texto igual à estrutura), e por isso republicar um cubo
+não a move. Cada ferramenta tem ali um caso CHEIO e um caso MAGRO — a resposta
+com os campos opcionais ausentes, que o golden, sempre com fixture cheia, não
+alcança.
 
 ## Documentação
 
