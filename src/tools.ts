@@ -1926,6 +1926,53 @@ export async function callTool(name: string, args: ToolArgs): Promise<CallToolRe
       }
     }
 
+    // -----------------------------------------------------------------------
+    // ANO QUE NÃO EXISTE NÃO PODE SER RESPONDIDO COM ZERO (sih:zero-calado).
+    //
+    // Medido em 14/09/2026, varrendo a classe nos sete servidores do portfólio:
+    // `get_hospitalizations({year:[2030]})` devolvia uma linha de medidas NULAS
+    // e `summary.total_hospitalizations: 0`, sem `error` e sem nota — o que se
+    // lê como "não houve internação em 2030", e não como "não tenho 2030". Seis
+    // das oito ferramentas de dado se comportavam assim; só as duas que
+    // precisam de denominador populacional avisavam, porque a guarda nasceu
+    // DENTRO delas, na validação de cobertura, e nunca subiu para cá.
+    //
+    // Zero é a resposta errada mais perigosa que existe: atravessa o esquema,
+    // atravessa o golden (que pina o caminho feliz com fixture cheia), atravessa
+    // o cliente e chega ao leitor como número medido.
+    //
+    // POR QUE A CONTA DE "ATENDÍVEL" INCLUI OS PRÉ-AGREGADOS. `getAvailableYears()`
+    // só enxerga os CUBOS (sih_causas|series|icsap_YYYY.parquet). Uma chamada
+    // coberta pelo grão A ou B do PLAN-006 responde SEM cubo nenhum em disco —
+    // é o motivo de o caminho rápido existir. Guardar só pelos cubos recusaria
+    // exatamente as consultas que o pré-agregado veio acelerar. Por isso a união
+    // com os `freshYears` dos dois resumos, e por isso esta guarda roda DEPOIS
+    // do bloco de cache: é lá que os anos pedidos são baixados ou cobertos.
+    //
+    // Conservadora por desenho: na dúvida, responde. Só acusa o ano que não
+    // está em lugar nenhum.
+    // -----------------------------------------------------------------------
+    let anosAusentes: number[] = [];
+    const anosPedidos = TOOLS_WITHOUT_CUBES.has(name) ? null : yearsFromArgs(args);
+    if (anosPedidos && anosPedidos.length > 0) {
+      const atendiveis = new Set<number>(getAvailableYears());
+      for (const y of causasSummaryState().freshYears) atendiveis.add(y);
+      for (const y of icsapSummaryState().freshYears) atendiveis.add(y);
+      anosAusentes = anosPedidos.filter((y) => !atendiveis.has(y));
+
+      // Nenhum ano atendível: a mesma redação que get_hospitalization_rates e
+      // compare_icsap_trends já usavam. Reusar o vocabulário em vez de inventar
+      // um terceiro é o que faz as doze soarem como um servidor só.
+      if (anosAusentes.length === anosPedidos.length) {
+        return withProvenance({
+          error: `Nenhum dos anos solicitados (${anosPedidos.join(", ")}) tem dados SIH disponíveis.`,
+          data: [],
+          available_sih_years: [...atendiveis].sort((a, b) => a - b),
+          note: "Use get_available_years para ver anos com dados de internação.",
+        }, provenanceFor(name, args)) as CallToolResult;
+      }
+    }
+
     switch (name) {
       // Metadados
       case "list_csap_groups":
@@ -1982,6 +2029,21 @@ export async function callTool(name: string, args: ToolArgs): Promise<CallToolRe
     // fonte, URL, safra, retrieved_at, citação e licença — ver src/provenance.ts.
     // O teto de linhas é aplicado aqui, no funil: vale para as 12 ferramentas e
     // para as que vierem, sem depender de cada handler lembrar (0.14.2).
+    // PARCIAL: alguns anos pedidos não existem. Responder só com os que existem
+    // e calar sobre o resto ESTREITA A PERGUNTA sem avisar — a série de "2022 a
+    // 2023" volta cobrindo só 2023, com o mesmo aspecto de uma série completa.
+    // Era assim mesmo nas duas ferramentas que avisavam no caso total: elas
+    // filtram para `validYears` e seguem. A nota é a metade que faltava.
+    if (anosAusentes.length > 0 && result && typeof result === "object" && !Array.isArray(result)) {
+      const presentes = (anosPedidos ?? []).filter((y) => !anosAusentes.includes(y));
+      (result as Record<string, unknown>).years_not_available = {
+        years: anosAusentes,
+        note:
+          `Os anos ${anosAusentes.join(", ")} não têm dados SIH e ficaram FORA deste resultado; ` +
+          `os números cobrem apenas ${presentes.join(", ")}.`,
+      };
+    }
+
     return withProvenance(capData(result), provenanceFor(name, args)) as CallToolResult;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
