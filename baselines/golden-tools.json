@@ -1346,6 +1346,12 @@
         "start": 2022,
         "end": 2023
       },
+      "years_not_available": {
+        "years": [
+          2022
+        ],
+        "note": "Os anos 2022 não têm dados SIH e ficaram FORA deste resultado; os números cobrem apenas 2023."
+      },
       "provenance": {
         "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
         "source_url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/",
@@ -3049,43 +3055,12 @@
     },
     "isError": false,
     "result": {
-      "error": "Antes de 2000 a população por UF só existe em faixas etárias quinquenais (0-4, 5-9, 10-14, 15-19, 20-24, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64, 65-69, 70-74, 75-79, 80 e +): o intervalo 0–17 não cai nos limites das faixas. Use age_min múltiplo de 5 e age_max terminado em 4 ou 9 (ou só age_min = 80).",
+      "error": "Nenhum dos anos solicitados (1995) tem dados SIH disponíveis.",
       "data": [],
-      "population_years": {
-        "first_year": 1991,
-        "last_year": 2025,
-        "detailed": {
-          "first_year": 2000,
-          "last_year": 2025,
-          "source": "pop_uf.parquet",
-          "age": "idade simples"
-        },
-        "aggregated": {
-          "first_year": 1991,
-          "last_year": 1999,
-          "source": "pop_uf_agregado.parquet",
-          "age": "faixa etária quinquenal",
-          "age_groups": [
-            "0-4",
-            "5-9",
-            "10-14",
-            "15-19",
-            "20-24",
-            "25-29",
-            "30-34",
-            "35-39",
-            "40-44",
-            "45-49",
-            "50-54",
-            "55-59",
-            "60-64",
-            "65-69",
-            "70-74",
-            "75-79",
-            "80 e +"
-          ]
-        }
-      },
+      "available_sih_years": [
+        2023
+      ],
+      "note": "Use get_available_years para ver anos com dados de internação.",
       "provenance": [
         {
           "source": "Ministério da Saúde — DATASUS, SIH/SUS (AIH reduzida, RD)",
@@ -3186,6 +3161,12 @@
       "trends": {},
       "summary": {
         "note": "Para % ICSAP, queda indica melhoria na Atenção Primária"
+      },
+      "years_not_available": {
+        "years": [
+          2022
+        ],
+        "note": "Os anos 2022 não têm dados SIH e ficaram FORA deste resultado; os números cobrem apenas 2023."
       },
       "provenance": [
         {
