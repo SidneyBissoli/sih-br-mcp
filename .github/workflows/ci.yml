@@ -73,6 +73,7 @@ jobs:
       # está lá. Então uma quebra de compilação derruba o CI aqui, com o erro do
       # tsc no meio do ruído da instalação.
       - run: npm ci
+      - run: npm ci --prefix worker
 
       # Redundante HOJE, de propósito. `build` é `tsc` puro, e o passo acima já
       # o executou pelo `prepare` — mas a garantia deste arquivo não deve
@@ -80,6 +81,21 @@ jobs:
       # limpeza perfeitamente razoável. Aqui a compilação é um passo com nome
       # próprio, que falha por si e aparece sozinho no log.
       - run: npm run build
+
+      # O WORKER TAMBÉM É CÓDIGO, e até 14/09/2026 não era olhado por nada.
+      # `worker/` tem suíte própria (75 casos) que compara a IDENTIDADE entre as
+      # três superfícies — o SERVER_TITLE de src/server.ts, o `title` do
+      # server.json e o SERVER_CONFIG do worker — e a lista de ferramentas que o
+      # worker anuncia contra a da raiz. Nada disso rodava aqui.
+      #
+      # O preço apareceu em 13/09: a ação GEO reescreveu o título e a descrição
+      # do server.json para o vocabulário da pergunta e os outros dois lugares
+      # ficaram para trás. O conector passou a anunciar "SIH/SUS Brasil MCP"
+      # enquanto o registro e os diretórios mostravam "DATASUS SIH/SUS — Brazil
+      # Hospital Admissions (AIH) MCP" — divergência que o teste do worker
+      # pegava, e que ficou um dia vermelha sem ninguém ver.
+      - run: npm run typecheck --prefix worker
+      - run: npm test --prefix worker
 
       # A SUÍTE (campanha:contrato-vitest, 14/09/2026). Roda antes dos gates de
       # ponta a ponta porque é a mais barata (~1,5 s) e porque falha apontando a

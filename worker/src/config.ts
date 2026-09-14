@@ -17,7 +17,14 @@ export const SERVER_CONFIG = {
   /** Versão do servidor — única fonte: package.json da raiz. */
   version: pkg.version as string,
   /** Título de exibição. Mesmo texto de SERVER_TITLE (../src/server.ts) e do server.json. */
-  title: "SIH/SUS Brasil MCP",
+  // Título canônico, e ele vive em TRÊS lugares que o tests/tools-sync.test.ts
+  // exige iguais: aqui, o SERVER_TITLE de src/server.ts e o `title` do
+  // server.json. A ação GEO de 13/09/2026 reescreveu só o server.json para o
+  // vocabulário da pergunta ("DATASUS", "hospital admissions", "AIH"), e os
+  // outros dois ficaram para trás — o conector anunciava um nome, o registro
+  // e os diretórios outro. Alinhados em 14/09, junto com pôr estes testes no
+  // CI, que é o que teria mostrado a divergência no dia.
+  title: "DATASUS SIH/SUS — Brazil Hospital Admissions (AIH) MCP",
   /** Uma frase: o que o servidor serve e de qual fonte. */
   description:
     "Servidor MCP das internações hospitalares do SUS (SIH/SUS, 1992–2025): causas, " +

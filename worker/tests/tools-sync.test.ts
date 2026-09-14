@@ -60,7 +60,27 @@ describe("identidade: Worker × handshake × server.json", () => {
     expect(leia("src/http.ts")).toContain(`MCP_PATH = "${SERVER_CONFIG.mcpRoute}"`);
   });
 
-  it("o server.json anuncia a mesma contagem de ferramentas", () => {
-    expect(manifesto.description).toContain(`${TOOLS.length} tools`);
+  /**
+   * A intenção aqui é "não anunciar contagem DEFASADA", não "anunciar contagem".
+   *
+   * Até 14/09/2026 o teste exigia a frase `N tools` na descrição do server.json.
+   * A ação GEO de 13/09 reescreveu essa descrição para o vocabulário da pergunta
+   * ("DATASUS SIH/SUS hospital admissions in Brazil (AIH, 1992-2025)…"), onde a
+   * contagem não cabe — ela gasta caracteres de um campo que os diretórios
+   * truncam, e não é o que alguém procura. O teste passou a reprovar por uma
+   * decisão de produto deliberada, e ficou vermelho sem ninguém ver porque os
+   * testes do worker não rodavam no CI.
+   *
+   * Exigir a frase de volta subordinaria a superfície pública ao teste. O que o
+   * teste deve garantir é a CONSISTÊNCIA de uma afirmação, quando ela é feita:
+   * se a descrição disser um número de ferramentas, que seja o número real.
+   */
+  it("se o server.json anuncia contagem de ferramentas, ela é a real", () => {
+    const anunciado = /(\d+)\s+tools?\b/i.exec(manifesto.description ?? "");
+    if (!anunciado) {
+      expect(manifesto.description ?? "").not.toMatch(/\btools?\b.*\d/i);
+      return;
+    }
+    expect(Number(anunciado[1])).toBe(TOOLS.length);
   });
 });
