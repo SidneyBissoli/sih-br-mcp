@@ -19,7 +19,15 @@ import { SERVER_VERSION } from "./provenance.js";
 import { callTool, tools, type ToolArgs } from "./tools.js";
 
 export const SERVER_NAME = "sih-br-mcp";
-export const SERVER_TITLE = "SIH/SUS Brasil MCP";
+// O título canônico do produto, e ele mora em TRÊS superfícies que têm de
+// concordar: este SERVER_TITLE (o que o cliente MCP mostra no handshake), o
+// `title` do server.json (o que o registro oficial e os diretórios exibem) e o
+// SERVER_CONFIG do worker/. Em 13/09/2026 a ação GEO reescreveu os dois
+// últimos para o vocabulário da pergunta — "DATASUS", "hospital admissions",
+// "AIH" — e este ficou para trás, então o conector anunciava um nome e o
+// diretório outro. Passou despercebido por um dia porque os testes do worker,
+// que comparam os três, não rodavam no CI (corrigido em 14/09).
+export const SERVER_TITLE = "DATASUS SIH/SUS — Brazil Hospital Admissions (AIH) MCP";
 
 // Review de conectores do claude.ai (claude.com/docs/connectors/building/
 // review-criteria, lido em 08/09/2026): toda ferramenta com `title` e
