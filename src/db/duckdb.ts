@@ -313,10 +313,20 @@ export interface SeriesFilters {
 // FUNÇÕES DE QUERY ESPECÍFICAS
 // =============================================================================
 
+// ---------------------------------------------------------------------------
+// Os auxiliares puros abaixo (buildWhereClause, groupSelect, groupKey,
+// buildOrderBy, causasRoute, resumoEligible, universeCondition) são
+// EXPORTADOS para que a suíte de vitest alcance a DECISÃO sem tocar o disco
+// nem o DuckDB: é aqui que moram as duas classes de defeito que já morderam
+// este repositório — cubo errado escolhido para a pergunta e artefato novo
+// lido por glob. Nada disto entra no contrato MCP: a superfície publicada
+// continua sendo a de src/tools.ts, gravada em baselines/surface-stdio.json.
+// ---------------------------------------------------------------------------
+
 /**
  * Constrói cláusula WHERE a partir de filtros
  */
-function buildWhereClause(filters: CausasFilters | IcsapFilters): string {
+export function buildWhereClause(filters: CausasFilters | IcsapFilters): string {
   const conditions: string[] = [];
 
   if ("years" in filters && filters.years && filters.years.length > 0) {
@@ -397,10 +407,10 @@ function buildWhereClause(filters: CausasFilters | IcsapFilters): string {
  * 9746572.61000001 na seguinte); em decimal a soma é exata e determinística.
  * `value` é dinheiro com 2 casas — nada se perde.
  */
-function groupSelect(column: string): string {
+export function groupSelect(column: string): string {
   return column === "cid_revision" ? "COALESCE(cid_revision, 10) AS cid_revision" : column;
 }
-function groupKey(column: string): string {
+export function groupKey(column: string): string {
   return column === "cid_revision" ? "COALESCE(cid_revision, 10)" : column;
 }
 
@@ -417,7 +427,7 @@ function groupKey(column: string): string {
  * aqui, no funil, e não tool a tool: toda coluna de agrupamento que o chamador
  * não ordenou explicitamente entra como desempate, na ordem do GROUP BY.
  */
-function buildOrderBy(orderBy: string | undefined, groupBy: string[]): string {
+export function buildOrderBy(orderBy: string | undefined, groupBy: string[]): string {
   const mentioned = new Set(
     (orderBy ?? "")
       .split(",")
@@ -463,7 +473,7 @@ function causasYears(filters: CausasFilters | undefined): number[] {
   return [...new Set(years)].sort((a, b) => a - b);
 }
 
-interface CausasRoute {
+export interface CausasRoute {
   kind: CausasPath;
   /** Primeiro argumento do read_parquet, já como expressão SQL ('glob' ou ['a','b']). */
   source: string;
@@ -476,7 +486,7 @@ function sqlPath(p: string): string {
   return `'${p.replace(/\\/g, "/")}'`;
 }
 
-function causasRoute(
+export function causasRoute(
   options: { filters?: CausasFilters; groupBy?: string[] },
   years: number[],
 ): CausasRoute {
@@ -639,7 +649,7 @@ let icsapPartsSeq = 0;
  */
 const RESUMO_GROUP_COLS = new Set(["year", "uf", "csap_group", "cid_revision"]);
 
-function resumoEligible(options: { filters?: IcsapFilters; groupBy?: string[] }, years: number[]): string | null {
+export function resumoEligible(options: { filters?: IcsapFilters; groupBy?: string[] }, years: number[]): string | null {
   const state = icsapSummaryState();
   if (!state.resumoPath) return null;
   if (years.length === 0) return null;
@@ -810,7 +820,7 @@ const ICSAP_STRATUM_KEYS = ["year", "uf", "municipality_code", "cid_revision", "
  */
 export type IcsapUniverse = "csapaih" | "all";
 
-function universeCondition(universe: IcsapUniverse | undefined): string {
+export function universeCondition(universe: IcsapUniverse | undefined): string {
   return (universe ?? "csapaih") === "csapaih" ? "AND exclusion IS NULL" : "";
 }
 
