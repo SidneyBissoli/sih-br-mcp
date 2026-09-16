@@ -13,6 +13,7 @@
  * em modo CLI), que não são navegador e não têm de onde vir.
  */
 
+import { normalizeClientName } from "./analytics.js";
 import { SERVER_CONFIG } from "./config.js";
 
 /** Hostname sem porta e em minúsculas, ou "" se o header não parseia. */
@@ -122,19 +123,30 @@ export function forwardedHeaders(incoming: Headers): Headers {
  * O painel verá esses casos como "ok"; o UsageTracker também.
  */
 export function toolNamesFromBody(body: unknown): string[] {
+  return messagesFromBody(body).map((m) => m.nome);
+}
+
+/**
+ * Como toolNamesFromBody, mas cada mensagem traz também o CLIENTE: o
+ * `clientInfo.name` normalizado, só na mensagem de initialize (é a única que
+ * o declara; as demais chegam ao cliente pela sessão — ver analytics.ts).
+ */
+export function messagesFromBody(body: unknown): Array<{ nome: string; cliente: string }> {
   const itens = Array.isArray(body) ? body : [body];
-  const nomes: string[] = [];
+  const out: Array<{ nome: string; cliente: string }> = [];
   for (const item of itens) {
     if (!item || typeof item !== "object") continue;
     const msg = item as { method?: unknown; params?: unknown };
     if (typeof msg.method !== "string" || msg.method === "") continue;
     if (msg.method === "tools/call") {
       const params = msg.params as { name?: unknown } | undefined;
-      if (typeof params?.name === "string" && params.name !== "") nomes.push(params.name);
-      else nomes.push("tools/call");
+      out.push({ nome: typeof params?.name === "string" && params.name !== "" ? params.name : "tools/call", cliente: "" });
+    } else if (msg.method === "initialize") {
+      const params = msg.params as { clientInfo?: { name?: unknown } } | undefined;
+      out.push({ nome: "initialize", cliente: normalizeClientName(params?.clientInfo?.name) });
     } else {
-      nomes.push(msg.method);
+      out.push({ nome: msg.method, cliente: "" });
     }
   }
-  return nomes;
+  return out;
 }

@@ -11,7 +11,7 @@
 
 import { getContainer } from "@cloudflare/containers";
 
-import { SELF_ROUTE, tagRequest, withAnalytics } from "./analytics.js";
+import { SELF_ROUTE, recordMessage, sessionFromRequest, tagRequest } from "./analytics.js";
 import { checkAuth } from "./auth.js";
 import { getServerCard } from "./card.js";
 import { CONTAINER_INSTANCE, HEALTH_PROBE_TIMEOUT_MS, SERVER_CONFIG } from "./config.js";
@@ -24,7 +24,7 @@ import {
   forwardedHeaders,
   isAllowedHost,
   isAllowedOrigin,
-  toolNamesFromBody,
+  messagesFromBody,
 } from "./mcp-proxy.js";
 import { checkRateLimit } from "./rate-limit.js";
 import { buildStatus } from "./status.js";
@@ -133,6 +133,17 @@ export default {
     if (!["POST", "GET", "DELETE"].includes(request.method)) {
       return text("Method Not Allowed", 405, { Allow: "GET, POST, DELETE, OPTIONS", ...cors });
     }
+    // DELETE encerra sessão, e não há sessão do lado do servidor: o container é
+    // stateless. Os seis irmãos respondem 405 pelo handler do SDK; aqui o
+    // container respondia 200 (conferido em 16/09/2026) — uniformizado na borda,
+    // sem encaminhar. A especificação permite 405 a servidor que não encerra
+    // sessões; o id emitido no initialize é só telemetria.
+    if (request.method === "DELETE") {
+      return json({ jsonrpc: "2.0", error: { code: -32000, message: "Method not allowed." }, id: null }, 405, {
+        Allow: "GET, POST, OPTIONS",
+        ...cors,
+      });
+    }
 
     const authResponse = await checkAuth(request, env.API_KEY);
     if (authResponse) {
@@ -157,10 +168,13 @@ export default {
 
     // Nome(s) a registrar na telemetria: lidos de uma CÓPIA do corpo, antes de
     // o stream original seguir para o container. Só o POST carrega JSON-RPC.
-    const nomes =
-      request.method === "POST"
-        ? toolNamesFromBody(await request.clone().json().catch(() => undefined))
-        : [];
+    const corpo = request.method === "POST" ? await request.clone().json().catch(() => undefined) : undefined;
+    const mensagens = messagesFromBody(corpo);
+    const nomes = mensagens.map((m) => m.nome);
+    // Sessão: o container é stateless e não emite id; o Worker sorteia no
+    // initialize e devolve no cabeçalho, e nas demais requisições lê o que o
+    // cliente repetiu. Vai na telemetria (blob9). Ver src/analytics.ts.
+    const sessao = sessionFromRequest(request, corpo);
 
     // Corpo em STREAM, sem bufferizar: a resposta é SSE e a série de 34 anos
     // leva ~30 s. Cabeçalhos por lista positiva (src/mcp-proxy.ts); o Host que
@@ -187,15 +201,18 @@ export default {
     // HTTP do container for < 400, senão "error". O par tool_call/tool_error é
     // síncrono — é o que withAnalytics coalesce numa linha só. Ver a LIMITAÇÃO
     // em toolNamesFromBody: erro JSON-RPC dentro do SSE não é lido.
-    const recordWithAnalytics = withAnalytics(record, env.ANALYTICS, tagRequest(request, env.SELF_MARKER));
-    for (const nome of nomes) {
-      recordWithAnalytics("tool_call", nome);
-      if (upstream.status >= 400) recordWithAnalytics("tool_error", nome);
+    const tag = tagRequest(request, env.SELF_MARKER, sessao.id);
+    const falhou = upstream.status >= 400;
+    for (const { nome, cliente } of mensagens) {
+      record("tool_call", nome);
+      if (falhou) record("tool_error", nome);
+      recordMessage(env.ANALYTICS, nome, falhou, tag, cliente);
     }
 
     // Repassa o corpo como stream (new Response(body) não consome) e acrescenta
     // o CORS resolvido na borda.
     const headers = new Headers(upstream.headers);
+    if (sessao.nova) headers.set("Mcp-Session-Id", sessao.id);
     for (const [k, v] of Object.entries(cors)) headers.set(k, v);
     const response = new Response(upstream.body, { status: upstream.status, statusText: upstream.statusText, headers });
 
