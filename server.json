@@ -7,13 +7,13 @@
     "url": "https://github.com/SidneyBissoli/sih-br-mcp",
     "source": "github"
   },
-  "version": "0.15.6",
+  "version": "0.15.7",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "sih-br-mcp",
-      "version": "0.15.6",
+      "version": "0.15.7",
       "transport": {
         "type": "stdio"
       },
