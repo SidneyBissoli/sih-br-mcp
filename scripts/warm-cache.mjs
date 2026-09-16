@@ -137,18 +137,31 @@ if (!skipSidecars) {
   // Conferidos por SHA-256 a cada chamada como os resumos, então assar não
   // cria risco de artefato velho.
   if (!skipEstratos) {
-    for (const [nome, ensure, bloco, prefixo] of [
-      ["ICSAP", ensureEstratosYears, "icsap_summary", "sih_icsap_estratos_"],
-      ["causas", ensureCausasEstratosYears, "causas_summary", "sih_causas_estratos_"],
+    for (const [nome, ensure, bloco, prefixo, cubo] of [
+      ["ICSAP", ensureEstratosYears, "icsap_summary", "sih_icsap_estratos_", "icsap"],
+      ["causas", ensureCausasEstratosYears, "causas_summary", "sih_causas_estratos_", "causas"],
     ]) {
       if (!manifest[bloco]?.files?.estratos) {
         console.error(`[warm] manifesto sem os estratos de ${nome} — o recorte demográfico longo vai pagar o download`);
         continue;
       }
       await ensure(dir, anos, log);
+      // O MESMO critério de frescor do runtime (summaryFreshYears em
+      // src/cache.ts): estrato só vale se deriva do cubo PUBLICADO daquele ano.
+      // Ano cujo cubo foi reconstruído depois da derivação fica de fora — o
+      // runtime não o baixa e cai no cubo — e não pode reprovar a imagem.
+      // Medido em 16/09/2026: o manifesto de 15/09 reconstruiu o cubo de 2025
+      // sem re-derivar os estratos, e este portão derrubou o deploy da 0.15.7
+      // por um arquivo que o próprio servidor nunca usaria.
+      const fresco = (y) =>
+        manifest[bloco].derived_from?.[String(y)] === manifest.years?.[String(y)]?.files?.[cubo]?.sha256;
+      const velhos = anos.filter((y) => manifest[bloco].files.estratos[String(y)] && !fresco(y));
+      if (velhos.length) {
+        console.error(`[warm] estratos de ${nome} de ano(s) com cubo reconstruído e ainda não re-derivados no manifesto — ficam de fora, o runtime usa o cubo: ${velhos.join(", ")}`);
+      }
       const faltando = anos.filter((y) => {
         const f = manifest[bloco].files.estratos[String(y)];
-        if (!f) return false;
+        if (!f || !fresco(y)) return false;
         try {
           return statSync(join(dir, f.name)).size !== f.size_bytes;
         } catch {
@@ -159,8 +172,9 @@ if (!skipSidecars) {
         console.error(`[warm] estratos de ${nome} faltando: ${faltando.join(", ")}`);
         process.exit(1);
       }
-      const bytes = anos.reduce((t, y) => t + (manifest[bloco].files.estratos[String(y)]?.size_bytes ?? 0), 0);
-      console.error(`[warm] ${anos.length} estrato(s) de ${nome} em ${dir} (${(bytes / 1e6).toFixed(1)} MB), prefixo ${prefixo}`);
+      const assados = anos.filter((y) => manifest[bloco].files.estratos[String(y)] && fresco(y));
+      const bytes = assados.reduce((t, y) => t + (manifest[bloco].files.estratos[String(y)]?.size_bytes ?? 0), 0);
+      console.error(`[warm] ${assados.length} estrato(s) de ${nome} em ${dir} (${(bytes / 1e6).toFixed(1)} MB), prefixo ${prefixo}`);
     }
   }
 }
