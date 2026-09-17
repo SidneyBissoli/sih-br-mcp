@@ -1,20 +1,28 @@
 /**
- * Contrato de saída: o ENVELOPE que as doze ferramentas devolvem.
+ * Contrato de saída: o `structuredContent` obedece ao `outputSchema` que o
+ * `tools/list` publica — e o ENVELOPE que as doze ferramentas devolvem.
  *
- * Por que este arquivo existe, e por que ele NÃO é o gate do ilo. O gate irmão
- * (ilo-mcp-server/tests/output-contract.test.ts) afirma que o
- * `structuredContent` obedece ao `outputSchema` anunciado. O sih não anuncia
- * `outputSchema` nenhum (grep em src/ devolve zero, medido em 14/09/2026), e
- * pela spec a obrigação só nasce quando o esquema existe — não há o que
- * validar. O que existe, e vale mais do que parece, é um envelope implícito
- * que TODA resposta de sucesso carrega, montado num funil só
- * (src/provenance.ts, withProvenance) e aplicado num ponto só
+ * Duas metades, na ordem em que nasceram. A segunda (14/09/2026, decisão 37)
+ * é o envelope implícito que TODA resposta de sucesso carrega, montado num
+ * funil só (src/provenance.ts, withProvenance) e aplicado num ponto só
  * (src/tools.ts, callTool):
  *
  *   { ...dados, provenance, attribution }  +  content[0].text === o JSON disso
  *
- * Três defeitos reais deste portfólio vivem exatamente aí, e nenhum dos 11
- * gates que já rodam no CI os alcança:
+ * A primeira (16/09/2026, 0.16.0) é o gate do ilo ao pé da letra
+ * (ilo-mcp-server/tests/output-contract.test.ts): o SDK v2 exige
+ * `structuredContent` em todo sucesso de tool com `outputSchema`; a spec exige
+ * que o conteúdo OBEDEÇA ao esquema, e cliente que valida — o MCP Inspector
+ * valida — rejeita a resposta INTEIRA quando não obedece. Rodar o Inspector em
+ * `tools/list` não pega nada: só `tools/call` expõe. Os esquemas são escritos à
+ * mão (src/output-schemas.ts) a partir das formas MEDIDAS, então o caminho
+ * feliz passa mesmo com um esquema desonesto; o defeito mora onde a fonte
+ * OMITE um campo ou o anula — por isso cada ferramenta tem caso CHEIO e caso
+ * MAGRO, e a validação é feita com o MESMO validador do SDK sobre o JSON que
+ * atravessa o fio.
+ *
+ * Três defeitos reais deste portfólio vivem no envelope, e nenhum dos gates
+ * de baseline os alcança:
  *
  * 1. CAMINHO RÁPIDO QUE PULA O FUNIL. Uma rota curta que devolve cedo sai sem
  *    proveniência — já aconteceu aqui, quando o atalho cortou o sidecar dos
@@ -39,6 +47,7 @@
 
 import { Client } from "@modelcontextprotocol/client";
 import { InMemoryTransport } from "@modelcontextprotocol/server";
+import { CfWorkerJsonSchemaValidator } from "@modelcontextprotocol/server/validators/cf-worker";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createServer } from "../src/server.js";
@@ -201,6 +210,22 @@ const SEM_PARAMETRO = new Set(["list_cid_chapters", "get_available_years"]);
 // ---------------------------------------------------------------------------
 
 let cliente: Client;
+/** `outputSchema` por ferramenta, como o `tools/list` publica. */
+let esquemas: Map<string, unknown>;
+const validador = new CfWorkerJsonSchemaValidator();
+
+/**
+ * Valida o que o CLIENTE vê: `structuredContent` atravessa como JSON, e
+ * `JSON.stringify` apaga chave cujo valor é `undefined` — num campo obrigatório
+ * isso é "missing required property" do outro lado. O transporte em memória
+ * não serializa, então serializa-se aqui.
+ */
+function validarContraEsquema(nome: string, structuredContent: unknown): { valid: boolean; errorMessage?: string } {
+  const esquema = esquemas.get(nome);
+  if (esquema === undefined) return { valid: false, errorMessage: `${nome} sem outputSchema em tools/list` };
+  const noFio = JSON.parse(JSON.stringify(structuredContent)) as unknown;
+  return validador.getValidator(esquema as never)(noFio);
+}
 
 async function conectar(): Promise<Client> {
   const server = createServer();
@@ -212,18 +237,80 @@ async function conectar(): Promise<Client> {
 
 beforeAll(async () => {
   cliente = await conectar();
+  const { tools } = await cliente.listTools();
+  esquemas = new Map(tools.map((t) => [t.name, t.outputSchema]));
 });
 
 afterAll(async () => {
   await cliente.close();
 });
 
-describe("toda resposta de sucesso sai envelopada", () => {
+describe("toda resposta de sucesso sai envelopada e obedece ao outputSchema anunciado", () => {
   it.each(CASOS.map((c) => [`${c.nome} — ${c.magro ? "MAGRO" : "cheio"} — ${c.cobre}`, c] as const))("%s", async (_titulo, caso) => {
     const resultado = await cliente.callTool({ name: caso.nome, arguments: caso.args });
     const texto = (resultado.content as Array<{ text?: string }> | undefined)?.[0]?.text;
     expect(resultado.isError, `${caso.nome} devolveu erro: ${texto}`).toBeFalsy();
     expect(conferirEnvelope(resultado), `${caso.nome} (${caso.cobre})`).toEqual([]);
+    const veredicto = validarContraEsquema(caso.nome, resultado.structuredContent);
+    expect(veredicto.valid, `${caso.nome} (${caso.cobre}): ${veredicto.errorMessage}`).toBe(true);
+  });
+
+  /**
+   * O caminho de ERRO-MOLE também é sucesso — resposta sem `isError`, com
+   * `structuredContent`, que carrega `error` em vez dos dados (decisão 38: "ano
+   * sem dado" sai do funil como sucesso honesto, não como falha). Cliente que
+   * valida recebe essa resposta como qualquer outra, então o esquema tem de
+   * prevê-la: é o segundo ramo do `anyOf` de cada ferramenta de dado.
+   */
+  it.each([
+    ["get_hospitalizations", { year: [2030] }],
+    ["get_hospitalization_trends", { year_start: 2029, year_end: 2030 }],
+    ["compare_regions", { year: [2030] }],
+    ["get_icsap", { year: [2030] }],
+    ["get_icsap_indicators", { year: [2030] }],
+    ["rank_csap_groups", { year: [2030] }],
+    ["get_hospitalization_rates", { year: [2030] }],
+    ["compare_icsap_trends", { start_year: 2029, end_year: 2030 }],
+    ["list_csap_groups", { group_code: "g99" }],
+  ] as const)("erro-mole de %s obedece ao esquema", async (nome, args) => {
+    const resultado = await cliente.callTool({ name: nome, arguments: args as Record<string, unknown> });
+    expect(resultado.isError).toBeFalsy();
+    const sc = resultado.structuredContent as Record<string, unknown>;
+    expect(typeof sc.error).toBe("string");
+    const veredicto = validarContraEsquema(nome, sc);
+    expect(veredicto.valid, `${nome}: ${veredicto.errorMessage}`).toBe(true);
+  });
+
+  /**
+   * Um portão que não pode reprovar não vale nada — e um esquema em que tudo é
+   * opcional passaria qualquer coisa. Três provas: (1) esquema DESONESTO
+   * contra uma resposta real — anunciar como `string` o que a fonte anula é a
+   * mentira exata que este arquivo existe para pegar; (2) resposta MUTILADA
+   * contra o esquema honesto — sem `summary`, o caminho feliz não fecha e o
+   * de erro-mole também não; (3) chave INTRUSA — o topo é fechado.
+   */
+  it("reprova esquema desonesto e resposta mutilada (prova de que o portão fecha)", async () => {
+    const magro = await cliente.callTool({ name: "classify_as_csap", arguments: { cid_codes: ["ZZZZ"] } });
+    expect(validarContraEsquema("classify_as_csap", magro.structuredContent).valid).toBe(true);
+    const desonesto = JSON.parse(JSON.stringify(esquemas.get("classify_as_csap"))) as {
+      properties: { classifications: { items: { properties: Record<string, unknown> } } };
+    };
+    desonesto.properties.classifications.items.properties.csap_group = { type: "string" };
+    const v1 = validador.getValidator(desonesto as never)(JSON.parse(JSON.stringify(magro.structuredContent)));
+    expect(v1.valid).toBe(false);
+    expect(v1.errorMessage).toContain("csap_group");
+
+    const cheio = await cliente.callTool({ name: "get_hospitalizations", arguments: { year: [2023], group_by: ["uf"] } });
+    expect(validarContraEsquema("get_hospitalizations", cheio.structuredContent).valid).toBe(true);
+    const semSummary = JSON.parse(JSON.stringify(cheio.structuredContent)) as Record<string, unknown>;
+    delete semSummary.summary;
+    expect(validarContraEsquema("get_hospitalizations", semSummary).valid).toBe(false);
+
+    const comIntruso = JSON.parse(JSON.stringify(cheio.structuredContent)) as Record<string, unknown>;
+    comIntruso.intruso = 1;
+    const v3 = validarContraEsquema("get_hospitalizations", comIntruso);
+    expect(v3.valid).toBe(false);
+    expect(v3.errorMessage).toContain("intruso");
   });
 
   /**
@@ -232,10 +319,16 @@ describe("toda resposta de sucesso sai envelopada", () => {
    * do que o servidor PUBLICA, e não de uma constante escrita à mão, é o que
    * impede a suíte de envelhecer calada.
    */
-  it("toda ferramenta publicada tem caso cheio e caso magro", async () => {
+  it("toda ferramenta publicada declara outputSchema e tem caso cheio e caso magro", async () => {
     const { tools } = await cliente.listTools();
     expect(tools.length).toBeGreaterThan(0);
     for (const t of tools) {
+      const saida = t.outputSchema as { type?: string; required?: string[]; anyOf?: unknown[] } | undefined;
+      expect(saida, `${t.name} sem outputSchema`).toBeDefined();
+      expect(saida?.type).toBe("object");
+      // O envelope é obrigatório em toda ferramenta: proveniência e atribuição.
+      expect(saida?.required).toEqual(expect.arrayContaining(["provenance", "attribution"]));
+      expect(Array.isArray(saida?.anyOf) && saida.anyOf.length > 0, `${t.name} sem formas (anyOf)`).toBe(true);
       const meus = CASOS.filter((c) => c.nome === t.name);
       expect(meus.length, `${t.name} sem nenhum caso`).toBeGreaterThan(0);
       if (!SEM_PARAMETRO.has(t.name)) {
@@ -253,7 +346,7 @@ describe("toda resposta de sucesso sai envelopada", () => {
    * mutilada de quatro formas — as quatro que este arquivo existe para pegar —
    * e o conferidor tem de recusar cada uma.
    */
-  it("reprova envelope mutilado (prova de que o portão fecha)", async () => {
+  it("reprova envelope mutilado (prova de que o conferidor do envelope fecha)", async () => {
     const bom = (await cliente.callTool({ name: "get_available_years", arguments: {} })) as Record<string, unknown>;
     expect(conferirEnvelope(bom)).toEqual([]);
 

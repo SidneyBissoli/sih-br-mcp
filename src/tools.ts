@@ -4,7 +4,7 @@
  * Foco em Internações por Condições Sensíveis à Atenção Primária (ICSAP)
  */
 
-import type { CallToolResult, Tool } from "@modelcontextprotocol/server";
+import type { CallToolResult, JsonSchemaType, Tool } from "@modelcontextprotocol/server";
 
 import {
   getAvailableYears,
@@ -52,6 +52,7 @@ import {
   type EraAspects,
 } from "./provenance.js";
 import { getFreshness } from "./freshness.js";
+import { outputSchemaFor } from "./output-schemas.js";
 import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, causasSummaryState, cubesCacheDir, ensureCausasEstratosYears, ensureCausasSummary, ensureEstratosYears, ensureIcsapSummary, ensurePopulation, ensureSidecars, ensureYears, icsapSummaryState, loadCubesManifest, populationPresent, publishedYears, yearsFromArgs } from "./cache.js";
 import type { CubeKind } from "./cache.js";
 
@@ -59,7 +60,7 @@ import type { CubeKind } from "./cache.js";
 // DEFINIÇÃO DAS FERRAMENTAS
 // =============================================================================
 
-export const tools: Tool[] = [
+const definicoes: Tool[] = [
   // --- Metadados ---
   {
     name: "list_csap_groups",
@@ -574,6 +575,17 @@ export const tools: Tool[] = [
     },
   },
 ];
+
+/**
+ * As doze como o `tools/list` as publica: cada definição acima mais o seu
+ * `outputSchema` (src/output-schemas.ts, 0.16.0), escrito à mão e servido
+ * verbatim como o `inputSchema`. Ferramenta nova sem esquema de saída derruba
+ * a carga do módulo — antes de chegar a qualquer gate.
+ */
+export const tools: Tool[] = definicoes.map((t) => ({
+  ...t,
+  outputSchema: outputSchemaFor(t.name, t.inputSchema as JsonSchemaType),
+}));
 
 // =============================================================================
 // HANDLERS DAS FERRAMENTAS

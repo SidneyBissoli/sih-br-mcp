@@ -9,10 +9,19 @@
  *   instância atende qualquer request, sem sessão nem eventStore.
  *
  * Os JSON Schemas das ferramentas continuam os mesmos (fromJsonSchema): a
- * superfície que o cliente vê — nome, descrição, inputSchema — é a gravada em
- * baselines/surface-stdio.json; título e anotações são o que entra a mais.
+ * superfície que o cliente vê — nome, descrição, inputSchema e, desde 0.16.0,
+ * outputSchema — é a gravada em baselines/surface-stdio.json; título e
+ * anotações são o que entra a mais.
  */
-import { McpServer, fromJsonSchema, type JsonSchemaType, type ToolAnnotations } from "@modelcontextprotocol/server";
+import {
+  McpServer,
+  fromJsonSchema,
+  type JsonSchemaType,
+  type JsonSchemaValidator,
+  type JsonSchemaValidatorResult,
+  type ToolAnnotations,
+  type jsonSchemaValidator,
+} from "@modelcontextprotocol/server";
 import { CfWorkerJsonSchemaValidator } from "@modelcontextprotocol/server/validators/cf-worker";
 
 import { SERVER_VERSION } from "./provenance.js";
@@ -62,6 +71,20 @@ const READ_ONLY: ToolAnnotations = {
  */
 const validadorDeEntrada = new CfWorkerJsonSchemaValidator();
 
+/**
+ * O `outputSchema` é ANUNCIADO verbatim, não imposto em runtime (molde do bcb,
+ * `passthroughSchema` em register.ts). Quem prova que toda resposta obedece ao
+ * esquema é tests/output-contract.test.ts, com o mesmo validador do SDK, caso
+ * cheio e caso magro por ferramenta. Validar aqui também transformaria um
+ * descompasso entre esquema e resposta em erro para o usuário em produção —
+ * o lugar de pegar isso é o CI, não o chat.
+ */
+const validadorPermissivo: jsonSchemaValidator = {
+  getValidator<T>(): JsonSchemaValidator<T> {
+    return (input: unknown): JsonSchemaValidatorResult<T> => ({ valid: true, data: input as T, errorMessage: undefined });
+  },
+};
+
 export function createServer(): McpServer {
   const server = new McpServer(
     { name: SERVER_NAME, version: SERVER_VERSION, title: SERVER_TITLE },
@@ -74,6 +97,7 @@ export function createServer(): McpServer {
         title: tool.title,
         description: tool.description,
         inputSchema: fromJsonSchema<ToolArgs>(tool.inputSchema as JsonSchemaType, validadorDeEntrada),
+        outputSchema: fromJsonSchema(tool.outputSchema as JsonSchemaType, validadorPermissivo),
         annotations: READ_ONLY,
       },
       (args) => callTool(tool.name, args),

@@ -6,7 +6,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 
-/** Superfície canônica: nome + descrição + inputSchema, ordenada por nome. */
+/** Superfície canônica: nome + descrição + inputSchema + outputSchema (0.16.0), ordenada por nome. */
 export function surfaceOf(tools) {
   if (!Array.isArray(tools) || tools.length === 0) throw new Error("tools/list vazio");
   for (const t of tools) {
@@ -15,7 +15,7 @@ export function surfaceOf(tools) {
   }
   const surface = [...tools]
     .sort((a, b) => a.name.localeCompare(b.name))
-    .map(({ name, description, inputSchema }) => ({ name, description, inputSchema }));
+    .map(({ name, description, inputSchema, outputSchema }) => ({ name, description, inputSchema, outputSchema }));
   return JSON.stringify(surface, null, 2) + "\n";
 }
 
