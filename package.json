@@ -1,6 +1,6 @@
 {
   "name": "sih-br-mcp",
-  "version": "0.15.7",
+  "version": "0.16.0",
   "mcpName": "io.github.SidneyBissoli/sih-br-mcp",
   "description": "Servidor MCP do DATASUS SIH/SUS: internações hospitalares do Brasil (AIH, 1992–2025) — causas CID-10 e CID-9, séries mensais, ICSAP e taxas por UF e município, sem baixar .dbc nem usar TabNet. Brazilian hospital admissions (SIH/SUS) MCP server.",
   "repository": {
