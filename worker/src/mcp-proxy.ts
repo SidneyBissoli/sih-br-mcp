@@ -117,35 +117,51 @@ export function forwardedHeaders(incoming: Headers): Headers {
  *  - lote JSON-RPC (array) → um nome por item;
  *  - notificação/resposta sem `method` ou corpo inválido → nada.
  *
- * LIMITAÇÃO: o desfecho registrado é o HTTP do container (< 400 = "ok"). Um
- * erro JSON-RPC ou `isError: true` que viaja DENTRO do SSE com HTTP 200 não é
- * lido — ler exigiria consumir o stream que está sendo repassado ao cliente.
- * O painel verá esses casos como "ok"; o UsageTracker também.
+ * O DESFECHO não vem daqui: vem do envelope da RESPOSTA (src/envelope.ts),
+ * casado com estas mensagens pelo `id` do JSON-RPC. Até 24/09/2026 vinha do
+ * HTTP do container (< 400 = "ok") e, como o protocolo MCP escreve o erro
+ * dentro da mensagem com HTTP 200, toda falha de ferramenta era gravada como
+ * acerto. O HTTP continua sendo o critério de RESERVA, para a mensagem cujo
+ * desfecho não deu para ler (stream cortado, evento grande demais, `id` nulo).
  */
 export function toolNamesFromBody(body: unknown): string[] {
   return messagesFromBody(body).map((m) => m.nome);
 }
 
+/** Uma mensagem do PEDIDO, com o que a telemetria precisa saber dela. */
+export interface MensagemDoPedido {
+  nome: string;
+  cliente: string;
+  /**
+   * `id` do JSON-RPC, em texto — a chave que casa esta mensagem com a resposta
+   * dela no envelope. "" quando é notificação (que não tem resposta) ou quando
+   * o `id` não é string nem número: nesses casos vale o critério de reserva.
+   */
+  id: string;
+}
+
 /**
- * Como toolNamesFromBody, mas cada mensagem traz também o CLIENTE: o
- * `clientInfo.name` normalizado, só na mensagem de initialize (é a única que
- * o declara; as demais chegam ao cliente pela sessão — ver analytics.ts).
+ * Como toolNamesFromBody, mas cada mensagem traz também o CLIENTE (o
+ * `clientInfo.name` normalizado, só na mensagem de initialize — é a única que
+ * o declara; as demais chegam ao cliente pela sessão, ver analytics.ts) e o
+ * `id` do JSON-RPC, que liga a mensagem à resposta dela.
  */
-export function messagesFromBody(body: unknown): Array<{ nome: string; cliente: string }> {
+export function messagesFromBody(body: unknown): MensagemDoPedido[] {
   const itens = Array.isArray(body) ? body : [body];
-  const out: Array<{ nome: string; cliente: string }> = [];
+  const out: MensagemDoPedido[] = [];
   for (const item of itens) {
     if (!item || typeof item !== "object") continue;
-    const msg = item as { method?: unknown; params?: unknown };
+    const msg = item as { method?: unknown; params?: unknown; id?: unknown };
     if (typeof msg.method !== "string" || msg.method === "") continue;
+    const id = typeof msg.id === "string" || typeof msg.id === "number" ? String(msg.id) : "";
     if (msg.method === "tools/call") {
       const params = msg.params as { name?: unknown } | undefined;
-      out.push({ nome: typeof params?.name === "string" && params.name !== "" ? params.name : "tools/call", cliente: "" });
+      out.push({ nome: typeof params?.name === "string" && params.name !== "" ? params.name : "tools/call", cliente: "", id });
     } else if (msg.method === "initialize") {
       const params = msg.params as { clientInfo?: { name?: unknown } } | undefined;
-      out.push({ nome: "initialize", cliente: normalizeClientName(params?.clientInfo?.name) });
+      out.push({ nome: "initialize", cliente: normalizeClientName(params?.clientInfo?.name), id });
     } else {
-      out.push({ nome: msg.method, cliente: "" });
+      out.push({ nome: msg.method, cliente: "", id });
     }
   }
   return out;
