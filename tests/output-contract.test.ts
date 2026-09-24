@@ -144,7 +144,7 @@ const CASOS: Caso[] = [
   { nome: "list_csap_groups", cobre: "um grupo só, sem a lista de códigos", magro: true, args: { group_code: "g01" } },
 
   { nome: "classify_as_csap", cobre: "códigos que classificam", magro: false, args: { cid_codes: ["J45", "I10", "A09"] } },
-  { nome: "classify_as_csap", cobre: "código que não existe na lista", magro: true, args: { cid_codes: ["ZZZZ"] } },
+  { nome: "classify_as_csap", cobre: "código que não é CID-10 (não classificado)", magro: true, args: { cid_codes: ["ZZZZ"] } },
 
   // -- internações gerais ----------------------------------------------------
   { nome: "get_hospitalizations", cobre: "ano cheio agrupado por UF", magro: false, args: { year: [2023], group_by: ["uf"] } },

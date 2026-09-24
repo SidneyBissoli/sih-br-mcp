@@ -1,7 +1,7 @@
 [
   {
     "name": "classify_as_csap",
-    "description": "Classifica um ou mais códigos CID-10 como CSAP ou não. Retorna o grupo CSAP correspondente se aplicável. Só CID-10: os códigos CID-9 de 6 dígitos do SIH de 1992–1997 são classificados no build pela lista derivada (src/data/csap-groups-cid9.json), não por esta ferramenta.",
+    "description": "Classifica um ou mais códigos CID-10 como CSAP ou não. Retorna o grupo CSAP correspondente se aplicável. Aceita as duas notações do mesmo código — `J18.1` (OMS) e `J181` (SIH) — com a mesma resposta. Código que NÃO é CID-10 não é classificado: volta com `is_csap: null` e `error` próprio, nunca `false` (que afirmaria que a condição existe e não é sensível). Só CID-10: os códigos CID-9 de 6 dígitos do SIH de 1992–1997 são classificados no build pela lista derivada (src/data/csap-groups-cid9.json), não por esta ferramenta.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -31,22 +31,29 @@
                 "description": "Código como foi informado"
               },
               "is_csap": {
-                "type": "boolean",
-                "description": "true quando o código cai em algum grupo CSAP"
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "true quando o código cai em algum grupo CSAP; false quando é CID-10 e não cai; null quando não é um código CID-10 (não classificado — veja `error` da entrada)"
               },
               "csap_group": {
                 "type": [
                   "string",
                   "null"
                 ],
-                "description": "Grupo CSAP g01–g19; null quando não é sensível"
+                "description": "Grupo CSAP g01–g19; null quando não é sensível ou não foi classificado"
               },
               "csap_name": {
                 "type": [
                   "string",
                   "null"
                 ],
-                "description": "Nome do grupo; null quando não é sensível"
+                "description": "Nome do grupo; null quando não é sensível ou não foi classificado"
+              },
+              "error": {
+                "type": "string",
+                "description": "Só nas entradas não classificadas: por que o código não é CID-10"
               }
             },
             "required": [
@@ -72,7 +79,11 @@
             },
             "non_csap": {
               "type": "number",
-              "description": "Quantos não são"
+              "description": "Quantos são CID-10 e não são sensíveis (não inclui os não classificados)"
+            },
+            "not_classified": {
+              "type": "number",
+              "description": "Só quando houver: quantos não são CID-10"
             }
           },
           "required": [
@@ -81,6 +92,10 @@
             "non_csap"
           ],
           "additionalProperties": false
+        },
+        "error": {
+          "type": "string",
+          "description": "Só quando houver código não classificado: quantos foram e para onde olhar"
         },
         "provenance": {
           "type": "object",
@@ -139,7 +154,7 @@
         "provenance",
         "attribution"
       ],
-      "description": "Cada código CID-10 informado classificado como sensível (com o grupo) ou não",
+      "description": "Cada código CID-10 informado classificado como sensível (com o grupo) ou não; `is_csap` é null no código que não é CID-10, que não recebe classificação",
       "anyOf": [
         {
           "required": [

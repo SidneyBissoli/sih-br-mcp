@@ -444,7 +444,10 @@ const definicoes: Tool[] = [
     title: "Classificar CID-10 como CSAP",
     description:
       "Classifica um ou mais códigos CID-10 como CSAP ou não. " +
-      "Retorna o grupo CSAP correspondente se aplicável. Só CID-10: os códigos CID-9 de 6 dígitos do SIH de 1992–1997 " +
+      "Retorna o grupo CSAP correspondente se aplicável. Aceita as duas notações do mesmo código — `J18.1` (OMS) e " +
+      "`J181` (SIH) — com a mesma resposta. Código que NÃO é CID-10 não é classificado: volta com `is_csap: null` e " +
+      "`error` próprio, nunca `false` (que afirmaria que a condição existe e não é sensível). " +
+      "Só CID-10: os códigos CID-9 de 6 dígitos do SIH de 1992–1997 " +
       "são classificados no build pela lista derivada (src/data/csap-groups-cid9.json), não por esta ferramenta.",
     inputSchema: {
       type: "object",
@@ -763,14 +766,65 @@ async function handleGetAvailableYears() {
   }
 }
 
+/**
+ * Forma de um código CID-10: letra + 2 dígitos, com um 4º caractere opcional
+ * (subcategoria, com ou sem ponto — o SIH grava `J180`, a OMS escreve `J18.0`).
+ */
+const FORMATO_CID10 = /^[A-Z]\d{2}(\.?\d)?$/;
+
+/**
+ * O código PERTENCE à CID-10? Não basta a forma: `A99` tem forma de CID e não
+ * existe capítulo que o contenha. O universo vem da tabela de capítulos que
+ * este servidor já carrega (`cid-chapters.json`, CID-10 2019 da OMS/CBCD), e
+ * não de uma lista escrita à mão — que envelheceria calada.
+ *
+ * Existe para separar duas perguntas que `is_csap: false` respondia junto:
+ * "esta doença não é sensível à atenção primária" e "isto não é uma doença".
+ * Medido em 24/09/2026: `classify_as_csap(["ZZZZ"])` devolvia `is_csap: false`,
+ * uma afirmação clínica sobre um código que não é CID nenhum.
+ *
+ * A comparação é lexicográfica de propósito: os extremos dos 22 capítulos são
+ * todos de 3 caracteres com dígitos zero-preenchidos (`A00-B99`, `V01-Y98`),
+ * então a ordem das strings É a ordem da classificação.
+ */
+export function ehCodigoCid10(codigo: string): boolean {
+  const limpo = codigo.toUpperCase().trim();
+  if (!FORMATO_CID10.test(limpo)) return false;
+  const raiz = limpo.substring(0, 3);
+  return cidChapters.chapters.some((cap) => {
+    const [inicio, fim] = cap.range.split("-");
+    return inicio !== undefined && fim !== undefined && raiz >= inicio && raiz <= fim;
+  });
+}
+
 async function handleClassifyAsCsap(args: { cid_codes: string[] }) {
   const { cid_codes } = args;
   const results = [];
 
   for (const cid of cid_codes) {
     const cidUpper = cid.toUpperCase().trim();
-    const cid3 = cidUpper.substring(0, 3);
-    const cid4 = cidUpper.substring(0, 4);
+    // Ausência antes da classificação: código que não é CID-10 não recebe
+    // resposta clínica nenhuma. `is_csap: null` — nunca `false` —, porque
+    // `false` afirma que a condição existe e não é sensível.
+    if (!ehCodigoCid10(cidUpper)) {
+      results.push({
+        cid: cid,
+        is_csap: null,
+        csap_group: null,
+        csap_name: null,
+        error: `"${cid}" não é um código CID-10 válido — não foi classificado. Esperado: letra + 2 dígitos, com subcategoria opcional (ex.: J18, J18.0, J180), dentro dos capítulos da CID-10.`,
+      });
+      continue;
+    }
+    // O ponto é NOTAÇÃO, não dado: `J18.1` (forma da OMS) e `J181` (forma do
+    // SIH) são o mesmo código. Até 24/09/2026 o ponto era removido só do lado
+    // da LISTA, e a entrada dotada nunca casava com um código de 4 caracteres:
+    // `J18.1` saía `is_csap: false` e `J181` saía `is_csap: true`, para a
+    // mesma pneumonia do grupo g06. Falso negativo clínico, e plausível — pior
+    // que o `ZZZZ`, porque não parece errado. Agora os dois lados são limpos.
+    const cidLimpo = cidUpper.replace(".", "");
+    const cid3 = cidLimpo.substring(0, 3);
+    const cid4 = cidLimpo.substring(0, 4);
     let found = false;
 
     for (const group of csapGroups.groups) {
@@ -780,10 +834,10 @@ async function handleClassifyAsCsap(args: { cid_codes: string[] }) {
 
         // Verifica match
         if (
-          cidUpper === groupCidClean ||
+          cidLimpo === groupCidClean ||
           cid3 === groupCidClean ||
           cid4 === groupCidClean ||
-          cidUpper.startsWith(groupCidClean)
+          cidLimpo.startsWith(groupCidClean)
         ) {
           results.push({
             cid: cid,
@@ -808,14 +862,23 @@ async function handleClassifyAsCsap(args: { cid_codes: string[] }) {
     }
   }
 
-  const csapCount = results.filter((r) => r.is_csap).length;
+  // `non_csap` conta só o que FOI classificado: somar os não-CID ali diria que
+  // eles são condições não sensíveis, que é o mesmo erro no atacado.
+  const csapCount = results.filter((r) => r.is_csap === true).length;
+  const naoClassificados = results.filter((r) => r.is_csap === null).length;
   return {
     classifications: results,
     summary: {
       total: results.length,
       csap: csapCount,
-      non_csap: results.length - csapCount,
+      non_csap: results.length - csapCount - naoClassificados,
+      ...(naoClassificados > 0 ? { not_classified: naoClassificados } : {}),
     },
+    ...(naoClassificados > 0
+      ? {
+          error: `${naoClassificados} de ${results.length} código(s) não são CID-10 e não foram classificados; veja \`error\` em cada entrada.`,
+        }
+      : {}),
   };
 }
 

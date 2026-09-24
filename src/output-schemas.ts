@@ -53,6 +53,7 @@ const strOuNulo = (description: string): Schema => ({ type: ["string", "null"], 
 const num = (description: string): Schema => ({ type: "number", description });
 const numOuNulo = (description: string): Schema => ({ type: ["number", "null"], description });
 const bool = (description: string): Schema => ({ type: "boolean", description });
+const boolOuNulo = (description: string): Schema => ({ type: ["boolean", "null"], description });
 const enumDe = (valores: readonly (string | number)[], description: string): Schema => ({
   enum: [...valores],
   description,
@@ -464,24 +465,36 @@ const get_available_years: Corpo = {
 };
 
 const classify_as_csap: Corpo = {
-  description: "Cada código CID-10 informado classificado como sensível (com o grupo) ou não",
+  description:
+    "Cada código CID-10 informado classificado como sensível (com o grupo) ou não; `is_csap` é null no código que não é CID-10, que não recebe classificação",
   properties: {
     classifications: lista(
       obj(
         {
           cid: str("Código como foi informado"),
-          is_csap: bool("true quando o código cai em algum grupo CSAP"),
-          csap_group: strOuNulo("Grupo CSAP g01–g19; null quando não é sensível"),
-          csap_name: strOuNulo("Nome do grupo; null quando não é sensível"),
+          // `null` é a terceira resposta, não um buraco: separa "não é sensível"
+          // de "isto não é uma doença". Ver `ehCodigoCid10` em tools.ts.
+          is_csap: boolOuNulo(
+            "true quando o código cai em algum grupo CSAP; false quando é CID-10 e não cai; null quando não é um código CID-10 (não classificado — veja `error` da entrada)",
+          ),
+          csap_group: strOuNulo("Grupo CSAP g01–g19; null quando não é sensível ou não foi classificado"),
+          csap_name: strOuNulo("Nome do grupo; null quando não é sensível ou não foi classificado"),
+          error: str("Só nas entradas não classificadas: por que o código não é CID-10"),
         },
         ["cid", "is_csap", "csap_group", "csap_name"],
       ),
       "Uma entrada por código, na ordem informada",
     ),
     summary: obj(
-      { total: num("Códigos informados"), csap: num("Quantos são sensíveis"), non_csap: num("Quantos não são") },
+      {
+        total: num("Códigos informados"),
+        csap: num("Quantos são sensíveis"),
+        non_csap: num("Quantos são CID-10 e não são sensíveis (não inclui os não classificados)"),
+        not_classified: num("Só quando houver: quantos não são CID-10"),
+      },
       ["total", "csap", "non_csap"],
     ),
+    error: str("Só quando houver código não classificado: quantos foram e para onde olhar"),
   },
   formas: [["classifications", "summary"]],
   proveniencia: "unica",
