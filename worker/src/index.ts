@@ -17,6 +17,7 @@ import { getServerCard } from "./card.js";
 import { CONTAINER_INSTANCE, HEALTH_PROBE_TIMEOUT_MS, SERVER_CONFIG } from "./config.js";
 import { SihContainer, type ContainerProbe } from "./container.js";
 import { discoveryResponseForPath } from "./discovery.js";
+import { desfechosDoCorpo, resolveDesfecho, type Desfecho } from "./envelope.js";
 import { landingResponse } from "./landing.js";
 import { logger } from "./logger.js";
 import {
@@ -197,24 +198,46 @@ export default {
       );
     }
 
-    // Telemetria por chamada (Analytics Engine + UsageTracker): status "ok" se o
-    // HTTP do container for < 400, senão "error". O par tool_call/tool_error é
-    // síncrono — é o que withAnalytics coalesce numa linha só. Ver a LIMITAÇÃO
-    // em toolNamesFromBody: erro JSON-RPC dentro do SSE não é lido.
+    // Telemetria por chamada (Analytics Engine + UsageTracker). O desfecho sai
+    // do ENVELOPE da resposta, não do HTTP do container: o protocolo MCP manda
+    // escrever o erro dentro da mensagem e deixar o HTTP em 200, e era por isso
+    // que 4 de 4 falhas viravam `ok` na série até 24/09/2026. O HTTP fica como
+    // critério de RESERVA para a mensagem cujo desfecho não deu para ler.
     const tag = tagRequest(request, env.SELF_MARKER, sessao.id);
     const falhou = upstream.status >= 400;
-    for (const { nome, cliente } of mensagens) {
-      record("tool_call", nome);
-      if (falhou) record("tool_error", nome);
-      recordMessage(env.ANALYTICS, nome, falhou, tag, cliente);
-    }
+    const grava = (desfechos: Map<string, Desfecho>): void => {
+      for (const { nome, cliente, id } of mensagens) {
+        const { erro, classe } = resolveDesfecho(id, desfechos, falhou);
+        record("tool_call", nome);
+        if (erro) record("tool_error", nome);
+        recordMessage(env.ANALYTICS, nome, erro, tag, cliente, classe);
+      }
+    };
 
     // Repassa o corpo como stream (new Response(body) não consome) e acrescenta
     // o CORS resolvido na borda.
     const headers = new Headers(upstream.headers);
     if (sessao.nova) headers.set("Mcp-Session-Id", sessao.id);
     for (const [k, v] of Object.entries(cors)) headers.set(k, v);
-    const response = new Response(upstream.body, { status: upstream.status, statusText: upstream.statusText, headers });
+
+    // Só TEIA o corpo quando há mensagem esperando resposta — o GET /mcp é um
+    // stream de vida longa sem pedido a casar, e teá-lo prenderia o Worker nele.
+    // O ramo de leitura corre em waitUntil, DEPOIS de a resposta ter saído: o
+    // cliente continua recebendo no mesmo ritmo de antes.
+    const esperaResposta = mensagens.some((m) => m.id !== "");
+    let corpoDoCliente = upstream.body;
+    if (esperaResposta && upstream.body) {
+      const [paraCliente, paraLeitura] = upstream.body.tee();
+      corpoDoCliente = paraCliente;
+      ctx.waitUntil(
+        desfechosDoCorpo(paraLeitura)
+          .then(grava)
+          .catch(() => grava(new Map())),
+      );
+    } else {
+      grava(new Map());
+    }
+    const response = new Response(corpoDoCliente, { status: upstream.status, statusText: upstream.statusText, headers });
 
     logger.info("request", {
       method: request.method,

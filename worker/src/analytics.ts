@@ -9,8 +9,10 @@
  * Esquema de blobs CONSISTENTE com o senado-br-mcp-cloudflare (instrument.ts):
  *   index1 = tool | blob1 = tool | blob2 = "ok"/"error" | blob3 = classe de
  *   cache (não medida neste worker — vazio) | blob4 = "self"/"" | blob5 = país
- *   | blob6 = organização do AS | blob7 e blob8 vazios (classe do erro e
- *   parâmetros, não medidos neste worker; posições mantidas iguais à frota) |
+ *   | blob6 = organização do AS | blob7 = classe do erro, lida do ENVELOPE da
+ *   resposta desde 24/09/2026 (src/envelope.ts; nos seis irmãos ela vem do
+ *   handler) | blob8 vazio (nomes dos parâmetros, não medidos neste worker;
+ *   posição mantida igual à frota) |
  *   blob9 = sessão (id emitido no initialize) | blob10 = cliente
  *   (clientInfo.name, só na linha do initialize) | double1 = flag de erro.
  *
@@ -114,6 +116,7 @@ function writeToolCall(
   isError: boolean,
   tag: RequestTag,
   cliente = "",
+  classe = "",
 ): void {
   try {
     analytics.writeDataPoint({
@@ -126,8 +129,8 @@ function writeToolCall(
         tag.self ? "self" : "",
         tag.country,
         tag.asOrg,
-        "", // classe do erro — não medida neste worker; posição mantida
-        "", // nomes dos parâmetros — idem
+        classe, // classe do erro — lida do envelope da resposta (src/envelope.ts)
+        "", // nomes dos parâmetros — não medidos neste worker; posição mantida
         tag.sessao,
         cliente,
       ],
@@ -141,7 +144,9 @@ function writeToolCall(
 /**
  * Uma mensagem JSON-RPC (tool ou método de protocolo) → uma linha no AE. É o
  * que o proxy usa: ele vê toda mensagem na borda e não tem hook de tool.
- * `cliente` só vem preenchido na linha do initialize.
+ * `cliente` só vem preenchido na linha do initialize; `classe` sai do envelope
+ * da resposta (src/envelope.ts) e é "" quando a chamada deu certo ou quando o
+ * desfecho não pôde ser lido.
  */
 export function recordMessage(
   analytics: AnalyticsEngineDataset | undefined,
@@ -149,9 +154,10 @@ export function recordMessage(
   isError: boolean,
   tag: RequestTag,
   cliente = "",
+  classe = "",
 ): void {
   if (!analytics) return;
-  writeToolCall(analytics, name, isError, tag, cliente);
+  writeToolCall(analytics, name, isError, tag, cliente, classe);
 }
 
 /**
