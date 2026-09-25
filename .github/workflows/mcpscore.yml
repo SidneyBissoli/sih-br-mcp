@@ -1,0 +1,116 @@
+name: mcpscore (contrato de qualidade)
+
+# O QUE ISTO GUARDA, e por que é contrato e não métrica.
+#
+# `mcpscore` é auditor determinístico (sem juiz LLM): conecta como cliente MCP
+# real e verifica conformidade de protocolo, qualidade das tools, segurança e
+# prontidão para a spec 2026-07-28. É o ÚNICO dos agregadores que mede o
+# SERVIDOR RODANDO — mcpindex, Glama e LobeHub leem ficha e repositório. Por
+# isso aqui ele deixa de ser número no painel e vira gate — o mesmo arquivo
+# que os seis irmãos têm desde 30/08/2026; este repositório era o único sem.
+#
+# CATRACA, não meta. O piso é o valor MEDIDO, arredondado para baixo: impede
+# regressão sem prometer melhora. Ao subir a nota de verdade, suba o piso na
+# mesma passada — senão a catraca protege um patamar que o servidor já não tem.
+#
+# DOIS PISOS, e a diferença não é arbitrária: no stdio várias regras de HTTP
+# não se aplicam e o denominador muda (103 no stdio, 76 em produção — o sih só
+# tem tools, sem resources nem prompts, e por isso o denominador é menor que os
+# 173–182 dos irmãos), então a mesma implementação pontua diferente nos dois
+# transportes.
+#
+# HISTÓRICO DOS PISOS
+#  - 25/09/2026: produção media 72/76 = 94,7 % e o stdio 98/103 = 95,1 %, com
+#    as mesmas três regras reprovadas nos dois (cursor inválido → -32603 em vez
+#    de -32602; `instructions` ausente no handshake; `server/discover` sem a
+#    revisão negociada) e, só em produção, `protocol_version_latest` — o
+#    contêiner atendia o HTTP pelo ciclo legado. Fechados os quatro na mesma
+#    release (1.0.1: src/pagination.ts, src/discover.ts, `instructions` em
+#    src/server.ts, `createMcpHandler` em src/http.ts): stdio medido em
+#    101/103 = 98,1 % → piso 98. Os 2 pontos que faltam no stdio são
+#    `readiness_2026_unsupported_version_error`, limite do SDK nesse
+#    transporte e não dívida — os mesmos 2 dos irmãos, que também têm piso
+#    98 no stdio. Em produção a prontidão passa a contar (o contêiner virou
+#    dual-era) e o denominador sobe de 76 para 126; medido sem o Worker em
+#    118/126, faltando só TLS e Origin, que são do Worker → piso 100 depois
+#    do deploy.
+#
+# UM PISO DE 100 É DESCONFORTÁVEL DE PROPÓSITO. Ele fica vermelho tanto numa
+# regressão nossa quanto numa REGRA NOVA do auditor que ainda não atendemos —
+# e a segunda também é notícia, não ruído: é uma exigência de conformidade que
+# passou a existir. Quem baixar este piso está decidindo não saber.
+#
+# O gate do PR mede o CÓDIGO DO PR (stdio, servidor local). O pós-deploy mede
+# o que FOI AO AR. São perguntas diferentes e por isso são dois jobs.
+
+# QUANDO CADA JOB RODA, e por que não é o mesmo gatilho.
+#
+# O job remoto ESPERA O DEPLOY. Ele mede o endpoint, e aqui o deploy
+# (deploy-container.yml) roda na TAG, não no push: um push ao master não muda
+# produção, e auditar produção a cada push mediria a release anterior. Por isso
+# o gatilho do job remoto é o TÉRMINO do workflow de deploy — e só o sucesso
+# dele: deploy que falhou deixou o ar como estava, e reprovar por isso seria
+# repetir o vermelho que o deploy já deu.
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_run:
+    workflows: ["Deploy do Worker e do container"]
+    types: [completed]
+  # Semanal, porque o gatilho do deploy sozinho deixa um buraco: entre duas
+  # releases ninguém audita nada. E o auditor não é estático — REGRA NOVA dele
+  # também reprova, e isso é notícia, não ruído (é a razão de o piso ser 100).
+  # Sem esta linha, uma regra nova só apareceria no deploy seguinte, que pode
+  # demorar. Os sete repositórios rodam em horas diferentes, de propósito: uma
+  # falha de infraestrutura da Cloudflare não deve chegar como sete alarmes
+  # simultâneos parecendo sete defeitos (ibge 6h, medical 7h, bcb 8h, ilo 9h,
+  # uis 10h, senado 11h, sih 12h UTC, toda segunda).
+  schedule:
+    - cron: "17 12 * * 1"
+  workflow_dispatch:
+
+jobs:
+  stdio:
+    name: contrato no código do PR (stdio)
+    # O eco do deploy não traz código novo para medir aqui — o PR e o push já
+    # mediram este mesmo commit. Já o semanal ENTRA: o que muda sem commit é a
+    # versão do auditor (o `uvx` não pina) e a árvore de dependências, e as
+    # duas coisas mexem na nota. Rodar aqui é o que faz regra nova aparecer em
+    # sete dias em vez de no próximo deploy.
+    if: github.event_name != 'workflow_run'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm ci
+      - name: Build (o auditor precisa do bundle, não do fonte)
+        run: npm run build
+      - uses: astral-sh/setup-uv@v7
+      - name: Auditar o servidor local
+        # Sem rede e sobre as fixtures, como o smoke: o auditor lista e
+        # inspeciona as ferramentas, não precisa dos cubos — e um download de
+        # 1,25 GB no meio da auditoria seria ruído, não medida.
+        env:
+          SIH_DATA_DIR: tests/fixtures/sih
+          SIH_CUBES_CACHE: "off"
+          SIH_FRESHNESS_CHECK: "off"
+        run: uvx mcpscore --fail-under 98 --stdio node dist/index.js
+
+  remoto:
+    name: contrato no que está no ar (streamable http)
+    # Depois do deploy, nunca no PR: num PR o endpoint ainda serve o código
+    # anterior, e reprovar o PR por isso mediria a coisa errada.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+      - name: Auditar o endpoint em produção
+        run: uvx mcpscore --fail-under 100 https://sih.sidneybissoli.com/mcp
