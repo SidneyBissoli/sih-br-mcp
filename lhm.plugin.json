@@ -1,0 +1,4085 @@
+{
+  "identifier": "sidneybissoli-sih-br-mcp",
+  "name": "DATASUS SIH/SUS — Brazil Hospital Admissions (AIH) MCP",
+  "version": "1.0.1",
+  "icon": "🏥",
+  "description": "Servidor MCP do DATASUS SIH/SUS: internações hospitalares do Brasil (AIH, 1992–2025) — causas CID-10 e CID-9, séries mensais, ICSAP e taxas por UF e município, sem baixar .dbc nem usar TabNet. Brazilian hospital admissions (SIH/SUS) MCP server: ICD-10 causes, monthly series, ambulatory-care-sensitive conditions (ICSAP) and rates by state and municipality, with source, data vintage and citation on every answer. Hosted on Cloudflare (Streamable HTTP, no auth) or local stdio via npm.",
+  "author": "Sidney Bissoli",
+  "authorUrl": "https://github.com/SidneyBissoli",
+  "homepage": "https://github.com/SidneyBissoli/sih-br-mcp",
+  "cloudEndpoint": "https://sih.sidneybissoli.com/mcp",
+  "category": "science-education",
+  "tags": [
+    "datasus",
+    "sih",
+    "sus",
+    "brazil",
+    "brasil",
+    "hospital-admissions",
+    "internacoes",
+    "icsap",
+    "cid-10",
+    "icd-10",
+    "public-health",
+    "saude-publica",
+    "open-data",
+    "provenance"
+  ],
+  "tools": [
+    {
+      "name": "list_csap_groups",
+      "title": "Grupos CSAP (Portaria 221/2008)",
+      "description": "Lista os 19 grupos de Condições Sensíveis à Atenção Primária (CSAP) conforme Portaria MS/SAS 221/2008. Retorna código, nome e códigos CID-10 de cada grupo.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "group_code": {
+            "type": "string",
+            "description": "Código do grupo específico (ex: 'g01'). Se omitido, retorna todos."
+          },
+          "include_cid_codes": {
+            "type": "boolean",
+            "description": "Se true, inclui lista de códigos CID-10 (default: false)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "total_groups": {
+            "type": "number",
+            "description": "Número de grupos na lista (19)"
+          },
+          "source": {
+            "type": "string",
+            "description": "Norma que define a lista (Portaria MS/SAS 221/2008)"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "Código do grupo, g01–g19"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Nome do grupo em português"
+                },
+                "cid_count": {
+                  "type": "number",
+                  "description": "Quantos códigos CID-10 compõem o grupo"
+                },
+                "cid_codes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Códigos CID-10 do grupo; só com `include_cid_codes: true`"
+                }
+              },
+              "required": [
+                "code",
+                "name",
+                "cid_count"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Os 19 grupos, na ordem da Portaria"
+          },
+          "group": {
+            "type": "object",
+            "description": "O grupo pedido por `group_code`",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Número do grupo na Portaria, 1–19"
+              },
+              "code": {
+                "type": "string",
+                "description": "Código do grupo, g01–g19"
+              },
+              "name_pt": {
+                "type": "string",
+                "description": "Nome em português"
+              },
+              "name_en": {
+                "type": "string",
+                "description": "Nome em inglês"
+              },
+              "diagnoses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Diagnóstico"
+                    },
+                    "cid10": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Códigos CID-10 do diagnóstico"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "cid10"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Diagnósticos que compõem o grupo, com seus códigos"
+              },
+              "cid_codes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Todos os códigos CID-10 do grupo; só com `include_cid_codes: true`"
+              }
+            },
+            "required": [
+              "id",
+              "code",
+              "name_pt",
+              "name_en",
+              "diagnoses"
+            ],
+            "additionalProperties": false
+          },
+          "error": {
+            "type": "string",
+            "description": "Grupo CSAP não encontrado"
+          },
+          "provenance": {
+            "type": "object",
+            "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+            "properties": {
+              "source": {
+                "type": "string",
+                "description": "Fonte oficial do dado"
+              },
+              "source_url": {
+                "type": "string",
+                "description": "URL canônica que reproduz a consulta ou localiza a fonte"
+              },
+              "data_vintage": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Competência ou safra do dado segundo a fonte; null quando a fonte não expõe"
+              },
+              "retrieved_at": {
+                "type": "string",
+                "description": "Instante REAL da extração na origem (ISO-8601)"
+              },
+              "citation": {
+                "type": "string",
+                "description": "Citação pronta para uso"
+              },
+              "license": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Regime legal do dado (id SPDX quando há)"
+              }
+            },
+            "required": [
+              "source",
+              "source_url",
+              "data_vintage",
+              "retrieved_at",
+              "citation",
+              "license"
+            ],
+            "additionalProperties": false
+          },
+          "attribution": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "URLs canônicas das fontes desta resposta (lista de atribuição)"
+          }
+        },
+        "required": [
+          "provenance",
+          "attribution"
+        ],
+        "description": "Os 19 grupos CSAP (lista completa) ou um grupo só, quando `group_code` é informado; `error` quando o código não existe",
+        "anyOf": [
+          {
+            "required": [
+              "total_groups",
+              "source",
+              "groups"
+            ]
+          },
+          {
+            "required": [
+              "group"
+            ]
+          },
+          {
+            "required": [
+              "error"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_cid_chapters",
+      "title": "Capítulos da CID-10",
+      "description": "Lista os 22 capítulos da CID-10 com seus códigos e faixas de diagnóstico. Os cubos de 1992–1997 (diagnóstico em CID-9) trazem `cid_chapter` como o capítulo CID-10 equivalente (mapa por categoria em src/data/cid9-chapters.json).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "total_chapters": {
+            "type": "number",
+            "description": "Número de capítulos (22)"
+          },
+          "chapters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "Capítulo em algarismo romano (chave usada em `cid_chapter` é o número, 1–22)"
+                },
+                "roman": {
+                  "type": "string",
+                  "description": "Capítulo em algarismo romano"
+                },
+                "range": {
+                  "type": "string",
+                  "description": "Intervalo de códigos CID-10 (ex.: A00-B99)"
+                },
+                "name_pt": {
+                  "type": "string",
+                  "description": "Nome em português"
+                },
+                "name_en": {
+                  "type": "string",
+                  "description": "Nome em inglês"
+                }
+              },
+              "required": [
+                "code",
+                "roman",
+                "range",
+                "name_pt",
+                "name_en"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Os capítulos, na ordem da CID"
+          },
+          "provenance": {
+            "type": "object",
+            "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+            "properties": {
+              "source": {
+                "type": "string",
+                "description": "Fonte oficial do dado"
+              },
+              "source_url": {
+                "type": "string",
+                "description": "URL canônica que reproduz a consulta ou localiza a fonte"
+              },
+              "data_vintage": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Competência ou safra do dado segundo a fonte; null quando a fonte não expõe"
+              },
+              "retrieved_at": {
+                "type": "string",
+                "description": "Instante REAL da extração na origem (ISO-8601)"
+              },
+              "citation": {
+                "type": "string",
+                "description": "Citação pronta para uso"
+              },
+              "license": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Regime legal do dado (id SPDX quando há)"
+              }
+            },
+            "required": [
+              "source",
+              "source_url",
+              "data_vintage",
+              "retrieved_at",
+              "citation",
+              "license"
+            ],
+            "additionalProperties": false
+          },
+          "attribution": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "URLs canônicas das fontes desta resposta (lista de atribuição)"
+          }
+        },
+        "required": [
+          "provenance",
+          "attribution"
+        ],
+        "description": "Os 22 capítulos da CID-10 (versão 2019), com intervalo de códigos e nomes",
+        "anyOf": [
+          {
+            "required": [
+              "total_chapters",
+              "chapters"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_available_years",
+      "title": "Anos disponíveis e frescor dos cubos",
+      "description": "Retorna os anos disponíveis nos dados do SIH-SUS carregados e o frescor dos cubos em relação ao espelho healthbr-data (`freshness.status`: current, stale, unknown, pending ou disabled; quando stale, lista por ano as partições reeditadas pelo MS, regeneradas, retiradas ou novas na janela). Por ano, o que muda entre as eras do SIH: `race_available` (raça/cor só de 2008), `cid_revision` (9 = CID-9 de 6 dígitos em 1992–1997, 10 = CID-10; 1997 tem as duas), `icsap_list_revision` (cid9-derivada, não oficial, em 1992–1997), `uf_basis` (arquivo em 1992–1997, residencia de 1998), `municipality_available`, `currency` e `records_date_imputed`.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos com cubos Parquet presentes localmente"
+          },
+          "data_range": {
+            "type": "object",
+            "description": "Intervalo dos anos locais",
+            "properties": {
+              "first_year": {
+                "type": "number",
+                "description": "Primeiro ano local; ausente quando não há cubo"
+              },
+              "last_year": {
+                "type": "number",
+                "description": "Último ano local; ausente quando não há cubo"
+              },
+              "total_years": {
+                "type": "number",
+                "description": "Quantos anos"
+              }
+            },
+            "required": [
+              "total_years"
+            ],
+            "additionalProperties": false
+          },
+          "note": {
+            "type": "string",
+            "description": "Aviso sobre o que `years` significa"
+          },
+          "race_available": {
+            "type": "object",
+            "description": "Raça/cor disponível — chave é o ano (string)",
+            "additionalProperties": {
+              "type": "boolean",
+              "description": "true quando o cubo tem raça/cor"
+            }
+          },
+          "years_without_race": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos sem raça/cor (1998–2007)"
+          },
+          "cid_revision": {
+            "type": "object",
+            "description": "Internações por revisão da CID — chave é o ano (string)",
+            "additionalProperties": {
+              "type": "object",
+              "description": "Revisão da CID (\"9\" ou \"10\") → internações",
+              "additionalProperties": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "Internações naquela revisão; null quando o sidecar não traz o total"
+              }
+            }
+          },
+          "years_cid9": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos em que o cubo usa CID-9 (1992–1997)"
+          },
+          "icsap_available": {
+            "type": "object",
+            "description": "ICSAP disponível — chave é o ano (string)",
+            "additionalProperties": {
+              "type": "boolean",
+              "description": "true quando o cubo tem a marcação ICSAP"
+            }
+          },
+          "icsap_list_revision": {
+            "type": "object",
+            "description": "Lista ICSAP por revisão da CID — chave é o ano (string)",
+            "additionalProperties": {
+              "type": "object",
+              "description": "Revisão → lista",
+              "additionalProperties": {
+                "type": "string",
+                "description": "Lista usada (portaria-221-2008 ou cid9-derivada)"
+              }
+            }
+          },
+          "uf_basis": {
+            "type": "object",
+            "description": "Base do eixo `uf` — chave é o ano (string)",
+            "additionalProperties": {
+              "enum": [
+                "residencia",
+                "arquivo"
+              ],
+              "description": "Base do eixo `uf`"
+            }
+          },
+          "years_uf_arquivo": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos em que `uf` é a do estabelecimento (1992–1997)"
+          },
+          "municipality_available": {
+            "type": "object",
+            "description": "Município disponível — chave é o ano (string)",
+            "additionalProperties": {
+              "type": "boolean",
+              "description": "false quando `municipality_code` é nulo em todas as linhas"
+            }
+          },
+          "currency": {
+            "type": "object",
+            "description": "Moeda de `value` — chave é o ano (string)",
+            "additionalProperties": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "description": "Moeda de `value` por competência; null quando o sidecar não informa",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "description": "Primeira competência (AAAA-MM)"
+                  },
+                  "to": {
+                    "type": "string",
+                    "description": "Última competência (AAAA-MM)"
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "Código ISO 4217 (BRE, BRR, BRL)"
+                  },
+                  "symbol": {
+                    "type": "string",
+                    "description": "Símbolo (Cr$, CR$, R$)"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Nome da moeda"
+                  }
+                },
+                "required": [
+                  "from",
+                  "to",
+                  "code",
+                  "symbol",
+                  "name"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "records_date_imputed": {
+            "type": "object",
+            "description": "Datas imputadas — chave é o ano (string)",
+            "additionalProperties": {
+              "type": "number",
+              "description": "Internações que entraram com data imputada"
+            }
+          },
+          "csap_universe": {
+            "type": "object",
+            "description": "Universo do % ICSAP — chave é o ano (string)",
+            "additionalProperties": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Universo do % ICSAP como o csapAIH; null em cubo anterior ao builder 2.6.0",
+              "properties": {
+                "method": {
+                  "type": "string",
+                  "description": "Método (csapAIH)"
+                },
+                "records_in_universe": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "Internações dentro do universo"
+                },
+                "excluded": {
+                  "type": "object",
+                  "description": "Motivo de exclusão → internações",
+                  "additionalProperties": {
+                    "type": "number",
+                    "description": "Internações fora do universo por este motivo"
+                  }
+                }
+              },
+              "required": [
+                "method",
+                "records_in_universe",
+                "excluded"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "population_years": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Cobertura dos arquivos de população por UF: o que as ferramentas de taxa aceitam",
+            "properties": {
+              "first_year": {
+                "type": "number",
+                "description": "Primeiro ano com população por UF (união dos dois arquivos)"
+              },
+              "last_year": {
+                "type": "number",
+                "description": "Último ano com população por UF"
+              },
+              "detailed": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "description": "pop_uf.parquet — idade simples por UF e sexo (projeções IBGE, 2000+)",
+                "properties": {
+                  "first_year": {
+                    "type": "number",
+                    "description": "Primeiro ano coberto"
+                  },
+                  "last_year": {
+                    "type": "number",
+                    "description": "Último ano coberto"
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Arquivo parquet que serve o intervalo"
+                  },
+                  "age": {
+                    "type": "string",
+                    "description": "Grão etário do arquivo"
+                  },
+                  "age_groups": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Faixas etárias quinquenais (só no arquivo agregado)"
+                  }
+                },
+                "required": [
+                  "first_year",
+                  "last_year",
+                  "source",
+                  "age"
+                ],
+                "additionalProperties": false
+              },
+              "aggregated": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "description": "pop_uf_agregado.parquet — faixa etária quinquenal por UF e sexo (1991–1999)",
+                "properties": {
+                  "first_year": {
+                    "type": "number",
+                    "description": "Primeiro ano coberto"
+                  },
+                  "last_year": {
+                    "type": "number",
+                    "description": "Último ano coberto"
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Arquivo parquet que serve o intervalo"
+                  },
+                  "age": {
+                    "type": "string",
+                    "description": "Grão etário do arquivo"
+                  },
+                  "age_groups": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Faixas etárias quinquenais (só no arquivo agregado)"
+                  }
+                },
+                "required": [
+                  "first_year",
+                  "last_year",
+                  "source",
+                  "age"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "first_year",
+              "last_year",
+              "detailed",
+              "aggregated"
+            ],
+            "additionalProperties": false
+          },
+          "cubes_channel": {
+            "type": "object",
+            "description": "Canal público dos cubos e cache local",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "false quando o cache de cubos está desligado"
+              },
+              "base_url": {
+                "type": "string",
+                "description": "URL do canal público de cubos"
+              },
+              "published_years": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "description": "Anos publicados no manifesto do canal"
+              },
+              "cache_dir": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Pasta do cache local; null quando desligado"
+              },
+              "manifest_source": {
+                "enum": [
+                  "remote",
+                  "disk",
+                  "none",
+                  "disabled"
+                ],
+                "description": "De onde veio o manifesto"
+              },
+              "manifest_generated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Quando o manifesto foi gerado; null sem manifesto"
+              },
+              "note": {
+                "type": "string",
+                "description": "Como o cache baixa os anos pedidos"
+              }
+            },
+            "required": [
+              "enabled",
+              "base_url",
+              "published_years",
+              "cache_dir",
+              "manifest_source"
+            ],
+            "additionalProperties": false
+          },
+          "freshness": {
+            "type": "object",
+            "description": "Frescor dos cubos locais frente ao espelho healthbr-data",
+            "properties": {
+              "status": {
+                "enum": [
+                  "disabled",
+                  "pending",
+                  "current",
+                  "stale",
+                  "unknown"
+                ],
+                "description": "Frescor dos cubos frente ao espelho"
+              },
+              "checked_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Instante (UTC) da última checagem; null se nunca terminou"
+              },
+              "method": {
+                "enum": [
+                  "range",
+                  "full",
+                  null
+                ],
+                "description": "Como checou: sonda parcial ou manifesto inteiro"
+              },
+              "manifest_url": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "URL do manifesto do espelho"
+              },
+              "manifest_last_updated_local": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Manifesto com que os cubos foram gerados"
+              },
+              "manifest_last_updated_remote": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Manifesto público lido agora"
+              },
+              "cubes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "cube_year": {
+                      "type": "number",
+                      "description": "Ano do cubo"
+                    },
+                    "reedited": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Partições cujo .dbc de origem mudou (reedição do MS)"
+                    },
+                    "reprocessed": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Partições regeneradas pelo espelho"
+                    },
+                    "removed": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Partições que saíram do manifesto"
+                    },
+                    "new_in_window": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Competências publicadas depois do build"
+                    },
+                    "behind": {
+                      "type": "boolean",
+                      "description": "true quando alguma lista acima tem item"
+                    }
+                  },
+                  "required": [
+                    "cube_year",
+                    "reedited",
+                    "reprocessed",
+                    "removed",
+                    "new_in_window",
+                    "behind"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Cubos atrasados frente ao espelho"
+              },
+              "error": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Erro da checagem; null quando não houve"
+              }
+            },
+            "required": [
+              "status",
+              "checked_at",
+              "method",
+              "manifest_url",
+              "manifest_last_updated_local",
+              "manifest_last_updated_remote",
+              "cubes",
+              "error"
+            ],
+            "additionalProperties": false
+          },
+          "error": {
+            "type": "string",
+            "description": "Falha ao listar os anos"
+          },
+          "provenance": {
+            "type": "object",
+            "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+            "properties": {
+              "source": {
+                "type": "string",
+                "description": "Fonte oficial do dado"
+              },
+              "source_url": {
+                "type": "string",
+                "description": "URL canônica que reproduz a consulta ou localiza a fonte"
+              },
+              "data_vintage": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Competência ou safra do dado segundo a fonte; null quando a fonte não expõe"
+              },
+              "retrieved_at": {
+                "type": "string",
+                "description": "Instante REAL da extração na origem (ISO-8601)"
+              },
+              "citation": {
+                "type": "string",
+                "description": "Citação pronta para uso"
+              },
+              "license": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Regime legal do dado (id SPDX quando há)"
+              }
+            },
+            "required": [
+              "source",
+              "source_url",
+              "data_vintage",
+              "retrieved_at",
+              "citation",
+              "license"
+            ],
+            "additionalProperties": false
+          },
+          "attribution": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "URLs canônicas das fontes desta resposta (lista de atribuição)"
+          }
+        },
+        "required": [
+          "provenance",
+          "attribution"
+        ],
+        "description": "Anos com cubo local, o que cada ano carrega (revisão da CID, raça/cor, município, moeda, universo ICSAP), cobertura da população, canal de cubos e frescor",
+        "anyOf": [
+          {
+            "required": [
+              "years",
+              "data_range",
+              "note",
+              "race_available",
+              "years_without_race",
+              "cid_revision",
+              "years_cid9",
+              "icsap_available",
+              "icsap_list_revision",
+              "uf_basis",
+              "years_uf_arquivo",
+              "municipality_available",
+              "currency",
+              "records_date_imputed",
+              "csap_universe",
+              "population_years",
+              "cubes_channel",
+              "freshness"
+            ]
+          },
+          {
+            "required": [
+              "error",
+              "years"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_hospitalizations",
+      "title": "Internações do SUS com filtros",
+      "description": "Consulta dados de internações hospitalares do SUS com filtros flexíveis. Permite agregar por múltiplas dimensões (UF, CID, sexo, idade, raça, ano/mês). Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). Série desde 1992: em 1992–1997 o diagnóstico é CID-9 decodificado por tabela (`cid_group` = categoria de 3 dígitos, `cid_chapter` = capítulo CID-10 equivalente; agrupar por `cid_revision` separa 9 e 10 — 1997 tem os dois), `uf` é a UF do ARQUIVO (estabelecimento), não de residência, e `value` é nominal na moeda da época — ver get_available_years (uf_basis, currency) e as `notes` da resposta. `exclusion` (agrupável) marca as internações fora do universo do % ICSAP do csapAIH (procedimento_obstetrico, parto, longa_permanencia; nula = dentro).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Anos para consultar (ex: [2023, 2024]); série de 1992 em diante"
+          },
+          "month": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Meses (1-12). Se omitido, todos."
+          },
+          "uf": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Lista de UFs (ex: ['SP', 'RJ']). Se omitido, todas."
+          },
+          "cid_chapter": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Capítulos CID-10 (1-22). Se omitido, todos."
+          },
+          "sex": {
+            "type": "string",
+            "enum": [
+              "M",
+              "F"
+            ],
+            "description": "Filtrar por sexo"
+          },
+          "age_min": {
+            "type": "integer",
+            "description": "Idade mínima em anos"
+          },
+          "age_max": {
+            "type": "integer",
+            "description": "Idade máxima em anos"
+          },
+          "race": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Raça/cor (branca, preta, parda, amarela, indigena, ignorado). Só existe de 2008 em diante: em 1998–2007 race é nulo e o filtro não alcança esses anos."
+          },
+          "is_csap": {
+            "type": "boolean",
+            "description": "Filtrar apenas CSAP (true) ou não-CSAP (false)"
+          },
+          "group_by": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "year",
+                "month",
+                "uf",
+                "cid_chapter",
+                "cid_revision",
+                "cid_group",
+                "sex",
+                "age",
+                "race",
+                "exclusion",
+                "is_csap",
+                "csap_group"
+              ]
+            },
+            "description": "Dimensões para agrupamento"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Limitar número de resultados"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Uma linha por combinação de `group_by` (só as colunas pedidas aparecem)",
+              "properties": {
+                "year": {
+                  "type": "number",
+                  "description": "Ano (group_by: year)"
+                },
+                "month": {
+                  "type": "number",
+                  "description": "Mês, 1–12 (group_by: month)"
+                },
+                "uf": {
+                  "type": "string",
+                  "description": "UF de residência — do estabelecimento em 1992–1997 (group_by: uf)"
+                },
+                "cid_chapter": {
+                  "type": "number",
+                  "description": "Capítulo da CID, 1–22 (group_by: cid_chapter)"
+                },
+                "cid_revision": {
+                  "type": "number",
+                  "description": "Revisão da CID do diagnóstico: 9 ou 10 (group_by: cid_revision)"
+                },
+                "cid_group": {
+                  "type": "string",
+                  "description": "Categoria CID de 3 dígitos (group_by: cid_group)"
+                },
+                "sex": {
+                  "type": "string",
+                  "description": "Sexo: M ou F (group_by: sex)"
+                },
+                "age": {
+                  "type": "number",
+                  "description": "Idade em anos (group_by: age)"
+                },
+                "race": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Raça/cor; null em 1998–2007, quando a AIH não trazia o campo (group_by: race)"
+                },
+                "exclusion": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Motivo de exclusão do universo csapAIH; null quando dentro do universo (group_by: exclusion)"
+                },
+                "is_csap": {
+                  "type": "boolean",
+                  "description": "Internação por condição sensível à atenção primária (group_by: is_csap)"
+                },
+                "csap_group": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Grupo CSAP g01–g19; null quando a internação não é sensível (group_by: csap_group)"
+                },
+                "n_hospitalizations": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "Internações; null quando o recorte não tem nenhuma linha"
+                },
+                "total_days": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "Dias de permanência; null quando o recorte não tem nenhuma linha"
+                },
+                "total_value": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "Valor total pago (R$); null quando o recorte não tem nenhuma linha"
+                },
+                "deaths": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "Óbitos; null quando o recorte não tem nenhuma linha"
+                }
+              },
+              "required": [
+                "n_hospitalizations",
+                "total_days",
+                "total_value",
+                "deaths"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Linhas agrupadas (vazio no caminho de erro-mole)"
+          },
+          "summary": {
+            "type": "object",
+            "description": "Totais do recorte inteiro (não do trecho devolvido, quando truncado)",
+            "properties": {
+              "total_hospitalizations": {
+                "type": "number",
+                "description": "Internações no recorte inteiro"
+              },
+              "total_days": {
+                "type": "number",
+                "description": "Dias de permanência"
+              },
+              "total_value": {
+                "type": "number",
+                "description": "Valor pago (R$), duas casas"
+              },
+              "deaths": {
+                "type": "number",
+                "description": "Óbitos"
+              },
+              "hospital_mortality_rate": {
+                "type": "number",
+                "description": "Óbitos / internações × 100, duas casas"
+              },
+              "records_returned": {
+                "type": "number",
+                "description": "Linhas em `data`"
+              }
+            },
+            "required": [
+              "total_hospitalizations",
+              "total_days",
+              "total_value",
+              "deaths",
+              "hospital_mortality_rate",
+              "records_returned"
+            ],
+            "additionalProperties": false
+          },
+          "filters_applied": {
+            "type": "object",
+            "description": "Os argumentos recebidos, ecoados",
+            "properties": {
+              "year": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "Anos para consultar (ex: [2023, 2024]); série de 1992 em diante"
+              },
+              "month": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "Meses (1-12). Se omitido, todos."
+              },
+              "uf": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Lista de UFs (ex: ['SP', 'RJ']). Se omitido, todas."
+              },
+              "cid_chapter": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "Capítulos CID-10 (1-22). Se omitido, todos."
+              },
+              "sex": {
+                "type": "string",
+                "enum": [
+                  "M",
+                  "F"
+                ],
+                "description": "Filtrar por sexo"
+              },
+              "age_min": {
+                "type": "integer",
+                "description": "Idade mínima em anos"
+              },
+              "age_max": {
+                "type": "integer",
+                "description": "Idade máxima em anos"
+              },
+              "race": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Raça/cor (branca, preta, parda, amarela, indigena, ignorado). Só existe de 2008 em diante: em 1998–2007 race é nulo e o filtro não alcança esses anos."
+              },
+              "is_csap": {
+                "type": "boolean",
+                "description": "Filtrar apenas CSAP (true) ou não-CSAP (false)"
+              },
+              "group_by": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "year",
+                    "month",
+                    "uf",
+                    "cid_chapter",
+                    "cid_revision",
+                    "cid_group",
+                    "sex",
+                    "age",
+                    "race",
+                    "exclusion",
+                    "is_csap",
+                    "csap_group"
+                  ]
+                },
+                "description": "Dimensões para agrupamento"
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Limitar número de resultados"
+              }
+            },
+            "additionalProperties": false
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Avisos que qualificam os números: era CID-9, raça/cor ausente, universo do % ICSAP, denominador populacional, truncamento"
+          },
+          "years_not_available": {
+            "type": "object",
+            "description": "Presente só quando parte dos anos pedidos não tem dado: os números cobrem apenas os anos atendidos",
+            "properties": {
+              "years": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "description": "Anos pedidos que não têm dados SIH e ficaram fora do resultado"
+              },
+              "note": {
+                "type": "string",
+                "description": "Quais anos ficaram fora e quais os números cobrem"
+              }
+            },
+            "required": [
+              "years",
+              "note"
+            ],
+            "additionalProperties": false
+          },
+          "truncated": {
+            "type": "object",
+            "description": "Presente só quando `data` foi truncado no teto de linhas; os totais em `summary` são do conjunto inteiro",
+            "properties": {
+              "returned": {
+                "type": "number",
+                "description": "Linhas devolvidas (o teto)"
+              },
+              "total": {
+                "type": "number",
+                "description": "Linhas que a consulta produziu"
+              }
+            },
+            "required": [
+              "returned",
+              "total"
+            ],
+            "additionalProperties": false
+          },
+          "error": {
+            "type": "string",
+            "description": "Motivo pelo qual não há dados nesta resposta (ano sem dado, cobertura populacional, falha na consulta)"
+          },
+          "available_sih_years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos com dados SIH atendíveis por este servidor"
+          },
+          "published_years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"
+          },
+          "note": {
+            "type": "string",
+            "description": "Como obter o dado (por exemplo, consultar get_available_years)"
+          },
+          "provenance": {
+            "type": "object",
+            "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+            "properties": {
+              "source": {
+                "type": "string",
+                "description": "Fonte oficial do dado"
+              },
+              "source_url": {
+                "type": "string",
+                "description": "URL canônica que reproduz a consulta ou localiza a fonte"
+              },
+              "data_vintage": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Competência ou safra do dado segundo a fonte; null quando a fonte não expõe"
+              },
+              "retrieved_at": {
+                "type": "string",
+                "description": "Instante REAL da extração na origem (ISO-8601)"
+              },
+              "citation": {
+                "type": "string",
+                "description": "Citação pronta para uso"
+              },
+              "license": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Regime legal do dado (id SPDX quando há)"
+              }
+            },
+            "required": [
+              "source",
+              "source_url",
+              "data_vintage",
+              "retrieved_at",
+              "citation",
+              "license"
+            ],
+            "additionalProperties": false
+          },
+          "attribution": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "URLs canônicas das fontes desta resposta (lista de atribuição)"
+          }
+        },
+        "required": [
+          "provenance",
+          "attribution"
+        ],
+        "description": "Internações do cubo de causas, agrupadas conforme `group_by`, com totais do recorte inteiro; `error` quando nenhum ano pedido tem dado",
+        "anyOf": [
+          {
+            "required": [
+              "data",
+              "summary",
+              "filters_applied"
+            ]
+          },
+          {
+            "required": [
+              "error"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_hospitalization_trends",
+      "title": "Séries temporais de internações",
+      "description": "Retorna séries temporais de internações (mensal ou anual). Útil para análise de tendências e sazonalidade. Série desde 1992; em 1992–1997 `uf` é a UF do arquivo (estabelecimento) e as internações sem data na fonte (1992-01..04 e 1993-01) entram no mês de faturamento — ver get_available_years e as `notes`.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "year_start": {
+            "type": "integer",
+            "description": "Ano inicial"
+          },
+          "year_end": {
+            "type": "integer",
+            "description": "Ano final"
+          },
+          "uf": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "UFs para filtrar"
+          },
+          "cid_chapter": {
+            "type": "integer",
+            "description": "Capítulo CID-10 específico"
+          },
+          "granularity": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "yearly"
+            ],
+            "description": "Granularidade temporal (default: yearly)"
+          }
+        },
+        "required": [
+          "year_start",
+          "year_end"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "granularity": {
+            "enum": [
+              "yearly",
+              "monthly"
+            ],
+            "description": "Grão da série"
+          },
+          "period": {
+            "type": "object",
+            "description": "Intervalo pedido",
+            "properties": {
+              "start": {
+                "type": [
+                  "number",
+                  "string"
+                ],
+                "description": "Ano (anual) ou AAAA-MM (mensal) inicial"
+              },
+              "end": {
+                "type": [
+                  "number",
+                  "string"
+                ],
+                "description": "Ano (anual) ou AAAA-MM (mensal) final"
+              }
+            },
+            "required": [
+              "start",
+              "end"
+            ],
+            "additionalProperties": false
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "description": "Ponto anual",
+                  "properties": {
+                    "year": {
+                      "type": "number",
+                      "description": "Ano"
+                    },
+                    "n_hospitalizations": {
+                      "type": "number",
+                      "description": "Internações no ano"
+                    },
+                    "deaths": {
+                      "type": "number",
+                      "description": "Óbitos no ano"
+                    }
+                  },
+                  "required": [
+                    "year",
+                    "n_hospitalizations",
+                    "deaths"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "description": "Ponto mensal",
+                  "properties": {
+                    "year_month": {
+                      "type": "string",
+                      "description": "Competência AAAA-MM"
+                    },
+                    "n": {
+                      "type": "number",
+                      "description": "Internações no mês"
+                    },
+                    "deaths": {
+                      "type": "number",
+                      "description": "Óbitos no mês"
+                    }
+                  },
+                  "required": [
+                    "year_month",
+                    "n",
+                    "deaths"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "description": "Um ponto por ano ou por mês, em ordem cronológica"
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Avisos que qualificam os números: era CID-9, raça/cor ausente, universo do % ICSAP, denominador populacional, truncamento"
+          },
+          "years_not_available": {
+            "type": "object",
+            "description": "Presente só quando parte dos anos pedidos não tem dado: os números cobrem apenas os anos atendidos",
+            "properties": {
+              "years": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "description": "Anos pedidos que não têm dados SIH e ficaram fora do resultado"
+              },
+              "note": {
+                "type": "string",
+                "description": "Quais anos ficaram fora e quais os números cobrem"
+              }
+            },
+            "required": [
+              "years",
+              "note"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "array",
+            "items": {},
+            "description": "Sempre vazio: só aparece no caminho de erro-mole do funil"
+          },
+          "error": {
+            "type": "string",
+            "description": "Motivo pelo qual não há dados nesta resposta (ano sem dado, cobertura populacional, falha na consulta)"
+          },
+          "available_sih_years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos com dados SIH atendíveis por este servidor"
+          },
+          "published_years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"
+          },
+          "note": {
+            "type": "string",
+            "description": "Como obter o dado (por exemplo, consultar get_available_years)"
+          },
+          "provenance": {
+            "type": "object",
+            "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+            "properties": {
+              "source": {
+                "type": "string",
+                "description": "Fonte oficial do dado"
+              },
+              "source_url": {
+                "type": "string",
+                "description": "URL canônica que reproduz a consulta ou localiza a fonte"
+              },
+              "data_vintage": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Competência ou safra do dado segundo a fonte; null quando a fonte não expõe"
+              },
+              "retrieved_at": {
+                "type": "string",
+                "description": "Instante REAL da extração na origem (ISO-8601)"
+              },
+              "citation": {
+                "type": "string",
+                "description": "Citação pronta para uso"
+              },
+              "license": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Regime legal do dado (id SPDX quando há)"
+              }
+            },
+            "required": [
+              "source",
+              "source_url",
+              "data_vintage",
+              "retrieved_at",
+              "citation",
+              "license"
+            ],
+            "additionalProperties": false
+          },
+          "attribution": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "URLs canônicas das fontes desta resposta (lista de atribuição)"
+          }
+        },
+        "required": [
+          "provenance",
+          "attribution"
+        ],
+        "description": "Série temporal de internações, anual (`year`) ou mensal (`year_month`); `error` quando nenhum ano do intervalo tem dado",
+        "anyOf": [
+          {
+            "required": [
+              "granularity",
+              "period",
+              "series"
+            ]
+          },
+          {
+            "required": [
+              "error"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "compare_regions",
+      "title": "Comparação entre UFs e regiões",
+      "description": "Compara internações entre UFs ou regiões do Brasil. Gera rankings e identifica variações regionais. Em 1992–1997 `uf` é a UF do arquivo (estabelecimento), não de residência — ver get_available_years.uf_basis e as `notes`.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Anos para consultar"
+          },
+          "compare_by": {
+            "type": "string",
+            "enum": [
+              "uf",
+              "region"
+            ],
+            "description": "Comparar por UF ou região (default: uf)"
+          },
+          "cid_chapter": {
+            "type": "integer",
+            "description": "Capítulo CID-10 específico"
+          },
+          "is_csap": {
+            "type": "boolean",
+            "description": "Filtrar apenas CSAP"
+          },
+          "metric": {
+            "type": "string",
+            "enum": [
+              "n",
+              "deaths"
+            ],
+            "description": "Métrica para ranking (default: n)"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Número de resultados (default: 10)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "compare_by": {
+            "enum": [
+              "uf",
+              "region"
+            ],
+            "description": "Eixo da comparação (hoje ambos agrupam por UF)"
+          },
+          "metric": {
+            "enum": [
+              "n",
+              "deaths"
+            ],
+            "description": "Métrica que ordena o ranking"
+          },
+          "ranking": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "rank": {
+                  "type": "number",
+                  "description": "Posição, 1 = maior"
+                },
+                "uf": {
+                  "type": "string",
+                  "description": "UF"
+                },
+                "n_hospitalizations": {
+                  "type": "number",
+                  "description": "Internações"
+                },
+                "deaths": {
+                  "type": "number",
+                  "description": "Óbitos"
+                },
+                "mortality_rate": {
+                  "type": "number",
+                  "description": "Óbitos / internações × 100, duas casas"
+                }
+              },
+              "required": [
+                "rank",
+                "uf",
+                "n_hospitalizations",
+                "deaths",
+                "mortality_rate"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Ranking em ordem decrescente da métrica"
+          },
+          "total_locations": {
+            "type": "number",
+            "description": "Quantas localidades no ranking"
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Avisos que qualificam os números: era CID-9, raça/cor ausente, universo do % ICSAP, denominador populacional, truncamento"
+          },
+          "years_not_available": {
+            "type": "object",
+            "description": "Presente só quando parte dos anos pedidos não tem dado: os números cobrem apenas os anos atendidos",
+            "properties": {
+              "years": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "description": "Anos pedidos que não têm dados SIH e ficaram fora do resultado"
+              },
+              "note": {
+                "type": "string",
+                "description": "Quais anos ficaram fora e quais os números cobrem"
+              }
+            },
+            "required": [
+              "years",
+              "note"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "array",
+            "items": {},
+            "description": "Sempre vazio: só aparece no caminho de erro-mole do funil"
+          },
+          "error": {
+            "type": "string",
+            "description": "Motivo pelo qual não há dados nesta resposta (ano sem dado, cobertura populacional, falha na consulta)"
+          },
+          "available_sih_years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos com dados SIH atendíveis por este servidor"
+          },
+          "published_years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"
+          },
+          "note": {
+            "type": "string",
+            "description": "Como obter o dado (por exemplo, consultar get_available_years)"
+          },
+          "provenance": {
+            "type": "object",
+            "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+            "properties": {
+              "source": {
+                "type": "string",
+                "description": "Fonte oficial do dado"
+              },
+              "source_url": {
+                "type": "string",
+                "description": "URL canônica que reproduz a consulta ou localiza a fonte"
+              },
+              "data_vintage": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Competência ou safra do dado segundo a fonte; null quando a fonte não expõe"
+              },
+              "retrieved_at": {
+                "type": "string",
+                "description": "Instante REAL da extração na origem (ISO-8601)"
+              },
+              "citation": {
+                "type": "string",
+                "description": "Citação pronta para uso"
+              },
+              "license": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Regime legal do dado (id SPDX quando há)"
+              }
+            },
+            "required": [
+              "source",
+              "source_url",
+              "data_vintage",
+              "retrieved_at",
+              "citation",
+              "license"
+            ],
+            "additionalProperties": false
+          },
+          "attribution": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "URLs canônicas das fontes desta resposta (lista de atribuição)"
+          }
+        },
+        "required": [
+          "provenance",
+          "attribution"
+        ],
+        "description": "Ranking de UFs por internações ou óbitos; `error` quando nenhum ano pedido tem dado",
+        "anyOf": [
+          {
+            "required": [
+              "compare_by",
+              "metric",
+              "ranking",
+              "total_locations"
+            ]
+          },
+          {
+            "required": [
+              "error"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_icsap",
+      "title": "Internações por condições sensíveis (ICSAP)",
+      "description": "Consulta internações por Condições Sensíveis à Atenção Primária (ICSAP). Permite filtros por grupo CSAP, UF, município, sexo, idade e raça. Raça/cor só existe de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). Série desde 1992: em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+), `uf` é a UF do arquivo e `municipality_code` é nulo — ver get_available_years (icsap_list_revision, uf_basis) e as `notes`. Percentual no universo do pacote R csapAIH por padrão (`universe`): fora do numerador e do denominador as internações por procedimento obstétrico, parto e longa permanência.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Anos para consultar"
+          },
+          "uf": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "UFs para filtrar"
+          },
+          "municipality_code": {
+            "type": "string",
+            "description": "Código IBGE do município (6 dígitos)"
+          },
+          "csap_group": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Grupos CSAP (ex: ['g01', 'g05'])"
+          },
+          "sex": {
+            "type": "string",
+            "enum": [
+              "M",
+              "F"
+            ],
+            "description": "Filtrar por sexo"
+          },
+          "age_min": {
+            "type": "integer",
+            "description": "Idade mínima"
+          },
+          "age_max": {
+            "type": "integer",
+            "description": "Idade máxima"
+          },
+          "race": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Raça/cor (branca, preta, parda, amarela, indigena, ignorado). Só existe de 2008 em diante: em 1998–2007 race é nulo e o filtro não alcança esses anos."
+          },
+          "group_by": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "year",
+                "uf",
+                "municipality_code",
+                "cid_revision",
+                "csap_group",
+                "sex",
+                "age",
+                "race"
+              ]
+            },
+            "description": "Dimensões para agrupamento"
+          },
+          "universe": {
+            "type": "string",
+            "enum": [
+              "csapaih",
+              "all"
+            ],
+            "description": "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações."
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Uma linha por combinação de `group_by` (só as colunas pedidas aparecem)",
+              "properties": {
+                "year": {
+                  "type": "number",
+                  "description": "Ano (group_by: year)"
+                },
+                "uf": {
+                  "type": "string",
+                  "description": "UF de residência — do estabelecimento em 1992–1997 (group_by: uf)"
+                },
+                "municipality_code": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Código IBGE do município de residência (6 dígitos); null em 1992–1997 (group_by: municipality_code)"
+                },
+                "cid_revision": {
+                  "type": "number",
+                  "description": "Revisão da CID: 9 ou 10 (group_by: cid_revision)"
+                },
+                "csap_group": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Grupo CSAP g01–g19 (group_by: csap_group)"
+                },
+                "sex": {
+                  "type": "string",
+                  "description": "Sexo: M ou F (group_by: sex)"
+                },
+                "age": {
+                  "type": "number",
+                  "description": "Idade em anos (group_by: age)"
+                },
+                "race": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Raça/cor; null em 1998–2007 (group_by: race)"
+                },
+                "n_icsap": {
+                  "type": "number",
+                  "description": "Internações por condições sensíveis à atenção primária no universo escolhido"
+                },
+                "n_total": {
+                  "type": "number",
+                  "description": "Total de internações no universo escolhido (denominador)"
+                },
+                "icsap_percentage": {
+                  "type": "number",
+                  "description": "n_icsap / n_total × 100, duas casas"
+                },
+                "total_days": {
+                  "type": "number",
+                  "description": "Dias de permanência das ICSAP"
+                },
+                "total_value": {
+                  "type": "number",
+                  "description": "Valor pago das ICSAP (R$)"
+                },
+                "deaths": {
+                  "type": "number",
+                  "description": "Óbitos nas ICSAP"
+                }
+              },
+              "required": [
+                "n_icsap",
+                "n_total",
+                "icsap_percentage",
+                "total_days",
+                "total_value",
+                "deaths"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Linhas agrupadas (vazio no caminho de erro-mole)"
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Avisos que qualificam os números: era CID-9, raça/cor ausente, universo do % ICSAP, denominador populacional, truncamento"
+          },
+          "summary": {
+            "type": "object",
+            "description": "Totais do recorte inteiro, calculados sem agrupamento",
+            "properties": {
+              "total_icsap": {
+                "type": "number",
+                "description": "ICSAP no recorte inteiro"
+              },
+              "total_hospitalizations": {
+                "type": "number",
+                "description": "Internações no universo (denominador)"
+              },
+              "icsap_percentage": {
+                "type": "number",
+                "description": "total_icsap / total_hospitalizations × 100, duas casas"
+              },
+              "total_days": {
+                "type": "number",
+                "description": "Dias de permanência das ICSAP"
+              },
+              "total_value": {
+                "type": "number",
+                "description": "Valor pago das ICSAP (R$)"
+              },
+              "deaths": {
+                "type": "number",
+                "description": "Óbitos nas ICSAP"
+              },
+              "records_returned": {
+                "type": "number",
+                "description": "Linhas em `data`"
+              }
+            },
+            "required": [
+              "total_icsap",
+              "total_hospitalizations",
+              "icsap_percentage",
+              "total_days",
+              "total_value",
+              "deaths",
+              "records_returned"
+            ],
+            "additionalProperties": false
+          },
+          "filters_applied": {
+            "type": "object",
+            "description": "Os argumentos recebidos, ecoados",
+            "properties": {
+              "year": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "Anos para consultar"
+              },
+              "uf": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "UFs para filtrar"
+              },
+              "municipality_code": {
+                "type": "string",
+                "description": "Código IBGE do município (6 dígitos)"
+              },
+              "csap_group": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Grupos CSAP (ex: ['g01', 'g05'])"
+              },
+              "sex": {
+                "type": "string",
+                "enum": [
+                  "M",
+                  "F"
+                ],
+                "description": "Filtrar por sexo"
+              },
+              "age_min": {
+                "type": "integer",
+                "description": "Idade mínima"
+              },
+              "age_max": {
+                "type": "integer",
+                "description": "Idade máxima"
+              },
+              "race": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Raça/cor (branca, preta, parda, amarela, indigena, ignorado). Só existe de 2008 em diante: em 1998–2007 race é nulo e o filtro não alcança esses anos."
+              },
+              "group_by": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "year",
+                    "uf",
+                    "municipality_code",
+                    "cid_revision",
+                    "csap_group",
+                    "sex",
+                    "age",
+                    "race"
+                  ]
+                },
+                "description": "Dimensões para agrupamento"
+              },
+              "universe": {
+                "type": "string",
+                "enum": [
+                  "csapaih",
+                  "all"
+                ],
+                "description": "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações."
+              }
+            },
+            "additionalProperties": false
+          },
+          "years_not_available": {
+            "type": "object",
+            "description": "Presente só quando parte dos anos pedidos não tem dado: os números cobrem apenas os anos atendidos",
+            "properties": {
+              "years": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "description": "Anos pedidos que não têm dados SIH e ficaram fora do resultado"
+              },
+              "note": {
+                "type": "string",
+                "description": "Quais anos ficaram fora e quais os números cobrem"
+              }
+            },
+            "required": [
+              "years",
+              "note"
+            ],
+            "additionalProperties": false
+          },
+          "truncated": {
+            "type": "object",
+            "description": "Presente só quando `data` foi truncado no teto de linhas; os totais em `summary` são do conjunto inteiro",
+            "properties": {
+              "returned": {
+                "type": "number",
+                "description": "Linhas devolvidas (o teto)"
+              },
+              "total": {
+                "type": "number",
+                "description": "Linhas que a consulta produziu"
+              }
+            },
+            "required": [
+              "returned",
+              "total"
+            ],
+            "additionalProperties": false
+          },
+          "error": {
+            "type": "string",
+            "description": "Motivo pelo qual não há dados nesta resposta (ano sem dado, cobertura populacional, falha na consulta)"
+          },
+          "available_sih_years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos com dados SIH atendíveis por este servidor"
+          },
+          "published_years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"
+          },
+          "note": {
+            "type": "string",
+            "description": "Como obter o dado (por exemplo, consultar get_available_years)"
+          },
+          "provenance": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "description": "Fonte oficial do dado"
+                },
+                "source_url": {
+                  "type": "string",
+                  "description": "URL canônica que reproduz a consulta ou localiza a fonte"
+                },
+                "data_vintage": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Competência ou safra do dado segundo a fonte; null quando a fonte não expõe"
+                },
+                "retrieved_at": {
+                  "type": "string",
+                  "description": "Instante REAL da extração na origem (ISO-8601)"
+                },
+                "citation": {
+                  "type": "string",
+                  "description": "Citação pronta para uso"
+                },
+                "license": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Regime legal do dado (id SPDX quando há)"
+                }
+              },
+              "required": [
+                "source",
+                "source_url",
+                "data_vintage",
+                "retrieved_at",
+                "citation",
+                "license"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Um bloco por procedência que contribuiu com esta resposta (SIH, lista CSAP, csapAIH, população…); licenças nunca se fundem"
+          },
+          "attribution": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "URLs canônicas das fontes desta resposta (lista de atribuição)"
+          }
+        },
+        "required": [
+          "provenance",
+          "attribution"
+        ],
+        "description": "Internações por condições sensíveis à atenção primária, agrupadas conforme `group_by`, com totais e a nota do universo; `error` quando nenhum ano pedido tem dado",
+        "anyOf": [
+          {
+            "required": [
+              "data",
+              "notes",
+              "summary",
+              "filters_applied"
+            ]
+          },
+          {
+            "required": [
+              "error"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_icsap_indicators",
+      "title": "Indicadores de ICSAP",
+      "description": "Calcula indicadores de ICSAP: percentual (ICSAP/Total×100). Métricas-chave para avaliar a Atenção Primária. Agrupar por raça só faz sentido de 2008 em diante: em 1998–2007 `race` é nulo (ver get_available_years.race_available). Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `uf` é a UF do arquivo — ver as `notes`. Percentual no universo do pacote R csapAIH por padrão (`universe`): fora do numerador e do denominador as internações por procedimento obstétrico, parto e longa permanência.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Anos para calcular"
+          },
+          "uf": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "UFs para calcular"
+          },
+          "municipality_code": {
+            "type": "string",
+            "description": "Código IBGE do município"
+          },
+          "sex": {
+            "type": "string",
+            "enum": [
+              "M",
+              "F"
+            ],
+            "description": "Filtrar por sexo"
+          },
+          "age_min": {
+            "type": "integer",
+            "description": "Idade mínima"
+          },
+          "age_max": {
+            "type": "integer",
+            "description": "Idade máxima"
+          },
+          "group_by": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "year",
+                "uf",
+                "cid_revision",
+                "sex",
+                "race"
+              ]
+            },
+            "description": "Dimensões para agrupamento"
+          },
+          "universe": {
+            "type": "string",
+            "enum": [
+              "csapaih",
+              "all"
+            ],
+            "description": "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações."
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Uma linha por combinação de `group_by` (só as colunas pedidas aparecem)",
+              "properties": {
+                "year": {
+                  "type": "number",
+                  "description": "Ano (group_by: year)"
+                },
+                "uf": {
+                  "type": "string",
+                  "description": "UF de residência — do estabelecimento em 1992–1997 (group_by: uf)"
+                },
+                "municipality_code": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Código IBGE do município de residência (6 dígitos); null em 1992–1997 (group_by: municipality_code)"
+                },
+                "cid_revision": {
+                  "type": "number",
+                  "description": "Revisão da CID: 9 ou 10 (group_by: cid_revision)"
+                },
+                "csap_group": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Grupo CSAP g01–g19 (group_by: csap_group)"
+                },
+                "sex": {
+                  "type": "string",
+                  "description": "Sexo: M ou F (group_by: sex)"
+                },
+                "age": {
+                  "type": "number",
+                  "description": "Idade em anos (group_by: age)"
+                },
+                "race": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Raça/cor; null em 1998–2007 (group_by: race)"
+                },
+                "n_icsap": {
+                  "type": "number",
+                  "description": "Internações por condições sensíveis à atenção primária no universo escolhido"
+                },
+                "n_total": {
+                  "type": "number",
+                  "description": "Total de internações no universo escolhido (denominador)"
+                },
+                "icsap_percentage": {
+                  "type": "number",
+                  "description": "n_icsap / n_total × 100, duas casas"
+                },
+                "total_days": {
+                  "type": "number",
+                  "description": "Dias de permanência das ICSAP"
+                },
+                "total_value": {
+                  "type": "number",
+                  "description": "Valor pago das ICSAP (R$)"
+                },
+                "deaths": {
+                  "type": "number",
+                  "description": "Óbitos nas ICSAP"
+                }
+              },
+              "required": [
+                "n_icsap",
+                "n_total",
+                "icsap_percentage",
+                "total_days",
+                "total_value",
+                "deaths"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Um estrato por linha (vazio no caminho de erro-mole)"
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Avisos que qualificam os números: era CID-9, raça/cor ausente, universo do % ICSAP, denominador populacional, truncamento"
+          },
+          "indicators_calculated": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Indicadores presentes nas linhas (icsap_percentage)"
+          },
+          "note": {
+            "type": "string",
+            "description": "Fórmula do indicador — ou, no caminho de erro-mole, como obter o dado"
+          },
+          "years_not_available": {
+            "type": "object",
+            "description": "Presente só quando parte dos anos pedidos não tem dado: os números cobrem apenas os anos atendidos",
+            "properties": {
+              "years": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "description": "Anos pedidos que não têm dados SIH e ficaram fora do resultado"
+              },
+              "note": {
+                "type": "string",
+                "description": "Quais anos ficaram fora e quais os números cobrem"
+              }
+            },
+            "required": [
+              "years",
+              "note"
+            ],
+            "additionalProperties": false
+          },
+          "truncated": {
+            "type": "object",
+            "description": "Presente só quando `data` foi truncado no teto de linhas; os totais em `summary` são do conjunto inteiro",
+            "properties": {
+              "returned": {
+                "type": "number",
+                "description": "Linhas devolvidas (o teto)"
+              },
+              "total": {
+                "type": "number",
+                "description": "Linhas que a consulta produziu"
+              }
+            },
+            "required": [
+              "returned",
+              "total"
+            ],
+            "additionalProperties": false
+          },
+          "error": {
+            "type": "string",
+            "description": "Motivo pelo qual não há dados nesta resposta (ano sem dado, cobertura populacional, falha na consulta)"
+          },
+          "available_sih_years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos com dados SIH atendíveis por este servidor"
+          },
+          "published_years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"
+          },
+          "provenance": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "description": "Fonte oficial do dado"
+                },
+                "source_url": {
+                  "type": "string",
+                  "description": "URL canônica que reproduz a consulta ou localiza a fonte"
+                },
+                "data_vintage": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Competência ou safra do dado segundo a fonte; null quando a fonte não expõe"
+                },
+                "retrieved_at": {
+                  "type": "string",
+                  "description": "Instante REAL da extração na origem (ISO-8601)"
+                },
+                "citation": {
+                  "type": "string",
+                  "description": "Citação pronta para uso"
+                },
+                "license": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Regime legal do dado (id SPDX quando há)"
+                }
+              },
+              "required": [
+                "source",
+                "source_url",
+                "data_vintage",
+                "retrieved_at",
+                "citation",
+                "license"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Um bloco por procedência que contribuiu com esta resposta (SIH, lista CSAP, csapAIH, população…); licenças nunca se fundem"
+          },
+          "attribution": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "URLs canônicas das fontes desta resposta (lista de atribuição)"
+          }
+        },
+        "required": [
+          "provenance",
+          "attribution"
+        ],
+        "description": "Percentual de ICSAP por estrato de `group_by`, com a fórmula e a nota do universo; `error` quando nenhum ano pedido tem dado",
+        "anyOf": [
+          {
+            "required": [
+              "data",
+              "notes",
+              "indicators_calculated",
+              "note"
+            ]
+          },
+          {
+            "required": [
+              "error"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "rank_csap_groups",
+      "title": "Ranking dos grupos CSAP",
+      "description": "Gera ranking dos 19 grupos CSAP por número de internações, dias de internação ou valor. Identifica principais causas evitáveis. Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `value` é nominal na moeda da época — ver as `notes`. Universo do pacote R csapAIH por padrão (`universe`): fora as internações por procedimento obstétrico, parto e longa permanência.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Anos para consultar"
+          },
+          "uf": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "UFs para filtrar"
+          },
+          "sex": {
+            "type": "string",
+            "enum": [
+              "M",
+              "F"
+            ],
+            "description": "Filtrar por sexo"
+          },
+          "age_min": {
+            "type": "integer",
+            "description": "Idade mínima"
+          },
+          "age_max": {
+            "type": "integer",
+            "description": "Idade máxima"
+          },
+          "metric": {
+            "type": "string",
+            "enum": [
+              "n",
+              "days",
+              "value",
+              "deaths"
+            ],
+            "description": "Métrica para ranking (default: n)"
+          },
+          "universe": {
+            "type": "string",
+            "enum": [
+              "csapaih",
+              "all"
+            ],
+            "description": "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Número de grupos no ranking (default: 19)",
+            "minimum": 1,
+            "maximum": 19
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "metric": {
+            "enum": [
+              "n",
+              "days",
+              "value",
+              "deaths"
+            ],
+            "description": "Métrica que ordena"
+          },
+          "ranking": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "rank": {
+                  "type": "number",
+                  "description": "Posição, 1 = maior"
+                },
+                "csap_group": {
+                  "type": "string",
+                  "description": "Grupo CSAP g01–g19"
+                },
+                "csap_name": {
+                  "type": "string",
+                  "description": "Nome do grupo"
+                },
+                "metric_value": {
+                  "type": "number",
+                  "description": "Valor da métrica escolhida"
+                },
+                "pct_of_total": {
+                  "type": "number",
+                  "description": "Participação do grupo no total da métrica, %"
+                },
+                "n_hospitalizations": {
+                  "type": "number",
+                  "description": "Internações do grupo"
+                },
+                "total_days": {
+                  "type": "number",
+                  "description": "Dias de permanência"
+                },
+                "total_value": {
+                  "type": "number",
+                  "description": "Valor pago (R$)"
+                },
+                "deaths": {
+                  "type": "number",
+                  "description": "Óbitos"
+                }
+              },
+              "required": [
+                "rank",
+                "csap_group",
+                "csap_name",
+                "metric_value",
+                "pct_of_total",
+                "n_hospitalizations",
+                "total_days",
+                "total_value",
+                "deaths"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Ranking em ordem decrescente da métrica"
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Avisos que qualificam os números: era CID-9, raça/cor ausente, universo do % ICSAP, denominador populacional, truncamento"
+          },
+          "concentration": {
+            "type": "object",
+            "properties": {
+              "top_3_percentage": {
+                "type": "number",
+                "description": "Soma da participação dos 3 primeiros, %"
+              },
+              "top_5_percentage": {
+                "type": "number",
+                "description": "Soma dos 5 primeiros, %"
+              }
+            },
+            "required": [
+              "top_3_percentage",
+              "top_5_percentage"
+            ],
+            "additionalProperties": false
+          },
+          "total_groups": {
+            "type": "number",
+            "description": "Quantos grupos no ranking"
+          },
+          "years_not_available": {
+            "type": "object",
+            "description": "Presente só quando parte dos anos pedidos não tem dado: os números cobrem apenas os anos atendidos",
+            "properties": {
+              "years": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "description": "Anos pedidos que não têm dados SIH e ficaram fora do resultado"
+              },
+              "note": {
+                "type": "string",
+                "description": "Quais anos ficaram fora e quais os números cobrem"
+              }
+            },
+            "required": [
+              "years",
+              "note"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "array",
+            "items": {},
+            "description": "Sempre vazio: só aparece no caminho de erro-mole do funil"
+          },
+          "error": {
+            "type": "string",
+            "description": "Motivo pelo qual não há dados nesta resposta (ano sem dado, cobertura populacional, falha na consulta)"
+          },
+          "available_sih_years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos com dados SIH atendíveis por este servidor"
+          },
+          "published_years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"
+          },
+          "note": {
+            "type": "string",
+            "description": "Como obter o dado (por exemplo, consultar get_available_years)"
+          },
+          "provenance": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "description": "Fonte oficial do dado"
+                },
+                "source_url": {
+                  "type": "string",
+                  "description": "URL canônica que reproduz a consulta ou localiza a fonte"
+                },
+                "data_vintage": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Competência ou safra do dado segundo a fonte; null quando a fonte não expõe"
+                },
+                "retrieved_at": {
+                  "type": "string",
+                  "description": "Instante REAL da extração na origem (ISO-8601)"
+                },
+                "citation": {
+                  "type": "string",
+                  "description": "Citação pronta para uso"
+                },
+                "license": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Regime legal do dado (id SPDX quando há)"
+                }
+              },
+              "required": [
+                "source",
+                "source_url",
+                "data_vintage",
+                "retrieved_at",
+                "citation",
+                "license"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Um bloco por procedência que contribuiu com esta resposta (SIH, lista CSAP, csapAIH, população…); licenças nunca se fundem"
+          },
+          "attribution": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "URLs canônicas das fontes desta resposta (lista de atribuição)"
+          }
+        },
+        "required": [
+          "provenance",
+          "attribution"
+        ],
+        "description": "Os grupos CSAP ordenados pela métrica, com participação de cada um e concentração nos primeiros; `error` quando nenhum ano pedido tem dado",
+        "anyOf": [
+          {
+            "required": [
+              "metric",
+              "ranking",
+              "notes",
+              "concentration",
+              "total_groups"
+            ]
+          },
+          {
+            "required": [
+              "error"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "classify_as_csap",
+      "title": "Classificar CID-10 como CSAP",
+      "description": "Classifica um ou mais códigos CID-10 como CSAP ou não. Retorna o grupo CSAP correspondente se aplicável. Aceita as duas notações do mesmo código — `J18.1` (OMS) e `J181` (SIH) — com a mesma resposta. Código que NÃO é CID-10 não é classificado: volta com `is_csap: null` e `error` próprio, nunca `false` (que afirmaria que a condição existe e não é sensível). Só CID-10: os códigos CID-9 de 6 dígitos do SIH de 1992–1997 são classificados no build pela lista derivada (src/data/csap-groups-cid9.json), não por esta ferramenta.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cid_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Códigos CID-10 para classificar (ex: ['J18', 'A09', 'K35'])"
+          }
+        },
+        "required": [
+          "cid_codes"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "classifications": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "cid": {
+                  "type": "string",
+                  "description": "Código como foi informado"
+                },
+                "is_csap": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "description": "true quando o código cai em algum grupo CSAP; false quando é CID-10 e não cai; null quando não é um código CID-10 (não classificado — veja `error` da entrada)"
+                },
+                "csap_group": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Grupo CSAP g01–g19; null quando não é sensível ou não foi classificado"
+                },
+                "csap_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Nome do grupo; null quando não é sensível ou não foi classificado"
+                },
+                "error": {
+                  "type": "string",
+                  "description": "Só nas entradas não classificadas: por que o código não é CID-10"
+                }
+              },
+              "required": [
+                "cid",
+                "is_csap",
+                "csap_group",
+                "csap_name"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Uma entrada por código, na ordem informada"
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "number",
+                "description": "Códigos informados"
+              },
+              "csap": {
+                "type": "number",
+                "description": "Quantos são sensíveis"
+              },
+              "non_csap": {
+                "type": "number",
+                "description": "Quantos são CID-10 e não são sensíveis (não inclui os não classificados)"
+              },
+              "not_classified": {
+                "type": "number",
+                "description": "Só quando houver: quantos não são CID-10"
+              }
+            },
+            "required": [
+              "total",
+              "csap",
+              "non_csap"
+            ],
+            "additionalProperties": false
+          },
+          "error": {
+            "type": "string",
+            "description": "Só quando houver código não classificado: quantos foram e para onde olhar"
+          },
+          "provenance": {
+            "type": "object",
+            "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+            "properties": {
+              "source": {
+                "type": "string",
+                "description": "Fonte oficial do dado"
+              },
+              "source_url": {
+                "type": "string",
+                "description": "URL canônica que reproduz a consulta ou localiza a fonte"
+              },
+              "data_vintage": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Competência ou safra do dado segundo a fonte; null quando a fonte não expõe"
+              },
+              "retrieved_at": {
+                "type": "string",
+                "description": "Instante REAL da extração na origem (ISO-8601)"
+              },
+              "citation": {
+                "type": "string",
+                "description": "Citação pronta para uso"
+              },
+              "license": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Regime legal do dado (id SPDX quando há)"
+              }
+            },
+            "required": [
+              "source",
+              "source_url",
+              "data_vintage",
+              "retrieved_at",
+              "citation",
+              "license"
+            ],
+            "additionalProperties": false
+          },
+          "attribution": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "URLs canônicas das fontes desta resposta (lista de atribuição)"
+          }
+        },
+        "required": [
+          "provenance",
+          "attribution"
+        ],
+        "description": "Cada código CID-10 informado classificado como sensível (com o grupo) ou não; `is_csap` é null no código que não é CID-10, que não recebe classificação",
+        "anyOf": [
+          {
+            "required": [
+              "classifications",
+              "summary"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_hospitalization_rates",
+      "title": "Taxas de internação por população",
+      "description": "Calcula taxas de internação por população (por 100.000 habitantes, configurável). Denominador lido de dois arquivos, informados em get_available_years.population_years: projeções do IBGE por idade simples de 2000 em diante (pop_uf.parquet) e, de 1991 a 1999, população por faixa etária quinquenal somada dos municípios (pop_uf_agregado.parquet) — antes de 2000 o recorte por idade só vale nos limites das faixas (age_min múltiplo de 5, age_max terminado em 4 ou 9, ou 80+). A resposta diz qual arquivo serviu a cada ano (population_source) e avisa quando mistura os dois.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Anos para calcular"
+          },
+          "rate_type": {
+            "type": "string",
+            "enum": [
+              "crude",
+              "specific"
+            ],
+            "description": "Tipo de taxa: crude (bruta) ou specific (específica por filtro)"
+          },
+          "rate_per": {
+            "type": "integer",
+            "enum": [
+              1000,
+              10000,
+              100000
+            ],
+            "description": "Taxa por X habitantes (default: 100000)"
+          },
+          "uf": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "UFs para filtrar"
+          },
+          "cid_chapter": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Capítulos CID-10 (1-22)"
+          },
+          "sex": {
+            "type": "string",
+            "enum": [
+              "M",
+              "F"
+            ],
+            "description": "Filtrar por sexo"
+          },
+          "age_min": {
+            "type": "integer",
+            "description": "Idade mínima"
+          },
+          "age_max": {
+            "type": "integer",
+            "description": "Idade máxima"
+          },
+          "is_csap": {
+            "type": "boolean",
+            "description": "Filtrar apenas CSAP"
+          },
+          "group_by": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "year",
+                "uf",
+                "sex"
+              ]
+            },
+            "description": "Dimensões para agrupamento"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "year": {
+                  "type": "number",
+                  "description": "Ano (quando agrupado por ano ou mais de um ano)"
+                },
+                "uf": {
+                  "type": "string",
+                  "description": "UF (quando agrupado por UF ou mais de uma UF)"
+                },
+                "n_hospitalizations": {
+                  "type": "number",
+                  "description": "Internações"
+                },
+                "deaths": {
+                  "type": "number",
+                  "description": "Óbitos"
+                },
+                "population": {
+                  "type": "number",
+                  "description": "População do estrato (denominador)"
+                },
+                "rate_per_100k": {
+                  "type": "number",
+                  "description": "Internações por `rate_per` habitantes (o nome do campo é histórico; a base está em `rate_per`)"
+                },
+                "rate_per": {
+                  "type": "number",
+                  "description": "Base da taxa (1000, 10000 ou 100000)"
+                },
+                "population_source": {
+                  "enum": [
+                    "detailed",
+                    "aggregated",
+                    null
+                  ],
+                  "description": "Arquivo de população que serviu o ano"
+                },
+                "mortality_rate": {
+                  "type": "number",
+                  "description": "Óbitos / internações × 100, duas casas"
+                }
+              },
+              "required": [
+                "n_hospitalizations",
+                "deaths",
+                "population",
+                "rate_per_100k",
+                "rate_per",
+                "population_source",
+                "mortality_rate"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Um estrato por linha (vazio quando não há internação no recorte)"
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "total_hospitalizations": {
+                "type": "number",
+                "description": "Internações somadas"
+              },
+              "total_population": {
+                "type": "number",
+                "description": "População somada"
+              },
+              "overall_rate": {
+                "type": "number",
+                "description": "Taxa do conjunto, na base `rate_per`"
+              },
+              "rate_per": {
+                "type": "number",
+                "description": "Base da taxa"
+              },
+              "rate_type": {
+                "enum": [
+                  "crude",
+                  "specific"
+                ],
+                "description": "Bruta ou específica"
+              }
+            },
+            "required": [
+              "total_hospitalizations",
+              "total_population",
+              "overall_rate",
+              "rate_per",
+              "rate_type"
+            ],
+            "additionalProperties": false
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "population_source": {
+                "type": "object",
+                "description": "Fonte da população — chave é o ano (string)",
+                "additionalProperties": {
+                  "enum": [
+                    "detailed",
+                    "aggregated",
+                    null
+                  ],
+                  "description": "Arquivo que serviu o ano"
+                }
+              },
+              "population_notes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Avisos sobre o denominador (faixa quinquenal antes de 2000; mistura de fontes)"
+              },
+              "filters_applied": {
+                "type": "object",
+                "description": "Os argumentos, com UFs normalizadas e só os anos atendidos",
+                "properties": {
+                  "year": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "Anos para calcular"
+                  },
+                  "rate_type": {
+                    "type": "string",
+                    "enum": [
+                      "crude",
+                      "specific"
+                    ],
+                    "description": "Tipo de taxa: crude (bruta) ou specific (específica por filtro)"
+                  },
+                  "rate_per": {
+                    "type": "integer",
+                    "enum": [
+                      1000,
+                      10000,
+                      100000
+                    ],
+                    "description": "Taxa por X habitantes (default: 100000)"
+                  },
+                  "uf": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "UFs para filtrar"
+                  },
+                  "cid_chapter": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "Capítulos CID-10 (1-22)"
+                  },
+                  "sex": {
+                    "type": "string",
+                    "enum": [
+                      "M",
+                      "F"
+                    ],
+                    "description": "Filtrar por sexo"
+                  },
+                  "age_min": {
+                    "type": "integer",
+                    "description": "Idade mínima"
+                  },
+                  "age_max": {
+                    "type": "integer",
+                    "description": "Idade máxima"
+                  },
+                  "is_csap": {
+                    "type": "boolean",
+                    "description": "Filtrar apenas CSAP"
+                  },
+                  "group_by": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "year",
+                        "uf",
+                        "sex"
+                      ]
+                    },
+                    "description": "Dimensões para agrupamento"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "note": {
+                "type": "string",
+                "description": "Presente quando nenhuma internação casou o recorte"
+              },
+              "available_sih_years": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "description": "Anos com dados SIH atendíveis por este servidor"
+              }
+            },
+            "required": [
+              "population_source",
+              "filters_applied"
+            ],
+            "additionalProperties": false
+          },
+          "years_not_available": {
+            "type": "object",
+            "description": "Presente só quando parte dos anos pedidos não tem dado: os números cobrem apenas os anos atendidos",
+            "properties": {
+              "years": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "description": "Anos pedidos que não têm dados SIH e ficaram fora do resultado"
+              },
+              "note": {
+                "type": "string",
+                "description": "Quais anos ficaram fora e quais os números cobrem"
+              }
+            },
+            "required": [
+              "years",
+              "note"
+            ],
+            "additionalProperties": false
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Avisos que qualificam os números: era CID-9, raça/cor ausente, universo do % ICSAP, denominador populacional, truncamento"
+          },
+          "truncated": {
+            "type": "object",
+            "description": "Presente só quando `data` foi truncado no teto de linhas; os totais em `summary` são do conjunto inteiro",
+            "properties": {
+              "returned": {
+                "type": "number",
+                "description": "Linhas devolvidas (o teto)"
+              },
+              "total": {
+                "type": "number",
+                "description": "Linhas que a consulta produziu"
+              }
+            },
+            "required": [
+              "returned",
+              "total"
+            ],
+            "additionalProperties": false
+          },
+          "population_years": {
+            "type": "object",
+            "description": "Cobertura dos arquivos de população por UF: o que as ferramentas de taxa aceitam",
+            "properties": {
+              "first_year": {
+                "type": "number",
+                "description": "Primeiro ano com população por UF (união dos dois arquivos)"
+              },
+              "last_year": {
+                "type": "number",
+                "description": "Último ano com população por UF"
+              },
+              "detailed": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "description": "pop_uf.parquet — idade simples por UF e sexo (projeções IBGE, 2000+)",
+                "properties": {
+                  "first_year": {
+                    "type": "number",
+                    "description": "Primeiro ano coberto"
+                  },
+                  "last_year": {
+                    "type": "number",
+                    "description": "Último ano coberto"
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Arquivo parquet que serve o intervalo"
+                  },
+                  "age": {
+                    "type": "string",
+                    "description": "Grão etário do arquivo"
+                  },
+                  "age_groups": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Faixas etárias quinquenais (só no arquivo agregado)"
+                  }
+                },
+                "required": [
+                  "first_year",
+                  "last_year",
+                  "source",
+                  "age"
+                ],
+                "additionalProperties": false
+              },
+              "aggregated": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "description": "pop_uf_agregado.parquet — faixa etária quinquenal por UF e sexo (1991–1999)",
+                "properties": {
+                  "first_year": {
+                    "type": "number",
+                    "description": "Primeiro ano coberto"
+                  },
+                  "last_year": {
+                    "type": "number",
+                    "description": "Último ano coberto"
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Arquivo parquet que serve o intervalo"
+                  },
+                  "age": {
+                    "type": "string",
+                    "description": "Grão etário do arquivo"
+                  },
+                  "age_groups": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Faixas etárias quinquenais (só no arquivo agregado)"
+                  }
+                },
+                "required": [
+                  "first_year",
+                  "last_year",
+                  "source",
+                  "age"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "first_year",
+              "last_year",
+              "detailed",
+              "aggregated"
+            ],
+            "additionalProperties": false
+          },
+          "error": {
+            "type": "string",
+            "description": "Motivo pelo qual não há dados nesta resposta (ano sem dado, cobertura populacional, falha na consulta)"
+          },
+          "available_sih_years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos com dados SIH atendíveis por este servidor"
+          },
+          "published_years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"
+          },
+          "note": {
+            "type": "string",
+            "description": "Como obter o dado (por exemplo, consultar get_available_years)"
+          },
+          "provenance": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "description": "Fonte oficial do dado"
+                },
+                "source_url": {
+                  "type": "string",
+                  "description": "URL canônica que reproduz a consulta ou localiza a fonte"
+                },
+                "data_vintage": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Competência ou safra do dado segundo a fonte; null quando a fonte não expõe"
+                },
+                "retrieved_at": {
+                  "type": "string",
+                  "description": "Instante REAL da extração na origem (ISO-8601)"
+                },
+                "citation": {
+                  "type": "string",
+                  "description": "Citação pronta para uso"
+                },
+                "license": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Regime legal do dado (id SPDX quando há)"
+                }
+              },
+              "required": [
+                "source",
+                "source_url",
+                "data_vintage",
+                "retrieved_at",
+                "citation",
+                "license"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Um bloco por procedência que contribuiu com esta resposta (SIH, lista CSAP, csapAIH, população…); licenças nunca se fundem"
+          },
+          "attribution": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "URLs canônicas das fontes desta resposta (lista de atribuição)"
+          }
+        },
+        "required": [
+          "provenance",
+          "attribution"
+        ],
+        "description": "Taxa de internação por população (IBGE por UF), bruta ou específica; `error` quando o ano está fora da cobertura populacional ou nenhum ano pedido tem dado",
+        "anyOf": [
+          {
+            "required": [
+              "data",
+              "summary",
+              "metadata"
+            ]
+          },
+          {
+            "required": [
+              "error"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "compare_icsap_trends",
+      "title": "Tendências comparativas de ICSAP",
+      "description": "Análise temporal comparativa de ICSAP entre UFs ou grupos CSAP. Calcula tendências, variação anual e identifica melhores/piores desempenhos. Para `percentage` e `count` valem todos os anos do SIH (desde 1992); `rate_per_10k` exige população e aceita só os anos de get_available_years.population_years. Em 1992–1997 a ICSAP vem de lista CID-9 DERIVADA e não oficial (g03 e g05 não comparáveis com 1998+) e `uf` é a UF do arquivo — ver as `notes`. Percentual no universo do pacote R csapAIH por padrão (`universe`): fora do numerador e do denominador as internações por procedimento obstétrico, parto e longa permanência.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "start_year": {
+            "type": "integer",
+            "description": "Ano inicial"
+          },
+          "end_year": {
+            "type": "integer",
+            "description": "Ano final"
+          },
+          "compare_by": {
+            "type": "string",
+            "enum": [
+              "uf",
+              "csap_group"
+            ],
+            "description": "Comparar por UF ou grupo CSAP"
+          },
+          "compare_values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Valores específicos para comparar (UFs ou grupos CSAP)"
+          },
+          "indicator": {
+            "type": "string",
+            "enum": [
+              "percentage",
+              "count",
+              "rate_per_10k"
+            ],
+            "description": "Indicador: percentage (% ICSAP), count (número), rate_per_10k (taxa)"
+          },
+          "include_trend_line": {
+            "type": "boolean",
+            "description": "Incluir análise de tendência linear (default: true)"
+          },
+          "universe": {
+            "type": "string",
+            "enum": [
+              "csapaih",
+              "all"
+            ],
+            "description": "Universo do % ICSAP: 'csapaih' (padrão) tira do numerador e do denominador as internações por procedimento obstétrico, com diagnóstico de parto (O80-O84) e as AIH de longa permanência, como o pacote R csapAIH (Nedel); 'all' conta todas as internações."
+          }
+        },
+        "required": [
+          "start_year",
+          "end_year"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "indicator": {
+            "enum": [
+              "percentage",
+              "count",
+              "rate_per_10k"
+            ],
+            "description": "Indicador das séries"
+          },
+          "period": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "number",
+                "description": "Ano inicial pedido"
+              },
+              "end": {
+                "type": "number",
+                "description": "Ano final pedido"
+              }
+            },
+            "required": [
+              "start",
+              "end"
+            ],
+            "additionalProperties": false
+          },
+          "compare_by": {
+            "type": "string",
+            "description": "Eixo comparado: uf, csap_group ou total (sem eixo)"
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Um ponto por ano: `year` mais uma chave por valor comparado (UF, grupo ou `total`) com o indicador",
+              "properties": {
+                "year": {
+                  "type": "number",
+                  "description": "Ano"
+                }
+              },
+              "required": [
+                "year"
+              ],
+              "additionalProperties": {
+                "type": "number",
+                "description": "Valor do indicador para esta UF, grupo ou `total`"
+              }
+            },
+            "description": "Pontos em ordem cronológica"
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Avisos que qualificam os números: era CID-9, raça/cor ausente, universo do % ICSAP, denominador populacional, truncamento"
+          },
+          "trends": {
+            "type": "object",
+            "description": "Tendência por valor comparado; só com `include_trend_line` e ao menos dois anos — ausente quando desligada",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "slope": {
+                  "type": "number",
+                  "description": "Inclinação da regressão linear (indicador por ano)"
+                },
+                "direction": {
+                  "enum": [
+                    "increasing",
+                    "decreasing",
+                    "stable"
+                  ],
+                  "description": "Sentido da tendência"
+                },
+                "avg_annual_change": {
+                  "type": "number",
+                  "description": "Variação média anual"
+                },
+                "start_value": {
+                  "type": "number",
+                  "description": "Valor no primeiro ano"
+                },
+                "end_value": {
+                  "type": "number",
+                  "description": "Valor no último ano"
+                },
+                "change_pct": {
+                  "type": "number",
+                  "description": "Variação relativa entre as pontas, %"
+                }
+              },
+              "required": [
+                "slope",
+                "direction",
+                "avg_annual_change",
+                "start_value",
+                "end_value",
+                "change_pct"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "best_performer": {
+                "type": "string",
+                "description": "Valor comparado com a melhor evolução; só com mais de uma tendência"
+              },
+              "worst_performer": {
+                "type": "string",
+                "description": "Valor comparado com a pior evolução; só com mais de uma tendência"
+              },
+              "note": {
+                "type": "string",
+                "description": "Como ler o indicador; só para `percentage`"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          "years_not_available": {
+            "type": "object",
+            "description": "Presente só quando parte dos anos pedidos não tem dado: os números cobrem apenas os anos atendidos",
+            "properties": {
+              "years": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "description": "Anos pedidos que não têm dados SIH e ficaram fora do resultado"
+              },
+              "note": {
+                "type": "string",
+                "description": "Quais anos ficaram fora e quais os números cobrem"
+              }
+            },
+            "required": [
+              "years",
+              "note"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "array",
+            "items": {},
+            "description": "Sempre vazio: só aparece no caminho de erro-mole do funil"
+          },
+          "population_years": {
+            "type": "object",
+            "description": "Cobertura populacional; só no erro-mole de `rate_per_10k` fora do intervalo",
+            "properties": {
+              "first_year": {
+                "type": "number",
+                "description": "Primeiro ano com população"
+              },
+              "last_year": {
+                "type": "number",
+                "description": "Último ano com população"
+              }
+            },
+            "required": [
+              "first_year",
+              "last_year"
+            ],
+            "additionalProperties": false
+          },
+          "error": {
+            "type": "string",
+            "description": "Motivo pelo qual não há dados nesta resposta (ano sem dado, cobertura populacional, falha na consulta)"
+          },
+          "available_sih_years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos com dados SIH atendíveis por este servidor"
+          },
+          "published_years": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"
+          },
+          "note": {
+            "type": "string",
+            "description": "Como obter o dado (por exemplo, consultar get_available_years)"
+          },
+          "provenance": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "description": "Fonte oficial do dado"
+                },
+                "source_url": {
+                  "type": "string",
+                  "description": "URL canônica que reproduz a consulta ou localiza a fonte"
+                },
+                "data_vintage": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Competência ou safra do dado segundo a fonte; null quando a fonte não expõe"
+                },
+                "retrieved_at": {
+                  "type": "string",
+                  "description": "Instante REAL da extração na origem (ISO-8601)"
+                },
+                "citation": {
+                  "type": "string",
+                  "description": "Citação pronta para uso"
+                },
+                "license": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Regime legal do dado (id SPDX quando há)"
+                }
+              },
+              "required": [
+                "source",
+                "source_url",
+                "data_vintage",
+                "retrieved_at",
+                "citation",
+                "license"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Um bloco por procedência que contribuiu com esta resposta (SIH, lista CSAP, csapAIH, população…); licenças nunca se fundem"
+          },
+          "attribution": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "URLs canônicas das fontes desta resposta (lista de atribuição)"
+          }
+        },
+        "required": [
+          "provenance",
+          "attribution"
+        ],
+        "description": "Séries anuais do indicador ICSAP por UF ou grupo CSAP, com tendência linear e melhor/pior desempenho; `error` quando o intervalo está fora da cobertura",
+        "anyOf": [
+          {
+            "required": [
+              "indicator",
+              "period",
+              "compare_by",
+              "series",
+              "notes",
+              "summary"
+            ]
+          },
+          {
+            "required": [
+              "error"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    }
+  ],
+  "resources": [],
+  "prompts": []
+}
