@@ -65,6 +65,23 @@ try {
   checkAnnotations(tools);
   const year = await threeCalls(client);
   await client.close();
+
+  // Sonda CRUA, fora do cliente do SDK (que nunca manda cursor): cursor de
+  // paginação inválido tem de virar -32602 no corpo com HTTP 200 — o guarda
+  // de src/pagination.ts na borda do contêiner. Regra
+  // `pagination_tools_invalid_cursor` do mcpscore; é medida aqui porque o
+  // Worker não participa deste smoke e a recusa tem de existir sem ele.
+  const sonda = await fetch(`${base}/mcp`, {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json, text/event-stream" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 91, method: "tools/list", params: { cursor: "nao-existe" } }),
+  });
+  const recusa = await sonda.json().catch(() => undefined);
+  if (sonda.status !== 200 || recusa?.error?.code !== -32602 || recusa?.id !== 91) {
+    fail(`cursor inválido não virou -32602: HTTP ${sonda.status} ${JSON.stringify(recusa)?.slice(0, 200)}`);
+  }
+  console.log("tools/list com cursor inválido: -32602");
+
   console.log(`SMOKE HTTP OK (ano consultado: ${year}, porta ${port})`);
 } catch (e) {
   fail(`${e?.message ?? e}\n--- stderr do servidor ---\n${stderr}`);

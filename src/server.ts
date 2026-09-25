@@ -24,6 +24,7 @@ import {
 } from "@modelcontextprotocol/server";
 import { CfWorkerJsonSchemaValidator } from "@modelcontextprotocol/server/validators/cf-worker";
 
+import { announceServedVersions } from "./discover.js";
 import { SERVER_VERSION } from "./provenance.js";
 import { callTool, tools, type ToolArgs } from "./tools.js";
 
@@ -38,6 +39,35 @@ export const SERVER_WEBSITE_URL = "https://sih.sidneybissoli.com";
 // diretório outro. Passou despercebido por um dia porque os testes do worker,
 // que comparam os três, não rodavam no CI (corrigido em 14/09).
 export const SERVER_TITLE = "DATASUS SIH/SUS — Brazil Hospital Admissions (AIH) MCP";
+
+/**
+ * Instruções do handshake MCP (`initialize.result.instructions`): o que o
+ * servidor cobre, o fluxo típico entre as doze ferramentas e quando o cliente
+ * NÃO deve usá-lo (critério de review de conectores da Anthropic; regra
+ * `server_instructions_present` do mcpscore, reprovada até 25/09/2026). Em
+ * inglês, como o título e o server.json — é o texto que o modelo lê, e o
+ * vocabulário da pergunta em inglês ("hospital admissions", "ICD-10", "AIH") é
+ * o que a ação GEO de 13/09/2026 fixou para as superfícies públicas. As doze
+ * ferramentas são citadas pelo nome, e tests/instructions.test.ts prende os
+ * dois lados: todo nome citado existe, e toda ferramenta é citada — uma
+ * ferramenta nova sem lugar no fluxo reprova ali, não no chat.
+ */
+export const SERVER_INSTRUCTIONS =
+  "Brazilian hospital admissions from DATASUS SIH/SUS (AIH records, 1992-2025), read from " +
+  "pre-aggregated public cubes of the healthbr-data Parquet mirror, never from the FTP or " +
+  "TabNet: causes by ICD-10 chapter and group (ICD-9 before 1998), monthly series, ambulatory " +
+  "care sensitive conditions (ICSAP, the Brazilian list) and crude, age-specific or " +
+  "age-standardized rates per 100,000 by state and municipality. Every stratum carries " +
+  "admissions, length of stay, amount paid by SUS and deaths; every response carries a " +
+  "provenance block with the data vintage and the citation. Typical flow: get_available_years " +
+  "first (which years each cube covers), then get_hospitalizations for counts by cause, place, " +
+  "age, sex and race, get_hospitalization_trends for monthly or annual series, " +
+  "get_hospitalization_rates and compare_regions for rates; get_icsap, get_icsap_indicators, " +
+  "rank_csap_groups and compare_icsap_trends for ICSAP; list_cid_chapters, list_csap_groups and " +
+  "classify_as_csap resolve codes and groups before querying. Do not use this server for " +
+  "individual AIH records, for variables the cubes do not carry (procedure performed, facility " +
+  "CNES, secondary diagnosis) or for other DATASUS systems (SIM, SINASC, SIA, SINAN): use " +
+  "microdatasus, PySUS or the healthbr-data mirror for those.";
 
 // Review de conectores do claude.ai (claude.com/docs/connectors/building/
 // review-criteria, lido em 08/09/2026): toda ferramenta com `title` e
@@ -99,8 +129,14 @@ export function createServer(): McpServer {
       websiteUrl: SERVER_WEBSITE_URL,
       icons: [{ src: `${SERVER_WEBSITE_URL}/icon.png`, mimeType: "image/png", sizes: ["512x512"] }],
     },
-    { capabilities: { tools: {} } },
+    { capabilities: { tools: {} }, instructions: SERVER_INSTRUCTIONS },
   );
+
+  // server/discover anuncia todas as revisões atendidas, não só as modernas —
+  // ver src/discover.ts. Antes das tools: se o SDK mudar por baixo, o servidor
+  // falha ao construir e não meio-construído.
+  announceServedVersions(server);
+
   for (const tool of tools) {
     server.registerTool(
       tool.name,
