@@ -32,10 +32,9 @@ const MENSAGENS: Array<[string, ErrorClass]> = [
   ["Ferramenta desconhecida: get_coisa_nenhuma", "contrato"],
 
   // --- nao_encontrado: chamou certo, o valor não existe ---
-  [
-    "Ano(s) 2030 não publicado(s) no canal de cubos (https://healthbr-data.sidneybissoli.com/sih/cubos/) e nenhum cubo local.",
-    "nao_encontrado",
-  ],
+  // (Até a 0.17.0 havia uma segunda frase para ano ausente — "Ano(s) X não
+  // publicado(s) no canal de cubos (...) e nenhum cubo local", isError com o
+  // disco vazio. Saiu na decisão 41 do container: a resposta é UMA, a de baixo.)
   ["Nenhum dos anos solicitados (1800) tem dados SIH disponíveis.", "nao_encontrado"],
   ["Grupo CSAP inexistente: grupo_que_nao_existe", "nao_encontrado"],
 

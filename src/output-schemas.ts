@@ -172,6 +172,7 @@ const COBERTURA_POPULACIONAL: Schema = obj(
 const ERRO_MOLE: Record<string, Schema> = {
   error: str("Motivo pelo qual não há dados nesta resposta (ano sem dado, cobertura populacional, falha na consulta)"),
   available_sih_years: ANOS_DISPONIVEIS,
+  published_years: listaDeNumeros("Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"),
   note: str("Como obter o dado (por exemplo, consultar get_available_years)"),
 };
 
@@ -633,6 +634,7 @@ const get_icsap_indicators: Corpo = {
     truncated: TRUNCADO,
     error: ERRO_MOLE.error,
     available_sih_years: ERRO_MOLE.available_sih_years,
+    published_years: ERRO_MOLE.published_years,
   },
   formas: [["data", "notes", "indicators_calculated", "note"], ["error"]],
   proveniencia: "multi",
