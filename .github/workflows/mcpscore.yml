@@ -40,6 +40,11 @@ name: mcpscore (contrato de qualidade)
 #    borda; só produção prova produção. Consertado no Worker (PR #28,
 #    worker/src/mcp-proxy.ts), deploy por workflow_dispatch; o piso remoto
 #    fica em 100.
+#  - 25/09/2026, depois desse deploy: 125/128 e 127/128 em duas medições, com
+#    regras diferentes e o mesmo "observed HTTP 429" — o rate limit do Worker
+#    (10 de burst, 2/s) derrubava duas ou três das ~60 requisições do
+#    auditor. Alinhado aos irmãos (20, 5/s) e todo cabeçalho `mcp-*`
+#    encaminhado por prefixo (PR #29). Piso 100 mantido.
 #
 # UM PISO DE 100 É DESCONFORTÁVEL DE PROPÓSITO. Ele fica vermelho tanto numa
 # regressão nossa quanto numa REGRA NOVA do auditor que ainda não atendemos —

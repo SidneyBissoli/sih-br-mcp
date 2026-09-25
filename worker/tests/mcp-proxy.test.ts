@@ -126,6 +126,7 @@ describe("cabeçalhos encaminhados ao container", () => {
         "Content-Type": "application/json",
         "MCP-Protocol-Version": "2026-07-28",
         "Mcp-Method": "server/discover",
+        "Mcp-Name": "sih://x",
         "Mcp-Param-Name": "Z2V0X2ljc2Fw",
         "Mcp-Param-Year": "2023",
         "Mcp-Session-Id": "abc",
@@ -133,8 +134,10 @@ describe("cabeçalhos encaminhados ao container", () => {
       }),
     );
     expect(out.get("mcp-method")).toBe("server/discover");
+    expect(out.get("mcp-name")).toBe("sih://x");
     expect(out.get("mcp-param-name")).toBe("Z2V0X2ljc2Fw");
     expect(out.get("mcp-param-year")).toBe("2023");
+    expect(out.get("mcp-session-id")).toBe("abc");
     expect(out.get("x-mcp-param-fake")).toBeNull();
   });
 

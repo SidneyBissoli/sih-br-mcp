@@ -95,14 +95,25 @@ export const TOOLS = [
  * Token bucket em memória por isolate: proteção contra abuso acidental/burst,
  * não um limite global exato (recicla com o isolate; instâncias em POPs
  * distintos não somam). Para limite global rígido, mover a contagem para um
- * Durable Object. Aqui o teto é mais baixo que nos irmãos porque cada chamada
- * de tool custa CPU do container (a série de 34 anos leva ~30 s).
+ * Durable Object.
+ *
+ * Até 25/09/2026 o teto era 10 de burst e 2/s, mais baixo que nos irmãos,
+ * porque cada chamada de tool custa CPU do contêiner (a série de 34 anos leva
+ * ~30 s). Medido em produção nesse dia, com o contêiner já servindo a era
+ * 2026-07-28: o mcpscore faz ~60 requisições de protocolo em poucos segundos
+ * (initialize, listas, cursores, discover, sondas de prontidão) e o balde de
+ * 10/2 devolvia 429 a duas ou três delas por rodada — regras diferentes a
+ * cada medição (125/128 e 127/128), todas "observed HTTP 429". O limite não
+ * distingue sonda barata de tool cara, então proteger o contêiner por aqui
+ * derruba primeiro quem só conversa protocolo. Alinhado aos irmãos (20 e
+ * 5/s); o custo das tools longas continua contido pelo próprio contêiner
+ * (SIH_DUCKDB_THREADS=1, uma instância).
  */
 export const RATE_LIMIT = {
   /** Burst máximo por cliente. */
-  clientBurst: 10,
+  clientBurst: 20,
   /** Reposição de tokens por segundo por cliente. */
-  clientRefillPerSec: 2,
+  clientRefillPerSec: 5,
   /** Teto de buckets rastreados por isolate (evicção FIFO ao estourar). */
   maxClientBuckets: 1000,
 } as const;

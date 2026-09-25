@@ -77,7 +77,7 @@ export function corsHeaders(origin: string | null): Record<string, string> {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
     "Access-Control-Allow-Headers":
-      "Content-Type, Accept, Authorization, Mcp-Session-Id, MCP-Protocol-Version, Mcp-Method, Last-Event-ID",
+      "Content-Type, Accept, Authorization, Mcp-Session-Id, MCP-Protocol-Version, Mcp-Method, Mcp-Name, Last-Event-ID",
     "Access-Control-Expose-Headers": "Mcp-Session-Id, MCP-Protocol-Version",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
@@ -100,18 +100,16 @@ export function corsHeaders(origin: string | null): Record<string, string> {
  * positiva que não acompanha a spec é o mesmo defeito do "adaptador que engole
  * argumento": o contêiner novo fala a revisão nova e a borda cala o cabeçalho.
  */
-export const FORWARDED_HEADERS = [
-  "accept",
-  "content-type",
-  "content-length",
-  "mcp-session-id",
-  "mcp-protocol-version",
-  "mcp-method",
-  "last-event-id",
-] as const;
+export const FORWARDED_HEADERS = ["accept", "content-type", "content-length", "last-event-id"] as const;
 
-/** Prefixo dos cabeçalhos por argumento da revisão 2026-07-28 (`Mcp-Param-{Name}`). */
-export const FORWARDED_HEADER_PREFIX = "mcp-param-";
+/**
+ * Todo cabeçalho do protocolo segue por PREFIXO: `Mcp-Session-Id`,
+ * `MCP-Protocol-Version`, `Mcp-Method`, `Mcp-Name`, `Mcp-Param-*` — os que o
+ * SDK 2.0.0 lê hoje — e os que a próxima revisão inventar. Nome a nome, a
+ * lista ficou para trás duas vezes no mesmo dia (`Mcp-Method`, depois
+ * `Mcp-Name`, cada um custando um deploy e uma medição).
+ */
+export const FORWARDED_HEADER_PREFIX = "mcp-";
 
 export function forwardedHeaders(incoming: Headers): Headers {
   const out = new Headers();
