@@ -34,6 +34,12 @@ name: mcpscore (contrato de qualidade)
 #    dual-era) e o denominador sobe de 76 para 126; medido sem o Worker em
 #    118/126, faltando só TLS e Origin, que são do Worker → piso 100 depois
 #    do deploy.
+#  - 25/09/2026, depois do deploy da 1.0.1: produção mediu 82/94 — o Worker
+#    descartava o cabeçalho `Mcp-Method` (obrigatório na era moderna) e todo
+#    `server/discover` voltava -32020. A medição local do contêiner NÃO prova a
+#    borda; só produção prova produção. Consertado no Worker (PR #28,
+#    worker/src/mcp-proxy.ts), deploy por workflow_dispatch; o piso remoto
+#    fica em 100.
 #
 # UM PISO DE 100 É DESCONFORTÁVEL DE PROPÓSITO. Ele fica vermelho tanto numa
 # regressão nossa quanto numa REGRA NOVA do auditor que ainda não atendemos —
