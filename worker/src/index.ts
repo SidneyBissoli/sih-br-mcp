@@ -18,6 +18,7 @@ import { CONTAINER_INSTANCE, HEALTH_PROBE_TIMEOUT_MS, SERVER_CONFIG } from "./co
 import { SihContainer, type ContainerProbe } from "./container.js";
 import { discoveryResponseForPath } from "./discovery.js";
 import { desfechosDoCorpo, resolveDesfecho, type Desfecho } from "./envelope.js";
+import { ICON_PNG_BASE64 } from "./icon.js";
 import { landingResponse } from "./landing.js";
 import { logger } from "./logger.js";
 import {
@@ -62,6 +63,9 @@ async function probeContainer(env: Env): Promise<ContainerProbe | { container: "
   }
 }
 
+// Decodificado uma vez por isolate; os bytes vivem em icon.ts (fonte única).
+const ICON_PNG = Uint8Array.from(atob(ICON_PNG_BASE64), (c) => c.charCodeAt(0));
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -70,6 +74,15 @@ export default {
 
     // --- Rotas públicas, servidas antes de qualquer auth ---
     if (url.pathname === "/") return landingResponse();
+    // O ícone declarado em server.json e no serverInfo do contêiner. Público e
+    // ANTES de qualquer auth: quem o busca é o crawler do diretório e o
+    // cliente MCP que renderiza o handshake, nunca um chamador autenticado.
+    if (url.pathname === "/icon.png") {
+      return new Response(ICON_PNG, {
+        status: 200,
+        headers: { "Content-Type": "image/png", "Cache-Control": "public, max-age=86400" },
+      });
+    }
     // robots.txt, sitemap.xml e a chave do IndexNow vêm ANTES da auth: um
     // rastreador não tem credencial, e robots.txt atrás de Bearer é o mesmo que
     // não ter robots.txt.

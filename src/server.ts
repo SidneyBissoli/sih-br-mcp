@@ -28,6 +28,7 @@ import { SERVER_VERSION } from "./provenance.js";
 import { callTool, tools, type ToolArgs } from "./tools.js";
 
 export const SERVER_NAME = "sih-br-mcp";
+export const SERVER_WEBSITE_URL = "https://sih.sidneybissoli.com";
 // O título canônico do produto, e ele mora em TRÊS superfícies que têm de
 // concordar: este SERVER_TITLE (o que o cliente MCP mostra no handshake), o
 // `title` do server.json (o que o registro oficial e os diretórios exibem) e o
@@ -87,7 +88,17 @@ const validadorPermissivo: jsonSchemaValidator = {
 
 export function createServer(): McpServer {
   const server = new McpServer(
-    { name: SERVER_NAME, version: SERVER_VERSION, title: SERVER_TITLE },
+    {
+      name: SERVER_NAME,
+      version: SERVER_VERSION,
+      title: SERVER_TITLE,
+      // O site e o ícone no handshake (campos da revisão 2025-11-25). As
+      // MESMAS URLs do server.json: worker/tests/icon.test.ts prende os três
+      // lugares (bytes no Worker, serverInfo aqui, manifesto no registro)
+      // para o handshake e os diretórios nunca mostrarem imagens diferentes.
+      websiteUrl: SERVER_WEBSITE_URL,
+      icons: [{ src: `${SERVER_WEBSITE_URL}/icon.png`, mimeType: "image/png", sizes: ["512x512"] }],
+    },
     { capabilities: { tools: {} } },
   );
   for (const tool of tools) {
