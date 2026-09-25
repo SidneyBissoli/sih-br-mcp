@@ -116,6 +116,31 @@ describe("cabeçalhos encaminhados ao container", () => {
     expect(out.get("cf-connecting-ip")).toBeNull();
     expect(out.get("x-mcp-self")).toBeNull();
   });
+
+  it("leva os da revisão 2026-07-28: Mcp-Method (obrigatório na era moderna) e todo Mcp-Param-*", () => {
+    // Medido em produção em 25/09/2026: com o contêiner já dual-era, todo
+    // `server/discover` atrás do Worker voltava -32020 "the required
+    // Mcp-Method header is absent" — a lista positiva o descartava.
+    const out = forwardedHeaders(
+      new Headers({
+        "Content-Type": "application/json",
+        "MCP-Protocol-Version": "2026-07-28",
+        "Mcp-Method": "server/discover",
+        "Mcp-Param-Name": "Z2V0X2ljc2Fw",
+        "Mcp-Param-Year": "2023",
+        "Mcp-Session-Id": "abc",
+        "X-Mcp-Param-Fake": "nao",
+      }),
+    );
+    expect(out.get("mcp-method")).toBe("server/discover");
+    expect(out.get("mcp-param-name")).toBe("Z2V0X2ljc2Fw");
+    expect(out.get("mcp-param-year")).toBe("2023");
+    expect(out.get("x-mcp-param-fake")).toBeNull();
+  });
+
+  it("o preflight CORS anuncia Mcp-Method — senão o navegador nem envia a requisição moderna", () => {
+    expect(corsHeaders("http://localhost:6274")["Access-Control-Allow-Headers"]).toContain("Mcp-Method");
+  });
 });
 
 describe("toolNamesFromBody — o que vai para o Analytics Engine", () => {

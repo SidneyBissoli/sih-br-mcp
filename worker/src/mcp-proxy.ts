@@ -77,7 +77,7 @@ export function corsHeaders(origin: string | null): Record<string, string> {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
     "Access-Control-Allow-Headers":
-      "Content-Type, Accept, Authorization, Mcp-Session-Id, MCP-Protocol-Version, Last-Event-ID",
+      "Content-Type, Accept, Authorization, Mcp-Session-Id, MCP-Protocol-Version, Mcp-Method, Last-Event-ID",
     "Access-Control-Expose-Headers": "Mcp-Session-Id, MCP-Protocol-Version",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
@@ -87,9 +87,18 @@ export function corsHeaders(origin: string | null): Record<string, string> {
 /**
  * Cabeçalhos que seguem do cliente para o container. Lista POSITIVA: o que o
  * transporte Streamable HTTP lê (Accept, Content-Type, sessão, versão do
- * protocolo, Last-Event-ID) mais Content-Length. Authorization, Cookie, o
+ * protocolo, Last-Event-ID) mais Content-Length, e os da revisão 2026-07-28
+ * (`Mcp-Method`, obrigatório em toda requisição da era moderna, e os
+ * `Mcp-Param-*`, que espelham argumentos do corpo). Authorization, Cookie, o
  * marcador self e os cabeçalhos CF-* ficam na borda — o container não os usa
  * e não deve vê-los.
+ *
+ * O `Mcp-Method` entrou em 25/09/2026, medido em produção: o contêiner passou
+ * a servir a era moderna (1.0.1), sem o Worker media 118/126 com prontidão
+ * 41/41, e atrás do Worker respondia -32020 "the required Mcp-Method header
+ * is absent" a todo `server/discover` — porque esta lista o descartava. Lista
+ * positiva que não acompanha a spec é o mesmo defeito do "adaptador que engole
+ * argumento": o contêiner novo fala a revisão nova e a borda cala o cabeçalho.
  */
 export const FORWARDED_HEADERS = [
   "accept",
@@ -97,8 +106,12 @@ export const FORWARDED_HEADERS = [
   "content-length",
   "mcp-session-id",
   "mcp-protocol-version",
+  "mcp-method",
   "last-event-id",
 ] as const;
+
+/** Prefixo dos cabeçalhos por argumento da revisão 2026-07-28 (`Mcp-Param-{Name}`). */
+export const FORWARDED_HEADER_PREFIX = "mcp-param-";
 
 export function forwardedHeaders(incoming: Headers): Headers {
   const out = new Headers();
@@ -106,6 +119,10 @@ export function forwardedHeaders(incoming: Headers): Headers {
     const v = incoming.get(nome);
     if (v !== null) out.set(nome, v);
   }
+  // `Headers` já devolve os nomes em minúsculas.
+  incoming.forEach((v, nome) => {
+    if (nome.startsWith(FORWARDED_HEADER_PREFIX)) out.set(nome, v);
+  });
   return out;
 }
 
