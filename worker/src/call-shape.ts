@@ -133,8 +133,8 @@ export function classeDoErroRpc(code: number | undefined, message: string): Erro
  *
  * No `sih` os três formatos medidos em 24/09/2026 são: texto cru
  * ("Input validation error: ...", "Ferramenta desconhecida: X",
- * "Erro ao executar X: ..."), e JSON com campo `error` ("Ano(s) ... não
- * publicado(s) no canal de cubos").
+ * "Erro ao executar X: ..."), e JSON com campo `error` ("Nenhum dos anos
+ * solicitados (...) tem dados SIH disponíveis.").
  */
 export function errorText(result: unknown): string {
   if (!result || typeof result !== "object") return "";

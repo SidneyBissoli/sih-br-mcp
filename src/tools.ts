@@ -53,7 +53,7 @@ import {
 } from "./provenance.js";
 import { getFreshness } from "./freshness.js";
 import { outputSchemaFor } from "./output-schemas.js";
-import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, causasSummaryState, cubesCacheDir, ensureCausasEstratosYears, ensureCausasSummary, ensureEstratosYears, ensureIcsapSummary, ensurePopulation, ensureSidecars, ensureYears, icsapSummaryState, loadCubesManifest, populationPresent, publishedYears, yearsFromArgs } from "./cache.js";
+import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cachedCubesManifest, causasSummaryState, cubesCacheDir, ensureCausasEstratosYears, ensureCausasSummary, ensureEstratosYears, ensureIcsapSummary, ensurePopulation, ensureSidecars, ensureYears, icsapSummaryState, loadCubesManifest, populationPresent, publishedYears, yearsFromArgs } from "./cache.js";
 import type { CubeKind } from "./cache.js";
 
 // =============================================================================
@@ -1316,6 +1316,7 @@ async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) 
       data: [],
       population_years: coverage,
       available_sih_years: getAvailableYears(),
+      note: NOTA_COBERTURA_POPULACIONAL,
     };
   }
   // Antes de 2000 o recorte etário só existe nas faixas quinquenais do arquivo
@@ -1341,13 +1342,11 @@ async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) 
   const requestedYears = args.year || availableYears;
   const validYears = requestedYears.filter(y => availableYears.includes(y));
 
+  // Defesa em profundidade: o funil (callTool) já recusa o caso total antes de
+  // chegar aqui; esta cópia só fala quando a cobertura de CAUSAS for menor que a
+  // união que o funil conhece. A resposta é a MESMA função — decisão 41.
   if (validYears.length === 0) {
-    return {
-      error: `Nenhum dos anos solicitados (${requestedYears.join(", ")}) tem dados SIH disponíveis.`,
-      data: [],
-      available_sih_years: availableYears,
-      note: "Use get_available_years para ver anos com dados de internação.",
-    };
+    return respostaSemAnos(requestedYears, availableYears);
   }
 
   const ratePer = args.rate_per || 100000;
@@ -1518,6 +1517,7 @@ async function handleCompareIcsapTrends(args: CompareIcsapTrendsArgs) {
       series: [],
       population_years: popRange,
       available_sih_years: getAvailableYears(),
+      note: NOTA_COBERTURA_POPULACIONAL,
     };
   }
 
@@ -1540,12 +1540,11 @@ async function handleCompareIcsapTrends(args: CompareIcsapTrendsArgs) {
   const availableYears = icsapYearsAvailable();
   const years = allYears.filter(y => availableYears.includes(y));
 
+  // Defesa em profundidade, como em handleGetHospitalizationRates: o funil
+  // recusa o caso total antes; aqui só quando a cobertura da ICSAP for menor
+  // que a união que o funil conhece. Mesma função, mesma frase (decisão 41).
   if (years.length === 0) {
-    return {
-      error: `Nenhum dos anos no intervalo ${start_year}-${end_year} tem dados SIH disponíveis.`,
-      series: [],
-      available_sih_years: availableYears,
-    };
+    return respostaSemAnos(allYears, availableYears, "series");
   }
 
   try {
@@ -1925,6 +1924,41 @@ async function ensurePopulationForTool(name: string): Promise<void> {
 
 export type ToolArgs = Record<string, unknown> | undefined;
 
+/** Nota das duas guardas de cobertura POPULACIONAL (taxas): aponta onde a cobertura está publicada. */
+const NOTA_COBERTURA_POPULACIONAL = "Use get_available_years (population_years) para ver os anos com denominador populacional.";
+
+/**
+ * A resposta ÚNICA para "nenhum dos anos pedidos tem dado SIH" (decisão 41).
+ *
+ * Até a 0.17.0 esta frase existia em TRÊS lugares (o funil, get_hospitalization_rates
+ * e compare_icsap_trends — a terceira com redação própria) e havia uma QUARTA
+ * guarda, mais antiga, dentro do bloco de cache: `isError: true`, sem
+ * proveniência e sem nota, que só falava quando o disco não tinha cubo nenhum.
+ * Medido em 24/09/2026: a mesma pergunta (`year:[1800]`) tinha duas respostas
+ * de formatos diferentes, e quem escolhia era o estado do disco do contêiner —
+ * que dorme e acorda frio. Oito das oito ferramentas com ano divergiam.
+ *
+ * Duas listas, nomeadas pelo que são: `available_sih_years` é o que ESTA
+ * instância consegue responder agora (cubos em disco mais os anos frescos dos
+ * pré-agregados — pode ser vazio num contêiner recém-acordado);
+ * `published_years` é o que o CANAL publica, que é o que ensina o chamador a
+ * acertar. A segunda só existe com o cache de cubos ligado (sem canal, não há
+ * manifesto), e sai do memo — nunca vai à rede daqui.
+ *
+ * `chave` acompanha o payload da ferramenta (`data` na maioria, `series` em
+ * compare_icsap_trends), para o esquema de saída de cada uma fechar.
+ */
+function respostaSemAnos(anosPedidos: number[], atendiveis: Iterable<number>, chave: "data" | "series" = "data"): Record<string, unknown> {
+  const publicados = publishedYears(cachedCubesManifest());
+  return {
+    error: `Nenhum dos anos solicitados (${anosPedidos.join(", ")}) tem dados SIH disponíveis.`,
+    [chave]: [],
+    available_sih_years: [...atendiveis].sort((a, b) => a - b),
+    ...(publicados.length > 0 ? { published_years: publicados } : {}),
+    note: "Use get_available_years para ver anos com dados de internação.",
+  };
+}
+
 /**
  * Executa uma ferramenta pelo nome e devolve o resultado MCP com o bloco de
  * proveniência. Erros viram `isError: true` com mensagem acionável — nunca
@@ -1980,7 +2014,13 @@ export async function callTool(name: string, args: ToolArgs): Promise<CallToolRe
 
     if (CUBES_CACHE_ENABLED && !TOOLS_WITHOUT_CUBES.has(name) && !semCubos) {
       const dir = getDataDirectory();
-      const { downloaded, unavailable } = await ensureYears(dir, yearsFromArgs(args), (m) => console.error(`[cache] ${m}`), cubesForCall(name, args));
+      // Ano pedido que o canal não publica NÃO é tratado aqui: ensureYears só o
+      // deixa de fora, e a guarda de ano ausente logo abaixo responde — a mesma
+      // resposta com ou sem cubo em disco. Até a 0.17.0 havia aqui uma guarda
+      // própria (`isError: true`, sem proveniência) que só falava com o disco
+      // vazio, e era ela que fazia a mesma pergunta ter duas respostas
+      // (decisão 41). Manifesto indisponível continua lançando, como antes.
+      const { downloaded } = await ensureYears(dir, yearsFromArgs(args), (m) => console.error(`[cache] ${m}`), cubesForCall(name, args));
       if (downloaded.length) {
         console.error(`[cache] ano(s) ${downloaded.join(", ")} baixado(s) para ${dir}`);
         // Sidecar novo no disco: relê, senão as notas de era ficam do estado antigo.
@@ -1989,15 +2029,6 @@ export async function callTool(name: string, args: ToolArgs): Promise<CallToolRe
       // Estratos dos anos pedidos (PLAN-005): denominador fino sem DISTINCT.
       if (ICSAP_AGG_TOOLS.has(name)) {
         await ensureEstratosYears(dir, yearsFromArgs(args), (m) => console.error(`[cache] ${m}`));
-      }
-      if (unavailable.length && downloaded.length === 0 && getAvailableYears().length === 0) {
-        return {
-          content: [{ type: "text", text: JSON.stringify({
-            error: `Ano(s) ${unavailable.join(", ")} não publicado(s) no canal de cubos (${CUBES_BASE_URL}) e nenhum cubo local.`,
-            published_years: publishedYears((await loadCubesManifest()).manifest),
-          }, null, 2) }],
-          isError: true,
-        };
       }
     }
 
@@ -2035,16 +2066,12 @@ export async function callTool(name: string, args: ToolArgs): Promise<CallToolRe
       for (const y of icsapSummaryState().freshYears) atendiveis.add(y);
       anosAusentes = anosPedidos.filter((y) => !atendiveis.has(y));
 
-      // Nenhum ano atendível: a mesma redação que get_hospitalization_rates e
-      // compare_icsap_trends já usavam. Reusar o vocabulário em vez de inventar
-      // um terceiro é o que faz as doze soarem como um servidor só.
+      // Nenhum ano atendível: a resposta única de respostaSemAnos(), a mesma
+      // que get_hospitalization_rates e compare_icsap_trends usam na defesa em
+      // profundidade deles. Uma função em vez de três cópias é o que faz as
+      // doze soarem como um servidor só — e o que impede a frase de derivar.
       if (anosAusentes.length === anosPedidos.length) {
-        return withProvenance({
-          error: `Nenhum dos anos solicitados (${anosPedidos.join(", ")}) tem dados SIH disponíveis.`,
-          data: [],
-          available_sih_years: [...atendiveis].sort((a, b) => a - b),
-          note: "Use get_available_years para ver anos com dados de internação.",
-        }, provenanceFor(name, args)) as CallToolResult;
+        return withProvenance(respostaSemAnos(anosPedidos, atendiveis), provenanceFor(name, args)) as CallToolResult;
       }
     }
 

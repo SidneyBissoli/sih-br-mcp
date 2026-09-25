@@ -406,6 +406,13 @@
           },
           "description": "Anos com dados SIH atendíveis por este servidor"
         },
+        "published_years": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"
+        },
         "note": {
           "type": "string",
           "description": "Como obter o dado (por exemplo, consultar get_available_years)"
@@ -638,6 +645,13 @@
             "type": "number"
           },
           "description": "Anos com dados SIH atendíveis por este servidor"
+        },
+        "published_years": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"
         },
         "note": {
           "type": "string",
@@ -1765,6 +1779,13 @@
           },
           "description": "Anos com dados SIH atendíveis por este servidor"
         },
+        "published_years": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"
+        },
         "note": {
           "type": "string",
           "description": "Como obter o dado (por exemplo, consultar get_available_years)"
@@ -2023,6 +2044,13 @@
             "type": "number"
           },
           "description": "Anos com dados SIH atendíveis por este servidor"
+        },
+        "published_years": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"
         },
         "note": {
           "type": "string",
@@ -2482,6 +2510,13 @@
           },
           "description": "Anos com dados SIH atendíveis por este servidor"
         },
+        "published_years": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"
+        },
         "note": {
           "type": "string",
           "description": "Como obter o dado (por exemplo, consultar get_available_years)"
@@ -2913,6 +2948,13 @@
           },
           "description": "Anos com dados SIH atendíveis por este servidor"
         },
+        "published_years": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"
+        },
         "note": {
           "type": "string",
           "description": "Como obter o dado (por exemplo, consultar get_available_years)"
@@ -3218,6 +3260,13 @@
             "type": "number"
           },
           "description": "Anos com dados SIH atendíveis por este servidor"
+        },
+        "published_years": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"
         },
         "provenance": {
           "type": "array",
@@ -3826,6 +3875,13 @@
             "type": "number"
           },
           "description": "Anos com dados SIH atendíveis por este servidor"
+        },
+        "published_years": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Anos que o canal de cubos publica — a verdade do canal, distinta do que esta instância tem em disco; só com o cache de cubos ligado"
         },
         "note": {
           "type": "string",
