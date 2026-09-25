@@ -37,7 +37,8 @@
     "tables:check": "node scripts/tables-check.mjs",
     "tables:check:offline": "node scripts/tables-check.mjs --manifest tests/fixtures/sih/cubes-manifest-excerpt.json",
     "start:http": "node dist/http.js",
-    "smoke:http": "node scripts/smoke-http.mjs --fixtures tests/fixtures/sih --baseline baselines/surface-stdio.json"
+    "smoke:http": "node scripts/smoke-http.mjs --fixtures tests/fixtures/sih --baseline baselines/surface-stdio.json",
+    "manifest:lhm": "node scripts/gen-lhm-manifest.mjs"
   },
   "keywords": [
     "mcp",
