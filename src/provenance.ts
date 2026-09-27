@@ -26,6 +26,7 @@ import {
 import { configuredDataDirectory, getDataDirectory } from "./db/duckdb.js";
 import { CUBES_BASE_URL, cachedCubesManifest } from "./cache.js";
 import { cubeFreshness, describeBehind, getFreshness } from "./freshness.js";
+import { currentRetrieval } from "./upstream.js";
 import csapGroups from "./data/csap-groups.json" with { type: "json" };
 import csapGroupsCid9 from "./data/csap-groups-cid9.json" with { type: "json" };
 import cidChapters from "./data/cid-chapters.json" with { type: "json" };
@@ -431,6 +432,7 @@ export function sihProvenance(years?: number[]): CanonicalProvenance {
         "Sidecar de proveniência ausente: retrieved_at é o instante da chamada, não a extração no upstream.",
       ],
       served_from_cache: null,
+      retrieval: currentRetrieval(),
     });
   }
 
@@ -464,6 +466,13 @@ export function sihProvenance(years?: number[]): CanonicalProvenance {
       `Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.`,
     notices: freshnessNotices(used),
     served_from_cache: null,
+    // Diagnóstico de origem (contrato v1.1): as idas ao canal sih/cubos/ feitas
+    // NESTA chamada — manifesto e arquivos que faltavam no disco. `null` = a
+    // resposta veio do disco (cache aquecido, memo do manifesto válido): é
+    // assim que o bloco diz QUAL camada respondeu. `retrieved_at` continua
+    // sendo a safra do sidecar (extração no upstream), nunca o instante do
+    // download — o golden depende disso.
+    retrieval: currentRetrieval(),
   });
 }
 
@@ -648,6 +657,9 @@ export function populationProvenance(): CanonicalProvenance {
     derivation_note:
       "Denominadores usados no cálculo de taxas; somente soma de estratos (município → UF), sem interpolação nem projeção própria (regras em CONTEXT.md).",
     served_from_cache: fromChannel ? true : null,
+    // Mesmo canal (sih/cubos/) e mesmo coletor da chamada: quando a população
+    // foi baixada nesta chamada, a ida está aqui; do disco, `null`.
+    retrieval: fromChannel ? currentRetrieval() : null,
   });
 }
 

@@ -1,7 +1,7 @@
 {
   "identifier": "sidneybissoli-sih-br-mcp",
   "name": "DATASUS SIH/SUS — Brazil Hospital Admissions (AIH) MCP",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "icon": "🏥",
   "description": "Servidor MCP do DATASUS SIH/SUS: internações hospitalares do Brasil (AIH, 1992–2025) — causas CID-10 e CID-9, séries mensais, ICSAP e taxas por UF e município, sem baixar .dbc nem usar TabNet. Brazilian hospital admissions (SIH/SUS) MCP server: ICD-10 causes, monthly series, ambulatory-care-sensitive conditions (ICSAP) and rates by state and municipality, with source, data vintage and citation on every answer. Hosted on Cloudflare (Streamable HTTP, no auth) or local stdio via npm.",
   "author": "Sidney Bissoli",
@@ -157,7 +157,7 @@
           },
           "provenance": {
             "type": "object",
-            "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+            "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
             "properties": {
               "source": {
                 "type": "string",
@@ -176,7 +176,73 @@
               },
               "retrieved_at": {
                 "type": "string",
-                "description": "Instante REAL da extração na origem (ISO-8601)"
+                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+              },
+              "retrieval": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "description": "Diagnóstico de origem da chamada: como o dado foi obtido. Medição real do servidor; unstable=true pede ao agente que trate o dado como obtido com dificuldade",
+                    "properties": {
+                      "requests": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Idas distintas à origem que compõem esta resposta (fatias, páginas)"
+                      },
+                      "attempts": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Tentativas somadas, incluindo as repetidas (>= requests)"
+                      },
+                      "anomalies": {
+                        "type": "array",
+                        "description": "Anomalias superadas até o sucesso, somadas por classe, em ordem fixa; [] se nenhuma",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "timeout",
+                                "network",
+                                "http_4xx",
+                                "http_5xx",
+                                "rate_limited",
+                                "malformed_body"
+                              ],
+                              "description": "Classe da anomalia (vocabulário fechado do contrato)"
+                            },
+                            "count": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "Ocorrências desta classe na chamada"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "count"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "unstable": {
+                        "type": "boolean",
+                        "description": "true se houve repetição (attempts > requests) ou alguma anomalia"
+                      }
+                    },
+                    "required": [
+                      "requests",
+                      "attempts",
+                      "anomalies",
+                      "unstable"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
               },
               "citation": {
                 "type": "string",
@@ -195,6 +261,7 @@
               "source_url",
               "data_vintage",
               "retrieved_at",
+              "retrieval",
               "citation",
               "license"
             ],
@@ -296,7 +363,7 @@
           },
           "provenance": {
             "type": "object",
-            "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+            "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
             "properties": {
               "source": {
                 "type": "string",
@@ -315,7 +382,73 @@
               },
               "retrieved_at": {
                 "type": "string",
-                "description": "Instante REAL da extração na origem (ISO-8601)"
+                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+              },
+              "retrieval": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "description": "Diagnóstico de origem da chamada: como o dado foi obtido. Medição real do servidor; unstable=true pede ao agente que trate o dado como obtido com dificuldade",
+                    "properties": {
+                      "requests": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Idas distintas à origem que compõem esta resposta (fatias, páginas)"
+                      },
+                      "attempts": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Tentativas somadas, incluindo as repetidas (>= requests)"
+                      },
+                      "anomalies": {
+                        "type": "array",
+                        "description": "Anomalias superadas até o sucesso, somadas por classe, em ordem fixa; [] se nenhuma",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "timeout",
+                                "network",
+                                "http_4xx",
+                                "http_5xx",
+                                "rate_limited",
+                                "malformed_body"
+                              ],
+                              "description": "Classe da anomalia (vocabulário fechado do contrato)"
+                            },
+                            "count": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "Ocorrências desta classe na chamada"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "count"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "unstable": {
+                        "type": "boolean",
+                        "description": "true se houve repetição (attempts > requests) ou alguma anomalia"
+                      }
+                    },
+                    "required": [
+                      "requests",
+                      "attempts",
+                      "anomalies",
+                      "unstable"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
               },
               "citation": {
                 "type": "string",
@@ -334,6 +467,7 @@
               "source_url",
               "data_vintage",
               "retrieved_at",
+              "retrieval",
               "citation",
               "license"
             ],
@@ -875,7 +1009,7 @@
           },
           "provenance": {
             "type": "object",
-            "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+            "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
             "properties": {
               "source": {
                 "type": "string",
@@ -894,7 +1028,73 @@
               },
               "retrieved_at": {
                 "type": "string",
-                "description": "Instante REAL da extração na origem (ISO-8601)"
+                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+              },
+              "retrieval": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "description": "Diagnóstico de origem da chamada: como o dado foi obtido. Medição real do servidor; unstable=true pede ao agente que trate o dado como obtido com dificuldade",
+                    "properties": {
+                      "requests": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Idas distintas à origem que compõem esta resposta (fatias, páginas)"
+                      },
+                      "attempts": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Tentativas somadas, incluindo as repetidas (>= requests)"
+                      },
+                      "anomalies": {
+                        "type": "array",
+                        "description": "Anomalias superadas até o sucesso, somadas por classe, em ordem fixa; [] se nenhuma",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "timeout",
+                                "network",
+                                "http_4xx",
+                                "http_5xx",
+                                "rate_limited",
+                                "malformed_body"
+                              ],
+                              "description": "Classe da anomalia (vocabulário fechado do contrato)"
+                            },
+                            "count": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "Ocorrências desta classe na chamada"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "count"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "unstable": {
+                        "type": "boolean",
+                        "description": "true se houve repetição (attempts > requests) ou alguma anomalia"
+                      }
+                    },
+                    "required": [
+                      "requests",
+                      "attempts",
+                      "anomalies",
+                      "unstable"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
               },
               "citation": {
                 "type": "string",
@@ -913,6 +1113,7 @@
               "source_url",
               "data_vintage",
               "retrieved_at",
+              "retrieval",
               "citation",
               "license"
             ],
@@ -1363,7 +1564,7 @@
           },
           "provenance": {
             "type": "object",
-            "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+            "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
             "properties": {
               "source": {
                 "type": "string",
@@ -1382,7 +1583,73 @@
               },
               "retrieved_at": {
                 "type": "string",
-                "description": "Instante REAL da extração na origem (ISO-8601)"
+                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+              },
+              "retrieval": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "description": "Diagnóstico de origem da chamada: como o dado foi obtido. Medição real do servidor; unstable=true pede ao agente que trate o dado como obtido com dificuldade",
+                    "properties": {
+                      "requests": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Idas distintas à origem que compõem esta resposta (fatias, páginas)"
+                      },
+                      "attempts": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Tentativas somadas, incluindo as repetidas (>= requests)"
+                      },
+                      "anomalies": {
+                        "type": "array",
+                        "description": "Anomalias superadas até o sucesso, somadas por classe, em ordem fixa; [] se nenhuma",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "timeout",
+                                "network",
+                                "http_4xx",
+                                "http_5xx",
+                                "rate_limited",
+                                "malformed_body"
+                              ],
+                              "description": "Classe da anomalia (vocabulário fechado do contrato)"
+                            },
+                            "count": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "Ocorrências desta classe na chamada"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "count"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "unstable": {
+                        "type": "boolean",
+                        "description": "true se houve repetição (attempts > requests) ou alguma anomalia"
+                      }
+                    },
+                    "required": [
+                      "requests",
+                      "attempts",
+                      "anomalies",
+                      "unstable"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
               },
               "citation": {
                 "type": "string",
@@ -1401,6 +1668,7 @@
               "source_url",
               "data_vintage",
               "retrieved_at",
+              "retrieval",
               "citation",
               "license"
             ],
@@ -1632,7 +1900,7 @@
           },
           "provenance": {
             "type": "object",
-            "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+            "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
             "properties": {
               "source": {
                 "type": "string",
@@ -1651,7 +1919,73 @@
               },
               "retrieved_at": {
                 "type": "string",
-                "description": "Instante REAL da extração na origem (ISO-8601)"
+                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+              },
+              "retrieval": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "description": "Diagnóstico de origem da chamada: como o dado foi obtido. Medição real do servidor; unstable=true pede ao agente que trate o dado como obtido com dificuldade",
+                    "properties": {
+                      "requests": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Idas distintas à origem que compõem esta resposta (fatias, páginas)"
+                      },
+                      "attempts": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Tentativas somadas, incluindo as repetidas (>= requests)"
+                      },
+                      "anomalies": {
+                        "type": "array",
+                        "description": "Anomalias superadas até o sucesso, somadas por classe, em ordem fixa; [] se nenhuma",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "timeout",
+                                "network",
+                                "http_4xx",
+                                "http_5xx",
+                                "rate_limited",
+                                "malformed_body"
+                              ],
+                              "description": "Classe da anomalia (vocabulário fechado do contrato)"
+                            },
+                            "count": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "Ocorrências desta classe na chamada"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "count"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "unstable": {
+                        "type": "boolean",
+                        "description": "true se houve repetição (attempts > requests) ou alguma anomalia"
+                      }
+                    },
+                    "required": [
+                      "requests",
+                      "attempts",
+                      "anomalies",
+                      "unstable"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
               },
               "citation": {
                 "type": "string",
@@ -1670,6 +2004,7 @@
               "source_url",
               "data_vintage",
               "retrieved_at",
+              "retrieval",
               "citation",
               "license"
             ],
@@ -1872,7 +2207,7 @@
           },
           "provenance": {
             "type": "object",
-            "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+            "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
             "properties": {
               "source": {
                 "type": "string",
@@ -1891,7 +2226,73 @@
               },
               "retrieved_at": {
                 "type": "string",
-                "description": "Instante REAL da extração na origem (ISO-8601)"
+                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+              },
+              "retrieval": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "description": "Diagnóstico de origem da chamada: como o dado foi obtido. Medição real do servidor; unstable=true pede ao agente que trate o dado como obtido com dificuldade",
+                    "properties": {
+                      "requests": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Idas distintas à origem que compõem esta resposta (fatias, páginas)"
+                      },
+                      "attempts": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Tentativas somadas, incluindo as repetidas (>= requests)"
+                      },
+                      "anomalies": {
+                        "type": "array",
+                        "description": "Anomalias superadas até o sucesso, somadas por classe, em ordem fixa; [] se nenhuma",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "timeout",
+                                "network",
+                                "http_4xx",
+                                "http_5xx",
+                                "rate_limited",
+                                "malformed_body"
+                              ],
+                              "description": "Classe da anomalia (vocabulário fechado do contrato)"
+                            },
+                            "count": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "Ocorrências desta classe na chamada"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "count"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "unstable": {
+                        "type": "boolean",
+                        "description": "true se houve repetição (attempts > requests) ou alguma anomalia"
+                      }
+                    },
+                    "required": [
+                      "requests",
+                      "attempts",
+                      "anomalies",
+                      "unstable"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
               },
               "citation": {
                 "type": "string",
@@ -1910,6 +2311,7 @@
               "source_url",
               "data_vintage",
               "retrieved_at",
+              "retrieval",
               "citation",
               "license"
             ],
@@ -2320,7 +2722,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+              "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
               "properties": {
                 "source": {
                   "type": "string",
@@ -2339,7 +2741,73 @@
                 },
                 "retrieved_at": {
                   "type": "string",
-                  "description": "Instante REAL da extração na origem (ISO-8601)"
+                  "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                },
+                "retrieval": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Diagnóstico de origem da chamada: como o dado foi obtido. Medição real do servidor; unstable=true pede ao agente que trate o dado como obtido com dificuldade",
+                      "properties": {
+                        "requests": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Idas distintas à origem que compõem esta resposta (fatias, páginas)"
+                        },
+                        "attempts": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Tentativas somadas, incluindo as repetidas (>= requests)"
+                        },
+                        "anomalies": {
+                          "type": "array",
+                          "description": "Anomalias superadas até o sucesso, somadas por classe, em ordem fixa; [] se nenhuma",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "timeout",
+                                  "network",
+                                  "http_4xx",
+                                  "http_5xx",
+                                  "rate_limited",
+                                  "malformed_body"
+                                ],
+                                "description": "Classe da anomalia (vocabulário fechado do contrato)"
+                              },
+                              "count": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "Ocorrências desta classe na chamada"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "count"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "unstable": {
+                          "type": "boolean",
+                          "description": "true se houve repetição (attempts > requests) ou alguma anomalia"
+                        }
+                      },
+                      "required": [
+                        "requests",
+                        "attempts",
+                        "anomalies",
+                        "unstable"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
                 },
                 "citation": {
                   "type": "string",
@@ -2358,6 +2826,7 @@
                 "source_url",
                 "data_vintage",
                 "retrieved_at",
+                "retrieval",
                 "citation",
                 "license"
               ],
@@ -2636,7 +3105,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+              "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
               "properties": {
                 "source": {
                   "type": "string",
@@ -2655,7 +3124,73 @@
                 },
                 "retrieved_at": {
                   "type": "string",
-                  "description": "Instante REAL da extração na origem (ISO-8601)"
+                  "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                },
+                "retrieval": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Diagnóstico de origem da chamada: como o dado foi obtido. Medição real do servidor; unstable=true pede ao agente que trate o dado como obtido com dificuldade",
+                      "properties": {
+                        "requests": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Idas distintas à origem que compõem esta resposta (fatias, páginas)"
+                        },
+                        "attempts": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Tentativas somadas, incluindo as repetidas (>= requests)"
+                        },
+                        "anomalies": {
+                          "type": "array",
+                          "description": "Anomalias superadas até o sucesso, somadas por classe, em ordem fixa; [] se nenhuma",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "timeout",
+                                  "network",
+                                  "http_4xx",
+                                  "http_5xx",
+                                  "rate_limited",
+                                  "malformed_body"
+                                ],
+                                "description": "Classe da anomalia (vocabulário fechado do contrato)"
+                              },
+                              "count": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "Ocorrências desta classe na chamada"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "count"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "unstable": {
+                          "type": "boolean",
+                          "description": "true se houve repetição (attempts > requests) ou alguma anomalia"
+                        }
+                      },
+                      "required": [
+                        "requests",
+                        "attempts",
+                        "anomalies",
+                        "unstable"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
                 },
                 "citation": {
                   "type": "string",
@@ -2674,6 +3209,7 @@
                 "source_url",
                 "data_vintage",
                 "retrieved_at",
+                "retrieval",
                 "citation",
                 "license"
               ],
@@ -2933,7 +3469,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+              "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
               "properties": {
                 "source": {
                   "type": "string",
@@ -2952,7 +3488,73 @@
                 },
                 "retrieved_at": {
                   "type": "string",
-                  "description": "Instante REAL da extração na origem (ISO-8601)"
+                  "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                },
+                "retrieval": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Diagnóstico de origem da chamada: como o dado foi obtido. Medição real do servidor; unstable=true pede ao agente que trate o dado como obtido com dificuldade",
+                      "properties": {
+                        "requests": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Idas distintas à origem que compõem esta resposta (fatias, páginas)"
+                        },
+                        "attempts": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Tentativas somadas, incluindo as repetidas (>= requests)"
+                        },
+                        "anomalies": {
+                          "type": "array",
+                          "description": "Anomalias superadas até o sucesso, somadas por classe, em ordem fixa; [] se nenhuma",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "timeout",
+                                  "network",
+                                  "http_4xx",
+                                  "http_5xx",
+                                  "rate_limited",
+                                  "malformed_body"
+                                ],
+                                "description": "Classe da anomalia (vocabulário fechado do contrato)"
+                              },
+                              "count": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "Ocorrências desta classe na chamada"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "count"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "unstable": {
+                          "type": "boolean",
+                          "description": "true se houve repetição (attempts > requests) ou alguma anomalia"
+                        }
+                      },
+                      "required": [
+                        "requests",
+                        "attempts",
+                        "anomalies",
+                        "unstable"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
                 },
                 "citation": {
                   "type": "string",
@@ -2971,6 +3573,7 @@
                 "source_url",
                 "data_vintage",
                 "retrieved_at",
+                "retrieval",
                 "citation",
                 "license"
               ],
@@ -3117,7 +3720,7 @@
           },
           "provenance": {
             "type": "object",
-            "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+            "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
             "properties": {
               "source": {
                 "type": "string",
@@ -3136,7 +3739,73 @@
               },
               "retrieved_at": {
                 "type": "string",
-                "description": "Instante REAL da extração na origem (ISO-8601)"
+                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+              },
+              "retrieval": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "description": "Diagnóstico de origem da chamada: como o dado foi obtido. Medição real do servidor; unstable=true pede ao agente que trate o dado como obtido com dificuldade",
+                    "properties": {
+                      "requests": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Idas distintas à origem que compõem esta resposta (fatias, páginas)"
+                      },
+                      "attempts": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Tentativas somadas, incluindo as repetidas (>= requests)"
+                      },
+                      "anomalies": {
+                        "type": "array",
+                        "description": "Anomalias superadas até o sucesso, somadas por classe, em ordem fixa; [] se nenhuma",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "timeout",
+                                "network",
+                                "http_4xx",
+                                "http_5xx",
+                                "rate_limited",
+                                "malformed_body"
+                              ],
+                              "description": "Classe da anomalia (vocabulário fechado do contrato)"
+                            },
+                            "count": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "Ocorrências desta classe na chamada"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "count"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "unstable": {
+                        "type": "boolean",
+                        "description": "true se houve repetição (attempts > requests) ou alguma anomalia"
+                      }
+                    },
+                    "required": [
+                      "requests",
+                      "attempts",
+                      "anomalies",
+                      "unstable"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
               },
               "citation": {
                 "type": "string",
@@ -3155,6 +3824,7 @@
               "source_url",
               "data_vintage",
               "retrieved_at",
+              "retrieval",
               "citation",
               "license"
             ],
@@ -3658,7 +4328,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+              "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
               "properties": {
                 "source": {
                   "type": "string",
@@ -3677,7 +4347,73 @@
                 },
                 "retrieved_at": {
                   "type": "string",
-                  "description": "Instante REAL da extração na origem (ISO-8601)"
+                  "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                },
+                "retrieval": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Diagnóstico de origem da chamada: como o dado foi obtido. Medição real do servidor; unstable=true pede ao agente que trate o dado como obtido com dificuldade",
+                      "properties": {
+                        "requests": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Idas distintas à origem que compõem esta resposta (fatias, páginas)"
+                        },
+                        "attempts": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Tentativas somadas, incluindo as repetidas (>= requests)"
+                        },
+                        "anomalies": {
+                          "type": "array",
+                          "description": "Anomalias superadas até o sucesso, somadas por classe, em ordem fixa; [] se nenhuma",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "timeout",
+                                  "network",
+                                  "http_4xx",
+                                  "http_5xx",
+                                  "rate_limited",
+                                  "malformed_body"
+                                ],
+                                "description": "Classe da anomalia (vocabulário fechado do contrato)"
+                              },
+                              "count": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "Ocorrências desta classe na chamada"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "count"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "unstable": {
+                          "type": "boolean",
+                          "description": "true se houve repetição (attempts > requests) ou alguma anomalia"
+                        }
+                      },
+                      "required": [
+                        "requests",
+                        "attempts",
+                        "anomalies",
+                        "unstable"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
                 },
                 "citation": {
                   "type": "string",
@@ -3696,6 +4432,7 @@
                 "source_url",
                 "data_vintage",
                 "retrieved_at",
+                "retrieval",
                 "citation",
                 "license"
               ],
@@ -3995,7 +4732,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
+              "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
               "properties": {
                 "source": {
                   "type": "string",
@@ -4014,7 +4751,73 @@
                 },
                 "retrieved_at": {
                   "type": "string",
-                  "description": "Instante REAL da extração na origem (ISO-8601)"
+                  "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                },
+                "retrieval": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Diagnóstico de origem da chamada: como o dado foi obtido. Medição real do servidor; unstable=true pede ao agente que trate o dado como obtido com dificuldade",
+                      "properties": {
+                        "requests": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Idas distintas à origem que compõem esta resposta (fatias, páginas)"
+                        },
+                        "attempts": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Tentativas somadas, incluindo as repetidas (>= requests)"
+                        },
+                        "anomalies": {
+                          "type": "array",
+                          "description": "Anomalias superadas até o sucesso, somadas por classe, em ordem fixa; [] se nenhuma",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "timeout",
+                                  "network",
+                                  "http_4xx",
+                                  "http_5xx",
+                                  "rate_limited",
+                                  "malformed_body"
+                                ],
+                                "description": "Classe da anomalia (vocabulário fechado do contrato)"
+                              },
+                              "count": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "Ocorrências desta classe na chamada"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "count"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "unstable": {
+                          "type": "boolean",
+                          "description": "true se houve repetição (attempts > requests) ou alguma anomalia"
+                        }
+                      },
+                      "required": [
+                        "requests",
+                        "attempts",
+                        "anomalies",
+                        "unstable"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
                 },
                 "citation": {
                   "type": "string",
@@ -4033,6 +4836,7 @@
                 "source_url",
                 "data_vintage",
                 "retrieved_at",
+                "retrieval",
                 "citation",
                 "license"
               ],
