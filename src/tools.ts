@@ -53,6 +53,7 @@ import {
 } from "./provenance.js";
 import { getFreshness } from "./freshness.js";
 import { outputSchemaFor } from "./output-schemas.js";
+import { withUpstreamCall } from "./upstream.js";
 import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cachedCubesManifest, causasSummaryState, cubesCacheDir, ensureCausasEstratosYears, ensureCausasSummary, ensureEstratosYears, ensureIcsapSummary, ensurePopulation, ensureSidecars, ensureYears, icsapSummaryState, loadCubesManifest, populationPresent, publishedYears, yearsFromArgs } from "./cache.js";
 import type { CubeKind } from "./cache.js";
 
@@ -1965,6 +1966,15 @@ function respostaSemAnos(anosPedidos: number[], atendiveis: Iterable<number>, ch
  * exceção para o transporte.
  */
 export async function callTool(name: string, args: ToolArgs): Promise<CallToolResult> {
+  // UM coletor de rede por chamada (src/upstream.ts): toda ida ao canal feita
+  // por `ensure*`/`loadCubesManifest`, a qualquer profundidade, cai nele, e
+  // `sihProvenance`/`populationProvenance` a leem ao montar o bloco. O
+  // coletor fecha com a resposta — inclusive a parcial, quando um `ensure*`
+  // engoliu a falha: é assim que a resposta que veio "com dificuldade" diz.
+  return withUpstreamCall(() => executarTool(name, args));
+}
+
+async function executarTool(name: string, args: ToolArgs): Promise<CallToolResult> {
   try {
     let result: unknown;
 

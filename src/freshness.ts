@@ -37,6 +37,7 @@
  */
 
 import { loadSidecars, type SihSidecar } from "./provenance.js";
+import { OrigemError, traduzirErro, upstreamFrescor } from "./upstream.js";
 
 export type FreshnessStatus = "disabled" | "pending" | "current" | "stale" | "unknown";
 
@@ -192,10 +193,21 @@ export function preferDomain(url: string): string {
   return url.startsWith(R2_DEV_HOST) ? HEALTHBR_DOMAIN + url.slice(R2_DEV_HOST.length) : url;
 }
 
+/**
+ * Uma ida ao espelho pelo fetch comum (src/upstream.ts), com coletor
+ * DESCARTÁVEL de propósito: a checagem é trabalho de fundo, e suas idas não
+ * podem entrar no `retrieval` da chamada de tool que por acaso a reagendou.
+ * Sem retry (a repetição manual domínio → r2.dev é do `fetchText`); o prazo
+ * cobre cabeçalhos E corpo (o manifesto inteiro tem 10 MB).
+ */
 async function fetchOnce(url: string, timeoutMs: number, headers?: Record<string, string>): Promise<{ status: number; text: string }> {
-  const res = await fetch(url, { headers, signal: AbortSignal.timeout(timeoutMs) });
-  if (!res.ok && res.status !== 206) throw new Error(`HTTP ${res.status} em ${url}`);
-  return { status: res.status, text: await res.text() };
+  const prazo = AbortSignal.timeout(timeoutMs);
+  try {
+    const res = await upstreamFrescor.call().response(url, { headers, timeoutMs, signal: prazo });
+    return { status: res.status, text: await res.text() };
+  } catch (err) {
+    throw traduzirErro(err, url);
+  }
 }
 
 /** Busca no domínio próprio e, se ele falhar, no r2.dev original (quando a URL era do r2.dev). */
@@ -279,7 +291,8 @@ async function runCheck(): Promise<FreshnessState> {
     }
     return evaluateManifest(sidecars, manifest, "full");
   } catch (e) {
-    const msg = e instanceof Error ? (e.name === "TimeoutError" ? `timeout (${e.message})` : e.message) : String(e);
+    // OrigemError já diz "timeout" na mensagem; o TimeoutError cru é o prazo do CORPO (AbortSignal.timeout).
+    const msg = e instanceof OrigemError ? e.message : e instanceof Error ? (e.name === "TimeoutError" ? `timeout (${e.message})` : e.message) : String(e);
     return { ...base, checked_at: new Date().toISOString(), error: msg };
   }
 }

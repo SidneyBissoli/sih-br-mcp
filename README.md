@@ -86,6 +86,13 @@ em `healthbr-data/scripts/pipeline/sih-cubos/README.md` e no card
   `~/.cache/sih-br-mcp/cubos/` (`SIH_CACHE_DIR`), com o sidecar
   `sih_provenance_<ano>.json` ao lado. `SIH_CUBES_BASE_URL` aponta outro canal;
   `SIH_CUBES_CACHE=off` desliga (smoke e golden usam).
+- **Rede:** toda ida ao canal passa por `src/upstream.ts` (fetch comum do portfólio,
+  `@sbissoli/mcp-upstream`, desde a 1.1.0): User-Agent, 15 s por tentativa até os
+  cabeçalhos, 2 retries em 429/5xx/rede com backoff, corpo em stream sob o prazo do
+  arquivo; a política foi medida contra o canal (55 MB em 1,2 s) e está documentada
+  no cabeçalho do módulo. O bloco de proveniência de cada resposta traz `retrieval`
+  (contrato v1.1): quantas idas, tentativas e anomalias a chamada custou ao canal —
+  `null` quando a resposta veio do disco.
 - **Frescor:** `src/freshness.ts` compara o sidecar com `sih/rd/manifest-summary.json`
   e avisa quando um cubo está atrás do espelho; quem reconstrói é o produtor
   (`rebuild-sih-cubes.yml`, toda terça e após cada manutenção do espelho).

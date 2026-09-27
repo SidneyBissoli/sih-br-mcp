@@ -41,6 +41,7 @@
  */
 
 import type { JsonSchemaType } from "@modelcontextprotocol/server";
+import { CONCISE_BLOCK_JSON_SCHEMA } from "@sbissoli/mcp-provenance";
 
 type Schema = Record<string, unknown>;
 
@@ -84,23 +85,36 @@ const mapa = (valor: Schema, description: string): Schema => ({
 
 /**
  * Projeção `concise` do bloco de proveniência (contrato @sbissoli/mcp-provenance
- * v1.0, `ConciseBlock` em render.ts): a forma que `withProvenance` põe em
- * `structuredContent`. Transcrito do PROVENANCE_BLOCK_SCHEMA do bcb-br-mcp
- * (src/provenance.ts) — o pacote comum publica o esquema canônico em zod, não
- * a projeção concise em JSON Schema, então cada servidor a escreve.
+ * v1.1): a forma que `withProvenance` põe em `structuredContent`.
+ *
+ * A FORMA é a que o pacote publica (`CONCISE_BLOCK_JSON_SCHEMA`, desde a
+ * 0.2.0), não uma transcrição: até a 1.0.1 as seis chaves da v1.0 estavam
+ * escritas à mão aqui, com `additionalProperties: false`, e subir o pacote
+ * para um contrato com chave nova (`retrieval`) sem tocar a transcrição
+ * reprovava TODA resposta no gate de contrato (e em qualquer cliente que
+ * valida). Importar a forma faz a chave nova chegar junto com a lib que a
+ * emite. Só as descrições são deste servidor — em particular a de
+ * `retrieval`, que aqui tem semântica própria (ver src/upstream.ts).
  */
-export const PROVENANCE_BLOCK_SCHEMA: Schema = obj(
-  {
-    source: str("Fonte oficial do dado"),
-    source_url: str("URL canônica que reproduz a consulta ou localiza a fonte"),
-    data_vintage: strOuNulo("Competência ou safra do dado segundo a fonte; null quando a fonte não expõe"),
-    retrieved_at: str("Instante REAL da extração na origem (ISO-8601)"),
-    citation: str("Citação pronta para uso"),
-    license: strOuNulo("Regime legal do dado (id SPDX quando há)"),
+const CONCISE = CONCISE_BLOCK_JSON_SCHEMA as { properties: Record<string, Schema> } & Schema;
+const descrever = (schema: Schema, description: string): Schema => ({ ...schema, description });
+export const PROVENANCE_BLOCK_SCHEMA: Schema = {
+  ...CONCISE,
+  description: "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
+  properties: {
+    ...CONCISE.properties,
+    source: descrever(CONCISE.properties.source!, "Fonte oficial do dado"),
+    source_url: descrever(CONCISE.properties.source_url!, "URL canônica que reproduz a consulta ou localiza a fonte"),
+    data_vintage: descrever(CONCISE.properties.data_vintage!, "Competência ou safra do dado segundo a fonte; null quando a fonte não expõe"),
+    retrieved_at: descrever(CONCISE.properties.retrieved_at!, "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"),
+    retrieval: descrever(
+      CONCISE.properties.retrieval!,
+      "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)",
+    ),
+    citation: descrever(CONCISE.properties.citation!, "Citação pronta para uso"),
+    license: descrever(CONCISE.properties.license!, "Regime legal do dado (id SPDX quando há)"),
   },
-  ["source", "source_url", "data_vintage", "retrieved_at", "citation", "license"],
-  "Bloco de proveniência (contrato v1.0): fonte, URL, competência, extração e licença",
-);
+};
 
 const ATTRIBUTION_SCHEMA: Schema = listaDeTextos("URLs canônicas das fontes desta resposta (lista de atribuição)");
 

@@ -27,6 +27,7 @@ import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
+import { OrigemError, UPSTREAM_POLICY, traduzirErro, upstreamCall } from "./upstream.js";
 
 export const CUBES_BASE_URL = (process.env.SIH_CUBES_BASE_URL ?? "https://data.sidneybissoli.com/sih/cubos/").replace(/\/?$/, "/");
 export const CUBES_CACHE_ENABLED = process.env.SIH_CUBES_CACHE !== "off";
@@ -162,31 +163,35 @@ function parseManifest(text: string): CubesManifest | null {
 }
 
 /**
- * Manifesto do canal: remoto (timeout curto), senão a cópia em disco da última
- * vez, senão null. Memoizado por 10 min. Nunca lança.
+ * Manifesto do canal: remoto (timeout curto, um retry — política em
+ * src/upstream.ts), senão a cópia em disco da última vez, senão null.
+ * Memoizado por 10 min. Nunca lança. A ida conta no coletor da chamada
+ * corrente (`retrieval` do bloco SIH); o memo e o disco não contam.
  */
 export async function loadCubesManifest(opts: { timeoutMs?: number } = {}): Promise<{ manifest: CubesManifest | null; source: "remote" | "disk" | "none" }> {
   if (manifestMemo && Date.now() - manifestMemo.at < MANIFEST_TTL_MS) return manifestMemo;
   const diskPath = join(cubesCacheDir(), "manifest.json");
+  const url = CUBES_BASE_URL + "manifest.json";
   let manifest: CubesManifest | null = null;
   let source: "remote" | "disk" | "none" = "none";
   try {
-    const res = await fetch(CUBES_BASE_URL + "manifest.json", { signal: AbortSignal.timeout(opts.timeoutMs ?? 8000) });
-    if (res.ok) {
-      const text = await res.text();
-      manifest = parseManifest(text);
-      if (manifest) {
-        source = "remote";
-        try {
-          mkdirSync(cubesCacheDir(), { recursive: true });
-          writeFileSync(diskPath, text);
-        } catch {
-          /* cache em disco é conveniência */
-        }
+    const text = await upstreamCall().text(url, {
+      timeoutMs: opts.timeoutMs ?? UPSTREAM_POLICY.manifesto.timeoutMs,
+      retries: UPSTREAM_POLICY.manifesto.retries,
+    });
+    manifest = parseManifest(text);
+    if (manifest) {
+      source = "remote";
+      try {
+        mkdirSync(cubesCacheDir(), { recursive: true });
+        writeFileSync(diskPath, text);
+      } catch {
+        /* cache em disco é conveniência */
       }
     }
-  } catch {
-    /* rede indisponível: cai para o disco */
+  } catch (err) {
+    // Rede indisponível (ou 404/5xx esgotado): cai para o disco, como sempre.
+    console.error(`[cache] manifesto remoto indisponível (${traduzirErro(err, url).message}); usando a cópia em disco, se houver`);
   }
   if (!manifest && existsSync(diskPath)) {
     manifest = parseManifest(readFileSync(diskPath, "utf8"));
@@ -236,18 +241,42 @@ async function downloadVerified(file: CubesManifestFile, dir: string, timeoutMs:
   const url = `${CUBES_BASE_URL}${file.name}?v=${file.sha256.slice(0, 16)}`;
   const final = join(dir, file.name);
   const tmp = `${final}.part-${process.pid}`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
-  if (!res.ok || !res.body) throw new Error(`${url}: HTTP ${res.status}`);
-  await pipeline(Readable.fromWeb(res.body as import("node:stream/web").ReadableStream), createWriteStream(tmp));
+  // Cabeçalhos pelo fetch comum (política do canal: 15 s por tentativa, 2
+  // retries em 429/5xx/rede, contagem no coletor da chamada); o CORPO é
+  // streamado AQUI, sob o prazo que o chamador dá ao arquivo inteiro — o modo
+  // `response` do pacote solta o cronômetro quando os cabeçalhos chegam, e um
+  // cubo de 55 MB não pode ficar sem prazo. Falha no meio do corpo não repete.
+  const prazo = AbortSignal.timeout(timeoutMs);
+  let res: Response;
+  try {
+    res = await upstreamCall().response(url, { signal: prazo });
+  } catch (err) {
+    throw traduzirErro(err, url);
+  }
+  if (!res.body) throw new OrigemError(`${url}: resposta sem corpo`, "stream", res.status);
+  try {
+    await pipeline(Readable.fromWeb(res.body as import("node:stream/web").ReadableStream), createWriteStream(tmp));
+  } catch (err) {
+    try {
+      unlinkSync(tmp);
+    } catch {
+      /* o .part pode nem ter sido criado */
+    }
+    const mb = (file.size_bytes / 1e6).toFixed(1);
+    if (prazo.aborted) {
+      throw new OrigemError(`${url}: timeout baixando o corpo (${mb} MB em mais de ${timeoutMs} ms)`, "timeout", res.status);
+    }
+    throw new OrigemError(`${url}: erro de conexão no meio do download (${err instanceof Error ? err.message : String(err)})`, "stream", res.status);
+  }
   const size = statSync(tmp).size;
   if (size !== file.size_bytes) {
     unlinkSync(tmp);
-    throw new Error(`${file.name}: ${size} bytes recebidos, manifesto diz ${file.size_bytes}`);
+    throw new OrigemError(`${file.name}: ${size} bytes recebidos, manifesto diz ${file.size_bytes}`, "verificacao", res.status);
   }
   const digest = await sha256File(tmp);
   if (digest !== file.sha256) {
     unlinkSync(tmp);
-    throw new Error(`${file.name}: SHA-256 não confere com o manifesto`);
+    throw new OrigemError(`${file.name}: SHA-256 não confere com o manifesto`, "verificacao", res.status);
   }
   renameSync(tmp, final);
 }
