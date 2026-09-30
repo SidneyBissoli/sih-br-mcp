@@ -1,0 +1,6 @@
+Pasta de fixture congelada: o servidor não baixa nada para cá.
+
+Com este arquivo na pasta de SIH_DATA_DIR, o cache de cubos fica desligado
+(como SIH_CUBES_CACHE=off), qualquer que seja a variável. Sem ele, um processo
+avulso apontado para esta pasta com o cache ligado grava aqui os pré-agregados
+reais do canal. Ver FROZEN_DATA_DIR_MARKER em src/cache.ts.

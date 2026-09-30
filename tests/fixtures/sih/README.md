@@ -1,5 +1,12 @@
 # Fixture do smoke e do golden stdio
 
+> **Pasta congelada.** O arquivo `.fixture-somente-leitura` desliga o cache de
+> cubos de quem aponta `SIH_DATA_DIR` para cá, então nada é baixado para esta
+> pasta. Sem ele, qualquer processo com o cache ligado gravava aqui os
+> pré-agregados reais do canal (incidente de 30/09/2026; ver
+> `FROZEN_DATA_DIR_MARKER` em `src/cache.ts` e `tests/fixture-congelada.test.ts`).
+> Arquivo novo aqui entra pelo git, nunca por download.
+
 Cópia, sem alteração, dos três cubos de 2023 que `build-aggregations.R` (hoje em healthbr-data/scripts/pipeline/sih-cubos/)
 gera em `data/` (dados reais, agregados — não há nada sintético aqui), mais o
 sidecar de proveniência `sih_provenance_2023.json` que o mesmo script grava ao

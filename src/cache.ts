@@ -14,6 +14,8 @@
  * Variáveis de ambiente:
  *   SIH_CUBES_CACHE=off      desliga tudo (smoke e golden usam: o baseline não
  *                            pode depender de rede — ver docs/plan-003).
+ *                            Pasta de SIH_DATA_DIR com `.fixture-somente-leitura`
+ *                            tem o mesmo efeito (ver FROZEN_DATA_DIR_MARKER).
  *   SIH_CACHE_DIR=<pasta>    onde guardar (padrão ~/.cache/sih-br-mcp/cubos).
  *   SIH_CUBES_BASE_URL=<url> outro canal (espelho, teste local).
  *
@@ -30,7 +32,27 @@ import { pipeline } from "node:stream/promises";
 import { OrigemError, UPSTREAM_POLICY, traduzirErro, upstreamCall } from "./upstream.js";
 
 export const CUBES_BASE_URL = (process.env.SIH_CUBES_BASE_URL ?? "https://data.sidneybissoli.com/sih/cubos/").replace(/\/?$/, "/");
-export const CUBES_CACHE_ENABLED = process.env.SIH_CUBES_CACHE !== "off";
+/**
+ * Marcador de pasta de dados CONGELADA. Com ele na pasta de `SIH_DATA_DIR`, o
+ * cache fica desligado como se fosse `SIH_CUBES_CACHE=off`, qualquer que seja
+ * a variável.
+ *
+ * Por quê: com cubo na pasta configurada, os pré-agregados e os sidecars são
+ * baixados para ELA (`getDataDirectory()`), por desenho: é assim que `data/` e
+ * o contêiner se completam. Numa fixture versionada isso é contaminação. Em
+ * 30/09/2026, um probe avulso com `SIH_DATA_DIR=tests/fixtures/sih` e o cache
+ * no padrão deixou lá o `sih_causas_resumo.parquet` real (34 anos, 569 KB).
+ * Com ele na pasta, as chamadas cobertas pelo grão A passam a ler 1992–2025
+ * na máquina local, enquanto o CI lê só a fixture de 2023. Cada script
+ * versionado já se protegia com `SIH_CUBES_CACHE=off`, um por um. O processo
+ * avulso não, e a defesa passa a ser da PASTA, não de quem a lê.
+ */
+export const FROZEN_DATA_DIR_MARKER = ".fixture-somente-leitura";
+export const DATA_DIR_IS_FROZEN = !!process.env.SIH_DATA_DIR && existsSync(join(resolve(process.env.SIH_DATA_DIR), FROZEN_DATA_DIR_MARKER));
+export const CUBES_CACHE_ENABLED = process.env.SIH_CUBES_CACHE !== "off" && !DATA_DIR_IS_FROZEN;
+if (DATA_DIR_IS_FROZEN && process.env.SIH_CUBES_CACHE !== "off") {
+  console.error(`[cache] ${process.env.SIH_DATA_DIR} tem ${FROZEN_DATA_DIR_MARKER}: cache desligado, nada é baixado para a fixture`);
+}
 
 export type CubeKind = "causas" | "series" | "icsap";
 const CUBE_KINDS: CubeKind[] = ["causas", "series", "icsap"];
