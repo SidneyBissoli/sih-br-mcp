@@ -208,6 +208,50 @@ export class OrigemError extends Error {
     super(message);
     this.name = "OrigemError";
   }
+
+  /**
+   * A classe de telemetria pelo TIPO, não pela frase — e é ela que viaja até a
+   * borda em `_meta` (ver `CLASSE_DO_ERRO_META` abaixo). Medido em 30/09/2026:
+   * pela frase, 4xx ("HTTP 403"), corpo inesperado, "resposta sem corpo" e a
+   * verificação de tamanho/SHA-256 caíam em `outro`. 404 continua ausência
+   * respondida, como a frase já dava; todo o resto é o canal falhando.
+   */
+  get classe(): "nao_encontrado" | "fonte" {
+    return this.kind === "not_found" ? "nao_encontrado" : "fonte";
+  }
+}
+
+/**
+ * Chave de `_meta` em que o resultado de ERRO leva a classe decidida pelo tipo
+ * da exceção até o Worker.
+ *
+ * Por que no fio. Nos outros seis servidores do portfólio (bcb-br-mcp #45 e
+ * seguintes) a classe viaja numa chave-símbolo que o `JSON.stringify` não vê,
+ * porque o hook de telemetria roda no MESMO processo que a tool. Aqui não: a
+ * tool roda no container e a telemetria no Worker, que só enxerga a resposta
+ * JSON (`worker/src/envelope.ts`). O único canal entre os dois é a resposta, e
+ * `_meta` é o lugar que a especificação do MCP reserva para metadado que não
+ * é conteúdo. Vai só em resultado de erro; o sucesso não muda.
+ */
+export const CLASSE_DO_ERRO_META = "br.com.sidneybissoli.sih/classe-do-erro";
+
+/**
+ * A classe que uma exceção declara pelo TIPO, ou `undefined` (aí a borda
+ * classifica pela frase, como sempre). Erro de programa (`TypeError` & cia.)
+ * é `defeito`, pelo mesmo critério do `classifyThrown` dos irmãos: pela frase,
+ * o texto do motor de JS caía em `outro`.
+ */
+export function classeDaExcecao(error: unknown): "nao_encontrado" | "fonte" | "defeito" | undefined {
+  if (error instanceof OrigemError) return error.classe;
+  if (
+    error instanceof TypeError ||
+    error instanceof RangeError ||
+    error instanceof ReferenceError ||
+    error instanceof SyntaxError
+  ) {
+    return "defeito";
+  }
+  return undefined;
 }
 
 /** O que o `fetch` ou o parse lançou, em uma linha, sem a pilha. */
