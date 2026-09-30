@@ -469,7 +469,7 @@ const definicoes: Tool[] = [
     name: "get_hospitalization_rates",
     title: "Taxas de internação por população",
     description:
-      "Calcula taxas de internação por população (por 100.000 habitantes, configurável). " +
+      "Calcula taxas de internação por população. A taxa sai em `rate`, na base declarada em `rate_per` (1000, 10000 ou 100000; default 100000). " +
       "Denominador lido de dois arquivos, informados em get_available_years.population_years: projeções do IBGE por idade simples de 2000 em diante (pop_uf.parquet) e, de 1991 a 1999, população por faixa etária quinquenal somada dos municípios (pop_uf_agregado.parquet) — " +
       "antes de 2000 o recorte por idade só vale nos limites das faixas (age_min múltiplo de 5, age_max terminado em 4 ou 9, ou 80+). A resposta diz qual arquivo serviu a cada ano (population_source) e avisa quando mistura os dois.",
     inputSchema: {
@@ -1457,8 +1457,12 @@ async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) 
         n_hospitalizations: nHosp,
         deaths,
         population,
-        rate_per_100k: Math.round(rate * 100) / 100,
+        rate: Math.round(rate * 100) / 100,
         rate_per: ratePer,
+        // Deprecado: mantido uma versão para quem lia o nome antigo. Até a 1.1.x
+        // este campo carregava a taxa na base `rate_per` (por mil, por 10 mil),
+        // contradizendo o próprio nome; agora vale sempre por 100 mil.
+        rate_per_100k: population > 0 ? Math.round((nHosp / population) * 100000 * 100) / 100 : 0,
         population_source: popSources[hospYear] ?? null,
         mortality_rate: nHosp > 0 ? Math.round((deaths / nHosp) * 10000) / 100 : 0,
       });

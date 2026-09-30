@@ -1,7 +1,7 @@
 {
   "identifier": "sidneybissoli-sih-br-mcp",
   "name": "DATASUS SIH/SUS — Brazil Hospital Admissions (AIH) MCP",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "icon": "🏥",
   "description": "Servidor MCP do DATASUS SIH/SUS: internações hospitalares do Brasil (AIH, 1992–2025) — causas CID-10 e CID-9, séries mensais, ICSAP e taxas por UF e município, sem baixar .dbc nem usar TabNet. Brazilian hospital admissions (SIH/SUS) MCP server: ICD-10 causes, monthly series, ambulatory-care-sensitive conditions (ICSAP) and rates by state and municipality, with source, data vintage and citation on every answer. Hosted on Cloudflare (Streamable HTTP, no auth) or local stdio via npm.",
   "author": "Sidney Bissoli",
@@ -3863,7 +3863,7 @@
     {
       "name": "get_hospitalization_rates",
       "title": "Taxas de internação por população",
-      "description": "Calcula taxas de internação por população (por 100.000 habitantes, configurável). Denominador lido de dois arquivos, informados em get_available_years.population_years: projeções do IBGE por idade simples de 2000 em diante (pop_uf.parquet) e, de 1991 a 1999, população por faixa etária quinquenal somada dos municípios (pop_uf_agregado.parquet) — antes de 2000 o recorte por idade só vale nos limites das faixas (age_min múltiplo de 5, age_max terminado em 4 ou 9, ou 80+). A resposta diz qual arquivo serviu a cada ano (population_source) e avisa quando mistura os dois.",
+      "description": "Calcula taxas de internação por população. A taxa sai em `rate`, na base declarada em `rate_per` (1000, 10000 ou 100000; default 100000). Denominador lido de dois arquivos, informados em get_available_years.population_years: projeções do IBGE por idade simples de 2000 em diante (pop_uf.parquet) e, de 1991 a 1999, população por faixa etária quinquenal somada dos municípios (pop_uf_agregado.parquet) — antes de 2000 o recorte por idade só vale nos limites das faixas (age_min múltiplo de 5, age_max terminado em 4 ou 9, ou 80+). A resposta diz qual arquivo serviu a cada ano (population_source) e avisa quando mistura os dois.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -3968,13 +3968,18 @@
                   "type": "number",
                   "description": "População do estrato (denominador)"
                 },
-                "rate_per_100k": {
+                "rate": {
                   "type": "number",
-                  "description": "Internações por `rate_per` habitantes (o nome do campo é histórico; a base está em `rate_per`)"
+                  "description": "Internações por `rate_per` habitantes, duas casas"
                 },
                 "rate_per": {
                   "type": "number",
                   "description": "Base da taxa (1000, 10000 ou 100000)"
+                },
+                "rate_per_100k": {
+                  "type": "number",
+                  "description": "DEPRECADO — use `rate` com `rate_per`. Internações por 100 mil habitantes, qualquer que seja `rate_per`; sai numa versão futura",
+                  "deprecated": true
                 },
                 "population_source": {
                   "enum": [
@@ -3993,8 +3998,9 @@
                 "n_hospitalizations",
                 "deaths",
                 "population",
-                "rate_per_100k",
+                "rate",
                 "rate_per",
+                "rate_per_100k",
                 "population_source",
                 "mortality_rate"
               ],
