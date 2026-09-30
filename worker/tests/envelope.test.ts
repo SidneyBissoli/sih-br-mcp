@@ -8,9 +8,12 @@
  * A regressão que importa é que o erro-mole continue valendo `ok`.
  */
 
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { recordMessage, type RequestTag } from "../src/analytics.js";
+import { CLASSE_DO_ERRO_META } from "../src/call-shape.js";
 import {
   LeitorDeEnvelope,
   MAX_EVENTO_BYTES,
@@ -78,6 +81,43 @@ describe("desfechoDaResposta — uma mensagem JSON-RPC", () => {
     expect(desfechoDaResposta(null)).toBeNull();
     expect(desfechoDaResposta("texto")).toBeNull();
     expect(desfechoDaResposta([{ id: 1, result: {} }])).toBeNull();
+  });
+});
+
+describe("classe pelo TIPO, em `_meta` (30/09/2026)", () => {
+  // O texto que o container devolve quando o cubo não baixa com 403 — pela
+  // frase, `outro`; o container manda a classe do `OrigemError` em `_meta`.
+  const erro403 = (meta?: Record<string, unknown>) => ({
+    jsonrpc: "2.0",
+    id: 1,
+    result: {
+      content: [{ type: "text", text: "Erro ao executar get_hospitalization_trends: https://data.sidneybissoli.com/sih/cubos/x.parquet: HTTP 403" }],
+      isError: true,
+      ...(meta ? { _meta: meta } : {}),
+    },
+  });
+
+  it("sem `_meta`, a frase manda — e era `outro`, o defeito medido", () => {
+    expect(desfechoDaResposta(erro403())?.desfecho).toEqual({ erro: true, classe: "outro" });
+  });
+
+  it("com a classe em `_meta`, ela vence a frase", () => {
+    expect(desfechoDaResposta(erro403({ [CLASSE_DO_ERRO_META]: "fonte" }))?.desfecho).toEqual({
+      erro: true,
+      classe: "fonte",
+    });
+  });
+
+  it("valor fora do vocabulário é ignorado: a frase continua sendo a reserva", () => {
+    expect(desfechoDaResposta(erro403({ [CLASSE_DO_ERRO_META]: "qualquer" }))?.desfecho).toEqual({
+      erro: true,
+      classe: "outro",
+    });
+  });
+
+  it("a chave é a MESMA dos dois lados do fio (container e borda)", () => {
+    const container = readFileSync(resolve(import.meta.dirname, "../../src/upstream.ts"), "utf8");
+    expect(container).toContain(`export const CLASSE_DO_ERRO_META = "${CLASSE_DO_ERRO_META}";`);
   });
 });
 

@@ -53,7 +53,7 @@ import {
 } from "./provenance.js";
 import { getFreshness } from "./freshness.js";
 import { outputSchemaFor } from "./output-schemas.js";
-import { withUpstreamCall } from "./upstream.js";
+import { CLASSE_DO_ERRO_META, classeDaExcecao, withUpstreamCall } from "./upstream.js";
 import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cachedCubesManifest, causasSummaryState, cubesCacheDir, ensureCausasEstratosYears, ensureCausasSummary, ensureEstratosYears, ensureIcsapSummary, ensurePopulation, ensureSidecars, ensureYears, icsapSummaryState, loadCubesManifest, populationPresent, publishedYears, yearsFromArgs } from "./cache.js";
 import type { CubeKind } from "./cache.js";
 
@@ -2163,9 +2163,13 @@ async function executarTool(name: string, args: ToolArgs): Promise<CallToolResul
     return withProvenance(capData(result), provenanceFor(name, args)) as CallToolResult;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    // A classe pelo TIPO vai à borda em `_meta` (ver CLASSE_DO_ERRO_META em
+    // src/upstream.ts); sem ela, o Worker classifica pela frase.
+    const classe = classeDaExcecao(error);
     return {
       content: [{ type: "text", text: `Erro ao executar ${name}: ${errorMessage}` }],
       isError: true,
+      ...(classe ? { _meta: { [CLASSE_DO_ERRO_META]: classe } } : {}),
     };
   }
 }

@@ -154,3 +154,31 @@ export function errorText(result: unknown): string {
   }
   return t;
 }
+
+/**
+ * Chave de `_meta` em que o container manda a classe decidida pelo TIPO da
+ * exceção. Tem de ser a MESMA de `CLASSE_DO_ERRO_META` em src/upstream.ts —
+ * o gate é `worker/tests/envelope.test.ts`.
+ */
+export const CLASSE_DO_ERRO_META = "br.com.sidneybissoli.sih/classe-do-erro";
+
+const CLASSES: ReadonlySet<string> = new Set<ErrorClass>(["contrato", "nao_encontrado", "fonte", "defeito", "outro"]);
+
+/**
+ * A classe que o resultado de erro trouxe em `_meta`, ou `undefined`.
+ *
+ * Por que existe. Medido em 30/09/2026: pela frase, 4xx do canal ("HTTP 403"),
+ * corpo inesperado, "resposta sem corpo" e a verificação de tamanho/SHA-256
+ * caíam em `outro`. O tipo (`OrigemError.kind`) existe no container, mas a
+ * borda só lê a resposta — então é nela que a classe viaja. Mesmo defeito de
+ * fundo consertado nos outros seis servidores (bcb-br-mcp #45 e seguintes),
+ * lá por chave-símbolo, porque tool e telemetria dividem o processo.
+ * Valor fora do vocabulário é ignorado: a frase continua sendo a reserva.
+ */
+export function classeDoMeta(result: unknown): ErrorClass | undefined {
+  if (!result || typeof result !== "object") return undefined;
+  const meta = (result as { _meta?: unknown })._meta;
+  if (!meta || typeof meta !== "object") return undefined;
+  const c = (meta as Record<string, unknown>)[CLASSE_DO_ERRO_META];
+  return typeof c === "string" && CLASSES.has(c) ? (c as ErrorClass) : undefined;
+}

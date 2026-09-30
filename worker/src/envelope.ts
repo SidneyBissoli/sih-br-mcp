@@ -34,7 +34,7 @@
  * conta como falha é `isError: true` ou um erro JSON-RPC — nada mais.
  */
 
-import { classeDoErroRpc, classifyError, errorText, type ErrorClass } from "./call-shape.js";
+import { classeDoErroRpc, classeDoMeta, classifyError, errorText, type ErrorClass } from "./call-shape.js";
 
 /** Teto de bytes acumulados por evento SSE (ou por linha) antes de desistir dele. */
 export const MAX_EVENTO_BYTES = 64 * 1024;
@@ -71,7 +71,9 @@ export function desfechoDaResposta(msg: unknown): { id: string; desfecho: Desfec
   if (m.result && typeof m.result === "object") {
     const r = m.result as { isError?: unknown };
     if (r.isError === true) {
-      return { id, desfecho: { erro: true, classe: classifyError(errorText(m.result)) } };
+      // A classe que o container mandou pelo TIPO vence a frase.
+      const classe = classeDoMeta(m.result) ?? classifyError(errorText(m.result));
+      return { id, desfecho: { erro: true, classe } };
     }
     return { id, desfecho: { erro: false, classe: "" } };
   }
