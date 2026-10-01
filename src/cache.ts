@@ -29,6 +29,7 @@ import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
+import { ErroInterno, FalhaDaFonte } from "./erros.js";
 import { OrigemError, UPSTREAM_POLICY, traduzirErro, upstreamCall } from "./upstream.js";
 
 export const CUBES_BASE_URL = (process.env.SIH_CUBES_BASE_URL ?? "https://data.sidneybissoli.com/sih/cubos/").replace(/\/?$/, "/");
@@ -314,7 +315,9 @@ const inFlight = new Map<string, Promise<void>>();
  */
 export function ensureYear(dir: string, year: number, manifest: CubesManifest, log: (msg: string) => void = () => {}, kinds: CubeKind[] = CUBE_KINDS): Promise<void> {
   const entry = manifest.years[String(year)];
-  if (!entry) return Promise.reject(new Error(`ano ${year} não está no canal ${CUBES_BASE_URL}`));
+  // Inalcançável pelo ensureYears, que separa antes os anos fora do canal:
+  // chegar aqui é bug de quem chamou (`defeito`).
+  if (!entry) return Promise.reject(new ErroInterno(`ano ${year} não está no canal ${CUBES_BASE_URL}`));
   const key = `${year}|${[...kinds].sort().join(",")}`;
   const have = inFlight.get(key);
   if (have) return have;
@@ -344,7 +347,7 @@ export function ensureYear(dir: string, year: number, manifest: CubesManifest, l
  */
 export async function ensureYears(dir: string, years: number[] | null, log?: (msg: string) => void, kinds: CubeKind[] = CUBE_KINDS): Promise<{ downloaded: number[]; unavailable: number[] }> {
   const { manifest } = await loadCubesManifest();
-  if (!manifest) throw new Error(`manifesto dos cubos indisponível (${CUBES_BASE_URL}manifest.json) e sem cópia local`);
+  if (!manifest) throw new FalhaDaFonte(`manifesto dos cubos indisponível (${CUBES_BASE_URL}manifest.json) e sem cópia local`);
   const present = new Set(yearsPresent(dir, kinds));
   const wanted = (years ?? publishedYears(manifest)).filter((y) => !present.has(y));
   const downloaded: number[] = [];
@@ -431,7 +434,7 @@ export function ensurePopulation(dir: string, log: (msg: string) => void = () =>
   if (populationInFlight) return populationInFlight;
   const p = (async () => {
     const { manifest } = await loadCubesManifest();
-    if (!manifest) throw new Error(`manifesto dos cubos indisponível (${CUBES_BASE_URL}manifest.json) e sem cópia local`);
+    if (!manifest) throw new FalhaDaFonte(`manifesto dos cubos indisponível (${CUBES_BASE_URL}manifest.json) e sem cópia local`);
     const pop = manifest.population;
     if (!pop || !pop.files) return { downloaded: [], available: false };
     mkdirSync(dir, { recursive: true });
