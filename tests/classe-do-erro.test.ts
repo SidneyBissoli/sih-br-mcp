@@ -145,9 +145,8 @@ describe("defeitos declarados pelo tipo (antes: classe pela frase)", () => {
     Object.assign(process.env, envOriginal);
   });
 
-  // As consultas DENTRO do `try` de cada handler viram erro-mole (`{error}`
-  // num sucesso) e não chegam ao `catch` final; a cobertura populacional de
-  // get_hospitalization_rates roda FORA dele, e é por ela que o caso passa.
+  // A cobertura populacional de get_hospitalization_rates roda antes da
+  // consulta principal; é por ela que este caso chega ao DuckDB.
   it("'Erro na query' (Parquet que o DuckDB recusa) é `defeito` — pela frase ('Invalid Input Error') era `contrato`", async () => {
     const dir = pastaCom({
       "sih_causas_2023.parquet": readFileSync(join(FIXTURES, "sih_causas_2023.parquet")),
@@ -170,8 +169,8 @@ describe("defeitos declarados pelo tipo (antes: classe pela frase)", () => {
   });
 
   it("'Nenhum cubo de series' (tipo de cubo ausente na pasta) é `defeito` — pela frase era `outro`", async () => {
-    // cubeSource só roda dentro do `try` dos handlers (erro-mole): o caso vai
-    // direto na camada de dados, que é de onde a exceção sai.
+    // Direto na camada de dados, de onde a exceção sai; o caminho pelo
+    // handler está na decisão 49, abaixo.
     const dir = pastaCom({ "sih_causas_2023.parquet": readFileSync(join(FIXTURES, "sih_causas_2023.parquet")) });
     const { classeDaExcecao } = await carregar({ SIH_DATA_DIR: dir });
     const { cubeSource } = await import("../src/db/duckdb.js");
@@ -213,8 +212,8 @@ describe("defeitos declarados pelo tipo (antes: classe pela frase)", () => {
   });
 
   it("população ausente (POPULATION_MISSING_MESSAGE) é `fonte` — pela frase era `outro`", async () => {
-    // Os handlers checam hasPopulationData() antes (erro-mole); quem LANÇA é
-    // a camada de dados, por isso o caso vai direto nela.
+    // Direto na camada de dados; o caminho pelo handler (que agora LANÇA
+    // FalhaDaFonte em vez de devolver erro-mole) está na decisão 49, abaixo.
     const dir = pastaCom({ "sih_series_2023.parquet": readFileSync(join(FIXTURES, "sih_series_2023.parquet")) });
     const { classeDaExcecao } = await carregar({ SIH_DATA_DIR: dir });
     const { getPopulation, getPopulationByUf } = await import("../src/db/duckdb.js");
@@ -237,5 +236,54 @@ describe("defeitos declarados pelo tipo (antes: classe pela frase)", () => {
     );
     expect(String(erro)).toContain("só existe em faixas etárias");
     expect(classeDaExcecao(erro)).toBe("contrato");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Decisão 49 (01/10/2026): o `catch` de cada handler de dado devolvia QUALQUER
+// exceção como erro-mole — `{ error, data: [] }` num SUCESSO —, e a telemetria
+// contava `ok` uma falha do DuckDB ou do canal. Agora a exceção sobe ao `catch`
+// final do dispatcher, que a devolve como erro com a classe pelo tipo. O
+// erro-mole fica só para o que é DELIBERADO: ausência ou recusa respondida
+// num `return { error }` explícito (pinado em worker/tests/envelope.test.ts).
+// ---------------------------------------------------------------------------
+
+describe("exceção no handler é erro de verdade, não erro-mole (decisão 49)", () => {
+  afterEach(() => {
+    for (const k of Object.keys(process.env)) if (!(k in envOriginal)) delete process.env[k];
+    Object.assign(process.env, envOriginal);
+  });
+
+  it("cubo que o DuckDB recusa, dentro do handler, sai isError com `defeito`", async () => {
+    const dir = pastaCom({ "sih_causas_2023.parquet": "isto não é parquet" });
+    const { callTool } = await carregar({ SIH_DATA_DIR: dir });
+    const r = await callTool("get_hospitalizations", { year: [ANO] });
+    expect(r.isError).toBe(true);
+    expect(JSON.stringify(r.content)).toContain("Erro na query");
+    expect(classeNoMeta(r)).toBe("defeito");
+  });
+
+  it("tipo de cubo ausente, dentro do handler, sai isError com `defeito`", async () => {
+    const dir = pastaCom({ "sih_causas_2023.parquet": readFileSync(join(FIXTURES, "sih_causas_2023.parquet")) });
+    const { callTool } = await carregar({ SIH_DATA_DIR: dir });
+    const r = await callTool("get_hospitalization_trends", { year_start: ANO, year_end: ANO, granularity: "monthly" });
+    expect(r.isError).toBe(true);
+    expect(classeNoMeta(r)).toBe("defeito");
+  });
+
+  it("população ausente no handler de taxas sai isError com `fonte`", async () => {
+    const dir = pastaCom({ "sih_causas_2023.parquet": readFileSync(join(FIXTURES, "sih_causas_2023.parquet")) });
+    const { callTool } = await carregar({ SIH_DATA_DIR: dir });
+    const r = await callTool("get_hospitalization_rates", { year: [ANO] });
+    expect(r.isError).toBe(true);
+    expect(JSON.stringify(r.content)).toContain("Dados populacionais não disponíveis");
+    expect(classeNoMeta(r)).toBe("fonte");
+  });
+
+  it("o erro-mole DELIBERADO continua: ano sem dados é resposta, não erro", async () => {
+    const { callTool } = await carregar({ SIH_DATA_DIR: FIXTURES });
+    const r = await callTool("get_hospitalizations", { year: [1800] });
+    expect(r.isError).toBeFalsy();
+    expect(JSON.stringify(r.content)).toContain("Nenhum dos anos solicitados");
   });
 });

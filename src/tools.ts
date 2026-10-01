@@ -54,7 +54,7 @@ import {
 import { getFreshness } from "./freshness.js";
 import { outputSchemaFor } from "./output-schemas.js";
 import { CLASSE_DO_ERRO_META, classeDaExcecao, withUpstreamCall } from "./upstream.js";
-import type { ClasseDoErro } from "./erros.js";
+import { FalhaDaFonte, type ClasseDoErro } from "./erros.js";
 import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cachedCubesManifest, causasSummaryState, cubesCacheDir, ensureCausasEstratosYears, ensureCausasSummary, ensureEstratosYears, ensureIcsapSummary, ensurePopulation, ensureSidecars, ensureYears, icsapSummaryState, loadCubesManifest, populationPresent, publishedYears, yearsFromArgs } from "./cache.js";
 import type { CubeKind } from "./cache.js";
 
@@ -707,65 +707,58 @@ async function describeCubesChannel() {
 }
 
 async function handleGetAvailableYears() {
-  try {
-    const years = getAvailableYears();
-    const noRace = yearsWithoutRace();
-    // Sidecars dos anos carregados (builder >= 2.5.0 traz os campos da era
-    // antiga; um sidecar anterior cai nos valores de 1998+).
-    const sidecars = loadSidecars().filter((s) => years.includes(s.cube_year));
-    const byYear = <T,>(f: (s: (typeof sidecars)[number]) => T): Record<string, T> =>
-      Object.fromEntries(sidecars.map((s) => [String(s.cube_year), f(s)]));
-    return {
-      years,
-      data_range: {
-        first_year: years[0],
-        last_year: years[years.length - 1],
-        total_years: years.length,
-      },
-      note: "Anos com dados Parquet disponíveis",
-      // Raça/cor por ano (sidecar `columns_missing`, builder >= 2.4.0): RACA_COR
-      // só entra no leiaute da AIH em 2008; em 1998–2007 `race` é nulo.
-      race_available: Object.fromEntries(years.map((y) => [String(y), !noRace.includes(y)])),
-      years_without_race: noRace,
-      // Era antiga 1992–1997 (sidecar do builder >= 2.5.0; docs/analise-002 e
-      // analise-003): revisão da CID por ano (internações por revisão; 1997 tem
-      // as duas), lista ICSAP por revisão, base do eixo `uf`, município,
-      // moeda de `value` e internações sem data na fonte.
-      cid_revision: byYear((s) => s.cid_revision ?? { "10": s.totals?.records_in_cube ?? null }),
-      years_cid9: yearsCid9(),
-      icsap_available: byYear(() => true),
-      icsap_list_revision: byYear((s) => s.icsap_list_revision ?? { "10": "portaria-221-2008" }),
-      uf_basis: byYear((s) => s.uf_basis ?? "residencia"),
-      years_uf_arquivo: yearsUfArquivo(),
-      municipality_available: byYear((s) => s.municipality_available ?? true),
-      currency: byYear((s) => s.currency ?? null),
-      records_date_imputed: byYear((s) => s.records_date_imputed ?? 0),
-      // Universo do % ICSAP (builder >= 2.6.0, csapAIH): internações dentro do
-      // universo e fora dele por motivo; null em cubo anterior a 2.6.0.
-      csap_universe: byYear((s) =>
-        s.csap_universe
-          ? { method: s.csap_universe.method, records_in_universe: s.csap_universe.records_in_universe, excluded: s.csap_universe.excluded }
-          : null,
-      ),
-      // Cobertura dos arquivos de população, lida deles: é o que as ferramentas
-      // de taxa aceitam — `detailed` (idade simples, 2000+) e `aggregated`
-      // (faixa etária quinquenal, 1991–1999; sih:taxas-1992-1999).
-      population_years: await getPopulationCoverage(),
-      // Canal público dos cubos (src/cache.ts): o que existe para baixar e onde
-      // o cache local vive. `published_years` vem do manifest.json do canal
-      // (timeout curto; cópia em disco quando a rede falha); `years` acima são
-      // os cubos já presentes localmente.
-      cubes_channel: await describeCubesChannel(),
-      // Frescor dos cubos frente ao espelho healthbr-data (src/freshness.ts):
-      // checado em segundo plano na inicialização, sem bloquear.
-      freshness: getFreshness(),
-    };
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "Erro ao listar anos",
-      years: [],
-    };
-  }
+  const years = getAvailableYears();
+  const noRace = yearsWithoutRace();
+  // Sidecars dos anos carregados (builder >= 2.5.0 traz os campos da era
+  // antiga; um sidecar anterior cai nos valores de 1998+).
+  const sidecars = loadSidecars().filter((s) => years.includes(s.cube_year));
+  const byYear = <T,>(f: (s: (typeof sidecars)[number]) => T): Record<string, T> =>
+    Object.fromEntries(sidecars.map((s) => [String(s.cube_year), f(s)]));
+  return {
+    years,
+    data_range: {
+      first_year: years[0],
+      last_year: years[years.length - 1],
+      total_years: years.length,
+    },
+    note: "Anos com dados Parquet disponíveis",
+    // Raça/cor por ano (sidecar `columns_missing`, builder >= 2.4.0): RACA_COR
+    // só entra no leiaute da AIH em 2008; em 1998–2007 `race` é nulo.
+    race_available: Object.fromEntries(years.map((y) => [String(y), !noRace.includes(y)])),
+    years_without_race: noRace,
+    // Era antiga 1992–1997 (sidecar do builder >= 2.5.0; docs/analise-002 e
+    // analise-003): revisão da CID por ano (internações por revisão; 1997 tem
+    // as duas), lista ICSAP por revisão, base do eixo `uf`, município,
+    // moeda de `value` e internações sem data na fonte.
+    cid_revision: byYear((s) => s.cid_revision ?? { "10": s.totals?.records_in_cube ?? null }),
+    years_cid9: yearsCid9(),
+    icsap_available: byYear(() => true),
+    icsap_list_revision: byYear((s) => s.icsap_list_revision ?? { "10": "portaria-221-2008" }),
+    uf_basis: byYear((s) => s.uf_basis ?? "residencia"),
+    years_uf_arquivo: yearsUfArquivo(),
+    municipality_available: byYear((s) => s.municipality_available ?? true),
+    currency: byYear((s) => s.currency ?? null),
+    records_date_imputed: byYear((s) => s.records_date_imputed ?? 0),
+    // Universo do % ICSAP (builder >= 2.6.0, csapAIH): internações dentro do
+    // universo e fora dele por motivo; null em cubo anterior a 2.6.0.
+    csap_universe: byYear((s) =>
+      s.csap_universe
+        ? { method: s.csap_universe.method, records_in_universe: s.csap_universe.records_in_universe, excluded: s.csap_universe.excluded }
+        : null,
+    ),
+    // Cobertura dos arquivos de população, lida deles: é o que as ferramentas
+    // de taxa aceitam — `detailed` (idade simples, 2000+) e `aggregated`
+    // (faixa etária quinquenal, 1991–1999; sih:taxas-1992-1999).
+    population_years: await getPopulationCoverage(),
+    // Canal público dos cubos (src/cache.ts): o que existe para baixar e onde
+    // o cache local vive. `published_years` vem do manifest.json do canal
+    // (timeout curto; cópia em disco quando a rede falha); `years` acima são
+    // os cubos já presentes localmente.
+    cubes_channel: await describeCubesChannel(),
+    // Frescor dos cubos frente ao espelho healthbr-data (src/freshness.ts):
+    // checado em segundo plano na inicialização, sem bloquear.
+    freshness: getFreshness(),
+  };
 }
 
 /**
@@ -913,50 +906,43 @@ async function handleGetHospitalizations(args: GetHospitalizationsArgs) {
     isCsap: args.is_csap,
   };
 
-  try {
-    const data = await queryCausas({
-      filters,
-      groupBy: args.group_by,
-      metrics: ["n", "days", "value", "deaths"],
-      orderBy: args.group_by?.includes("year")
-        ? "year"
-        : args.group_by?.[0] || "n_hospitalizations DESC",
-      limit: args.limit,
-    });
+  const data = await queryCausas({
+    filters,
+    groupBy: args.group_by,
+    metrics: ["n", "days", "value", "deaths"],
+    orderBy: args.group_by?.includes("year")
+      ? "year"
+      : args.group_by?.[0] || "n_hospitalizations DESC",
+    limit: args.limit,
+  });
 
-    // Calcula totais
-    type HospTotals = { n: number; days: number; value: number; deaths: number };
-    const totals = data.reduce<HospTotals>(
-      (acc, row: Record<string, unknown>) => ({
-        n: acc.n + (Number(row.n_hospitalizations) || 0),
-        days: acc.days + (Number(row.total_days) || 0),
-        value: acc.value + (Number(row.total_value) || 0),
-        deaths: acc.deaths + (Number(row.deaths) || 0),
-      }),
-      { n: 0, days: 0, value: 0, deaths: 0 }
-    );
+  // Calcula totais
+  type HospTotals = { n: number; days: number; value: number; deaths: number };
+  const totals = data.reduce<HospTotals>(
+    (acc, row: Record<string, unknown>) => ({
+      n: acc.n + (Number(row.n_hospitalizations) || 0),
+      days: acc.days + (Number(row.total_days) || 0),
+      value: acc.value + (Number(row.total_value) || 0),
+      deaths: acc.deaths + (Number(row.deaths) || 0),
+    }),
+    { n: 0, days: 0, value: 0, deaths: 0 }
+  );
 
-    const raceN = args.race?.length || args.group_by?.includes("race") ? raceNotes(args.year, causasYearsAvailable()) : [];
-    return {
-      data,
-      ...notesField(args.year, { value: true, month: !!args.month?.length || !!args.group_by?.includes("month") }, raceN),
-      summary: {
-        total_hospitalizations: totals.n,
-        total_days: totals.days,
-        total_value: Math.round(totals.value * 100) / 100,
-        deaths: totals.deaths,
-        hospital_mortality_rate:
-          totals.n > 0 ? Math.round((totals.deaths / totals.n) * 10000) / 100 : 0,
-        records_returned: data.length,
-      },
-      filters_applied: args,
-    };
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "Erro na consulta",
-      data: [],
-    };
-  }
+  const raceN = args.race?.length || args.group_by?.includes("race") ? raceNotes(args.year, causasYearsAvailable()) : [];
+  return {
+    data,
+    ...notesField(args.year, { value: true, month: !!args.month?.length || !!args.group_by?.includes("month") }, raceN),
+    summary: {
+      total_hospitalizations: totals.n,
+      total_days: totals.days,
+      total_value: Math.round(totals.value * 100) / 100,
+      deaths: totals.deaths,
+      hospital_mortality_rate:
+        totals.n > 0 ? Math.round((totals.deaths / totals.n) * 10000) / 100 : 0,
+      records_returned: data.length,
+    },
+    filters_applied: args,
+  };
 }
 
 interface GetTrendsArgs {
@@ -970,53 +956,46 @@ interface GetTrendsArgs {
 async function handleGetHospitalizationTrends(args: GetTrendsArgs) {
   const { year_start, year_end, uf, cid_chapter, granularity = "yearly" } = args;
 
-  try {
-    if (granularity === "monthly") {
-      // Usa cubo de séries temporais
-      const data = await querySeries({
-        filters: {
-          yearMonthStart: `${year_start}-01`,
-          yearMonthEnd: `${year_end}-12`,
-          ufs: uf,
-          cidChapters: cid_chapter ? [cid_chapter] : undefined,
-        },
-        groupBy: ["year_month"],
-        orderBy: "year_month",
-      });
-
-      return {
-        granularity: "monthly",
-        series: data,
-        period: { start: `${year_start}-01`, end: `${year_end}-12` },
-        ...notesField(yearsFromArgs(args) ?? undefined, { month: true }),
-      };
-    } else {
-      // Agregação anual do CUBO DE SÉRIES (0.14.1; era do de causas): mesma
-      // resposta, provada grupo a grupo — e o cache baixa ~40 KB/ano em vez
-      // dos três cubos (~70 MB/ano). Foi a pergunta "total do Brasil desde
-      // 1992" levando 4 min no chat que expôs a diferença.
-      const years = [];
-      for (let y = year_start; y <= year_end; y++) {
-        years.push(y);
-      }
-
-      const data = await querySeriesYearly({
-        years,
+  if (granularity === "monthly") {
+    // Usa cubo de séries temporais
+    const data = await querySeries({
+      filters: {
+        yearMonthStart: `${year_start}-01`,
+        yearMonthEnd: `${year_end}-12`,
         ufs: uf,
         cidChapters: cid_chapter ? [cid_chapter] : undefined,
-      });
+      },
+      groupBy: ["year_month"],
+      orderBy: "year_month",
+    });
 
-      return {
-        granularity: "yearly",
-        series: data,
-        period: { start: year_start, end: year_end },
-        ...notesField(yearsFromArgs(args) ?? undefined, { month: args.granularity === "monthly" }),
-      };
-    }
-  } catch (error) {
     return {
-      error: error instanceof Error ? error.message : "Erro na consulta",
-      series: [],
+      granularity: "monthly",
+      series: data,
+      period: { start: `${year_start}-01`, end: `${year_end}-12` },
+      ...notesField(yearsFromArgs(args) ?? undefined, { month: true }),
+    };
+  } else {
+    // Agregação anual do CUBO DE SÉRIES (0.14.1; era do de causas): mesma
+    // resposta, provada grupo a grupo — e o cache baixa ~40 KB/ano em vez
+    // dos três cubos (~70 MB/ano). Foi a pergunta "total do Brasil desde
+    // 1992" levando 4 min no chat que expôs a diferença.
+    const years = [];
+    for (let y = year_start; y <= year_end; y++) {
+      years.push(y);
+    }
+
+    const data = await querySeriesYearly({
+      years,
+      ufs: uf,
+      cidChapters: cid_chapter ? [cid_chapter] : undefined,
+    });
+
+    return {
+      granularity: "yearly",
+      series: data,
+      period: { start: year_start, end: year_end },
+      ...notesField(yearsFromArgs(args) ?? undefined, { month: args.granularity === "monthly" }),
     };
   }
 }
@@ -1033,57 +1012,50 @@ interface CompareRegionsArgs {
 async function handleCompareRegions(args: CompareRegionsArgs) {
   const { year, compare_by = "uf", cid_chapter, is_csap, metric = "n", limit = 10 } = args;
 
-  try {
-    const groupByField = compare_by === "region" ? "uf" : "uf"; // TODO: agregar por região
+  const groupByField = compare_by === "region" ? "uf" : "uf"; // TODO: agregar por região
 
-    // Cubo LEVE quando o recorte cabe nele (0.14.2): esta ferramenta devolve só
-    // contagem e óbitos, que as séries têm — 1,2 MB nos 34 anos contra 1.253 MB.
-    const orderBy = metric === "n" ? "n_hospitalizations DESC" : "deaths DESC";
-    const data = seriesFitsCall("compare_regions", args)
-      ? await querySeriesYearly({
-          years: year ?? [],
+  // Cubo LEVE quando o recorte cabe nele (0.14.2): esta ferramenta devolve só
+  // contagem e óbitos, que as séries têm — 1,2 MB nos 34 anos contra 1.253 MB.
+  const orderBy = metric === "n" ? "n_hospitalizations DESC" : "deaths DESC";
+  const data = seriesFitsCall("compare_regions", args)
+    ? await querySeriesYearly({
+        years: year ?? [],
+        cidChapters: cid_chapter ? [cid_chapter] : undefined,
+        groupBy: [groupByField],
+        orderBy,
+        limit,
+      })
+    : await queryCausas({
+        filters: {
+          years: year,
           cidChapters: cid_chapter ? [cid_chapter] : undefined,
-          groupBy: [groupByField],
-          orderBy,
-          limit,
-        })
-      : await queryCausas({
-          filters: {
-            years: year,
-            cidChapters: cid_chapter ? [cid_chapter] : undefined,
-            isCsap: is_csap,
-          },
-          groupBy: [groupByField],
-          metrics: ["n", "deaths"],
-          orderBy,
-          limit,
-        });
+          isCsap: is_csap,
+        },
+        groupBy: [groupByField],
+        metrics: ["n", "deaths"],
+        orderBy,
+        limit,
+      });
 
-    // Adiciona ranking
-    const ranking = data.map((row: Record<string, unknown>, index: number) => ({
-      rank: index + 1,
-      uf: row.uf,
-      n_hospitalizations: row.n_hospitalizations,
-      deaths: row.deaths,
-      mortality_rate:
-        Number(row.n_hospitalizations) > 0
-          ? Math.round((Number(row.deaths) / Number(row.n_hospitalizations)) * 10000) / 100
-          : 0,
-    }));
+  // Adiciona ranking
+  const ranking = data.map((row: Record<string, unknown>, index: number) => ({
+    rank: index + 1,
+    uf: row.uf,
+    n_hospitalizations: row.n_hospitalizations,
+    deaths: row.deaths,
+    mortality_rate:
+      Number(row.n_hospitalizations) > 0
+        ? Math.round((Number(row.deaths) / Number(row.n_hospitalizations)) * 10000) / 100
+        : 0,
+  }));
 
-    return {
-      compare_by,
-      metric,
-      ranking,
-      total_locations: data.length,
-      ...notesField(args.year, {}),
-    };
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "Erro na consulta",
-      ranking: [],
-    };
-  }
+  return {
+    compare_by,
+    metric,
+    ranking,
+    total_locations: data.length,
+    ...notesField(args.year, {}),
+  };
 }
 
 // --- ICSAP ---
@@ -1113,57 +1085,50 @@ async function handleGetIcsap(args: GetIcsapArgs) {
     races: args.race,
   };
 
-  try {
-    const data = await queryIcsap({
-      filters,
-      groupBy: args.group_by,
-      metrics: ["n", "n_total", "days", "value", "deaths"],
-      universe: args.universe,
-      orderBy: args.group_by?.includes("year")
-        ? "year"
-        : args.group_by?.[0] || "n_icsap DESC",
-    });
+  const data = await queryIcsap({
+    filters,
+    groupBy: args.group_by,
+    metrics: ["n", "n_total", "days", "value", "deaths"],
+    universe: args.universe,
+    orderBy: args.group_by?.includes("year")
+      ? "year"
+      : args.group_by?.[0] || "n_icsap DESC",
+  });
 
-    // Totais do filtro inteiro, numa consulta sem agrupamento (0.9.0): somar
-    // as linhas de `data` repetiria n_total sempre que o agrupamento divide o
-    // estrato (por grupo CSAP) — o denominador vem dos estratos distintos.
-    const [whole] = await calculateIcsapIndicators<Record<string, unknown>>({ filters, groupBy: [], universe: args.universe });
-    const totals = {
-      icsap: Number(whole?.n_icsap) || 0,
-      total: Number(whole?.n_total) || 0,
-      days: Number(whole?.total_days) || 0,
-      value: Number(whole?.total_value) || 0,
-      deaths: Number(whole?.deaths) || 0,
-    };
+  // Totais do filtro inteiro, numa consulta sem agrupamento (0.9.0): somar
+  // as linhas de `data` repetiria n_total sempre que o agrupamento divide o
+  // estrato (por grupo CSAP) — o denominador vem dos estratos distintos.
+  const [whole] = await calculateIcsapIndicators<Record<string, unknown>>({ filters, groupBy: [], universe: args.universe });
+  const totals = {
+    icsap: Number(whole?.n_icsap) || 0,
+    total: Number(whole?.n_total) || 0,
+    days: Number(whole?.total_days) || 0,
+    value: Number(whole?.total_value) || 0,
+    deaths: Number(whole?.deaths) || 0,
+  };
 
-    const raceN = args.race?.length || args.group_by?.includes("race") ? raceNotes(args.year, getAvailableYears()) : [];
-    return {
-      data,
-      ...notesField(
-        args.year,
-        { icsap: true, value: true, municipality: !!args.municipality_code || !!args.group_by?.includes("municipality_code") },
-        [...raceN, universeNote(args.universe)],
-      ),
-      summary: {
-        total_icsap: totals.icsap,
-        total_hospitalizations: totals.total,
-        icsap_percentage:
-          totals.total > 0
-            ? Math.round((totals.icsap / totals.total) * 10000) / 100
-            : 0,
-        total_days: totals.days,
-        total_value: Math.round(totals.value * 100) / 100,
-        deaths: totals.deaths,
-        records_returned: data.length,
-      },
-      filters_applied: args,
-    };
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "Erro na consulta",
-      data: [],
-    };
-  }
+  const raceN = args.race?.length || args.group_by?.includes("race") ? raceNotes(args.year, getAvailableYears()) : [];
+  return {
+    data,
+    ...notesField(
+      args.year,
+      { icsap: true, value: true, municipality: !!args.municipality_code || !!args.group_by?.includes("municipality_code") },
+      [...raceN, universeNote(args.universe)],
+    ),
+    summary: {
+      total_icsap: totals.icsap,
+      total_hospitalizations: totals.total,
+      icsap_percentage:
+        totals.total > 0
+          ? Math.round((totals.icsap / totals.total) * 10000) / 100
+          : 0,
+      total_days: totals.days,
+      total_value: Math.round(totals.value * 100) / 100,
+      deaths: totals.deaths,
+      records_returned: data.length,
+    },
+    filters_applied: args,
+  };
 }
 
 interface GetIcsapIndicatorsArgs {
@@ -1187,26 +1152,19 @@ async function handleGetIcsapIndicators(args: GetIcsapIndicatorsArgs) {
     ageMax: args.age_max,
   };
 
-  try {
-    const data = await calculateIcsapIndicators({
-      filters,
-      groupBy: args.group_by,
-      universe: args.universe,
-    });
+  const data = await calculateIcsapIndicators({
+    filters,
+    groupBy: args.group_by,
+    universe: args.universe,
+  });
 
-    const raceN = args.group_by?.includes("race") ? raceNotes(args.year, getAvailableYears()) : [];
-    return {
-      data,
-      ...notesField(args.year, { icsap: true, value: true }, [...raceN, universeNote(args.universe)]),
-      indicators_calculated: ["icsap_percentage"],
-      note: "icsap_percentage = (n_icsap / n_total) * 100",
-    };
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "Erro no cálculo",
-      data: [],
-    };
-  }
+  const raceN = args.group_by?.includes("race") ? raceNotes(args.year, getAvailableYears()) : [];
+  return {
+    data,
+    ...notesField(args.year, { icsap: true, value: true }, [...raceN, universeNote(args.universe)]),
+    indicators_calculated: ["icsap_percentage"],
+    note: "icsap_percentage = (n_icsap / n_total) * 100",
+  };
 }
 
 interface RankCsapGroupsArgs {
@@ -1229,57 +1187,50 @@ async function handleRankCsapGroups(args: RankCsapGroupsArgs) {
     ageMax: args.age_max,
   };
 
-  try {
-    const data = await rankCsapGroups({
-      filters,
-      metric: args.metric || "n",
-      limit: args.limit || 19,
-      universe: args.universe,
-    });
+  const data = await rankCsapGroups({
+    filters,
+    metric: args.metric || "n",
+    limit: args.limit || 19,
+    universe: args.universe,
+  });
 
-    // Adiciona nomes dos grupos e calcula percentuais
-    const totalMetric = data.reduce(
-      (acc, row: Record<string, unknown>) => acc + (Number(row.metric_value) || 0),
-      0
-    );
+  // Adiciona nomes dos grupos e calcula percentuais
+  const totalMetric = data.reduce(
+    (acc, row: Record<string, unknown>) => acc + (Number(row.metric_value) || 0),
+    0
+  );
 
-    const ranking = data.map((row: Record<string, unknown>, index: number) => {
-      const group = csapGroups.groups.find((g) => g.code === row.csap_group);
-      return {
-        rank: index + 1,
-        csap_group: row.csap_group,
-        csap_name: group?.name_pt || "Desconhecido",
-        metric_value: row.metric_value,
-        pct_of_total: totalMetric > 0
-          ? Math.round((Number(row.metric_value) / totalMetric) * 10000) / 100
-          : 0,
-        n_hospitalizations: row.n_hospitalizations,
-        total_days: row.total_days,
-        total_value: row.total_value,
-        deaths: row.deaths,
-      };
-    });
-
-    // Concentração nos top 3 e top 5
-    const top3Pct = ranking.slice(0, 3).reduce((acc, r) => acc + r.pct_of_total, 0);
-    const top5Pct = ranking.slice(0, 5).reduce((acc, r) => acc + r.pct_of_total, 0);
-
+  const ranking = data.map((row: Record<string, unknown>, index: number) => {
+    const group = csapGroups.groups.find((g) => g.code === row.csap_group);
     return {
-      metric: args.metric || "n",
-      ranking,
-      ...notesField(args.year, { icsap: true, value: true }, [universeNote(args.universe)]),
-      concentration: {
-        top_3_percentage: Math.round(top3Pct * 100) / 100,
-        top_5_percentage: Math.round(top5Pct * 100) / 100,
-      },
-      total_groups: ranking.length,
+      rank: index + 1,
+      csap_group: row.csap_group,
+      csap_name: group?.name_pt || "Desconhecido",
+      metric_value: row.metric_value,
+      pct_of_total: totalMetric > 0
+        ? Math.round((Number(row.metric_value) / totalMetric) * 10000) / 100
+        : 0,
+      n_hospitalizations: row.n_hospitalizations,
+      total_days: row.total_days,
+      total_value: row.total_value,
+      deaths: row.deaths,
     };
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "Erro no ranking",
-      ranking: [],
-    };
-  }
+  });
+
+  // Concentração nos top 3 e top 5
+  const top3Pct = ranking.slice(0, 3).reduce((acc, r) => acc + r.pct_of_total, 0);
+  const top5Pct = ranking.slice(0, 5).reduce((acc, r) => acc + r.pct_of_total, 0);
+
+  return {
+    metric: args.metric || "n",
+    ranking,
+    ...notesField(args.year, { icsap: true, value: true }, [universeNote(args.universe)]),
+    concentration: {
+      top_3_percentage: Math.round(top3Pct * 100) / 100,
+      top_5_percentage: Math.round(top5Pct * 100) / 100,
+    },
+    total_groups: ranking.length,
+  };
 }
 
 // --- Ferramentas com dados populacionais ---
@@ -1301,11 +1252,12 @@ async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) 
   // Verifica se dados populacionais estão disponíveis (pasta de dados ou cache
   // local, enchido do canal por ensurePopulation() antes deste handler)
   if (!hasPopulationData()) {
-    return {
-      error: POPULATION_MISSING_MESSAGE,
-      data: [],
-      note: `Esta ferramenta requer pop_uf.parquet (ou pop_uf_agregado/pop_municipios) em ${getPopulationDir()}; o canal ${CUBES_BASE_URL} publica os três no bloco population do manifest.json.`,
-    };
+    // Falha da FONTE (o download do bloco population não chegou), não ausência
+    // respondida: sai como erro de verdade, com classe, e não como `{ error }`
+    // num sucesso que a telemetria contava `ok` (decisão 49).
+    throw new FalhaDaFonte(
+      `${POPULATION_MISSING_MESSAGE} Esta ferramenta requer pop_uf.parquet (ou pop_uf_agregado/pop_municipios) em ${getPopulationDir()}; o canal ${CUBES_BASE_URL} publica os três no bloco population do manifest.json.`,
+    );
   }
 
   // Valida anos pela cobertura REAL dos arquivos de população (lida deles, não
@@ -1366,135 +1318,128 @@ async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) 
   const popSources: Record<number, "detailed" | "aggregated" | null> = {};
   for (const y of validYears) popSources[y] = await populationSourceFor(y);
 
-  try {
-    // Define agrupamento: se uf ou year foram passados sem group_by, agrupa automaticamente
-    const groupBy = args.group_by ? [...args.group_by] : [];
-    if (normalizedUfs && normalizedUfs.length > 1 && !groupBy.includes("uf")) {
-      groupBy.push("uf");
-    }
-    if (validYears.length > 1 && !groupBy.includes("year")) {
-      groupBy.push("year");
-    }
+  // Define agrupamento: se uf ou year foram passados sem group_by, agrupa automaticamente
+  const groupBy = args.group_by ? [...args.group_by] : [];
+  if (normalizedUfs && normalizedUfs.length > 1 && !groupBy.includes("uf")) {
+    groupBy.push("uf");
+  }
+  if (validYears.length > 1 && !groupBy.includes("year")) {
+    groupBy.push("year");
+  }
 
-    const hasUfGrouping = groupBy.includes("uf");
-    const hasYearGrouping = groupBy.includes("year");
+  const hasUfGrouping = groupBy.includes("uf");
+  const hasYearGrouping = groupBy.includes("year");
 
-    // Busca internações — cubo LEVE quando o recorte cabe (0.14.2): a taxa usa
-    // contagem e óbitos, que as séries têm. É o caminho da pergunta longa
-    // ("taxa por 100 mil ao longo do tempo"), que no cubo de causas custava
-    // 1.253 MB de download.
-    const hospData = seriesFitsCall("get_hospitalization_rates", args)
-      ? await querySeriesYearly({
-          years: validYears,
-          ufs: normalizedUfs,
-          cidChapters: args.cid_chapter,
-          groupBy,
-        })
-      : await queryCausas({
-          filters,
-          groupBy,
-          metrics: ["n", "deaths"],
-        });
-
-    // Filtra resultados nulos (quando GROUP BY vazio e sem dados, retorna {null, null})
-    const validHospData = (hospData as Array<Record<string, unknown>>).filter(
-      row => row.n_hospitalizations !== null && row.n_hospitalizations !== undefined
-    );
-
-    if (validHospData.length === 0) {
-      // Sem internações, mas podemos ainda fornecer a população
-      const popYear = validYears[0];
-      let population = 0;
-      try {
-        population = await getPopulation({ year: popYear, uf: normalizedUfs, sex: args.sex, ageMin: args.age_min, ageMax: args.age_max });
-      } catch { /* ignore */ }
-
-      return {
-        data: [],
-        summary: {
-          total_hospitalizations: 0,
-          total_population: population,
-          overall_rate: 0,
-          rate_per: ratePer,
-          rate_type: args.rate_type || "crude",
-        },
-        metadata: {
-          population_source: popSources,
-          filters_applied: { ...args, uf: normalizedUfs, year: validYears },
-          note: "Nenhuma internação encontrada para os filtros aplicados.",
-          available_sih_years: availableYears,
-        },
-      };
-    }
-
-    // Busca população correspondente e calcula taxas
-    const results = [];
-
-    for (const row of validHospData) {
-      const hospYear = hasYearGrouping ? Number(row.year) : validYears[0];
-      const hospUf = hasUfGrouping ? String(row.uf) : undefined;
-
-      // Busca população para o estrato
-      let population = 0;
-      try {
-        population = await getPopulation({
-          year: hospYear,
-          uf: hospUf ? [hospUf] : normalizedUfs,
-          sex: args.sex,
-          ageMin: args.age_min,
-          ageMax: args.age_max,
-        });
-      } catch (popError) {
-        console.error(`[get_hospitalization_rates] Erro população (year=${hospYear}, uf=${hospUf}): ${popError}`);
-      }
-
-      const nHosp = Number(row.n_hospitalizations) || 0;
-      const deaths = Number(row.deaths) || 0;
-      const rate = population > 0 ? (nHosp / population) * ratePer : 0;
-
-      results.push({
-        ...(hasYearGrouping ? { year: hospYear } : {}),
-        ...(hasUfGrouping ? { uf: hospUf } : {}),
-        n_hospitalizations: nHosp,
-        deaths,
-        population,
-        rate: Math.round(rate * 100) / 100,
-        rate_per: ratePer,
-        // Deprecado: mantido uma versão para quem lia o nome antigo. Até a 1.1.x
-        // este campo carregava a taxa na base `rate_per` (por mil, por 10 mil),
-        // contradizendo o próprio nome; agora vale sempre por 100 mil.
-        rate_per_100k: population > 0 ? Math.round((nHosp / population) * 100000 * 100) / 100 : 0,
-        population_source: popSources[hospYear] ?? null,
-        mortality_rate: nHosp > 0 ? Math.round((deaths / nHosp) * 10000) / 100 : 0,
+  // Busca internações — cubo LEVE quando o recorte cabe (0.14.2): a taxa usa
+  // contagem e óbitos, que as séries têm. É o caminho da pergunta longa
+  // ("taxa por 100 mil ao longo do tempo"), que no cubo de causas custava
+  // 1.253 MB de download.
+  const hospData = seriesFitsCall("get_hospitalization_rates", args)
+    ? await querySeriesYearly({
+        years: validYears,
+        ufs: normalizedUfs,
+        cidChapters: args.cid_chapter,
+        groupBy,
+      })
+    : await queryCausas({
+        filters,
+        groupBy,
+        metrics: ["n", "deaths"],
       });
-    }
 
-    // Calcula totais
-    const totalHosp = results.reduce((acc, r) => acc + r.n_hospitalizations, 0);
-    const totalPop = results.reduce((acc, r) => acc + r.population, 0);
-    const overallRate = totalPop > 0 ? (totalHosp / totalPop) * ratePer : 0;
+  // Filtra resultados nulos (quando GROUP BY vazio e sem dados, retorna {null, null})
+  const validHospData = (hospData as Array<Record<string, unknown>>).filter(
+    row => row.n_hospitalizations !== null && row.n_hospitalizations !== undefined
+  );
+
+  if (validHospData.length === 0) {
+    // Sem internações, mas podemos ainda fornecer a população
+    const popYear = validYears[0];
+    let population = 0;
+    try {
+      population = await getPopulation({ year: popYear, uf: normalizedUfs, sex: args.sex, ageMin: args.age_min, ageMax: args.age_max });
+    } catch { /* ignore */ }
 
     return {
-      data: results,
+      data: [],
       summary: {
-        total_hospitalizations: totalHosp,
-        total_population: totalPop,
-        overall_rate: Math.round(overallRate * 100) / 100,
+        total_hospitalizations: 0,
+        total_population: population,
+        overall_rate: 0,
         rate_per: ratePer,
         rate_type: args.rate_type || "crude",
       },
       metadata: {
         population_source: popSources,
-        population_notes: populationNotes(popSources),
         filters_applied: { ...args, uf: normalizedUfs, year: validYears },
+        note: "Nenhuma internação encontrada para os filtros aplicados.",
+        available_sih_years: availableYears,
       },
     };
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "Erro ao calcular taxas",
-      data: [],
-    };
   }
+
+  // Busca população correspondente e calcula taxas
+  const results = [];
+
+  for (const row of validHospData) {
+    const hospYear = hasYearGrouping ? Number(row.year) : validYears[0];
+    const hospUf = hasUfGrouping ? String(row.uf) : undefined;
+
+    // Busca população para o estrato
+    let population = 0;
+    try {
+      population = await getPopulation({
+        year: hospYear,
+        uf: hospUf ? [hospUf] : normalizedUfs,
+        sex: args.sex,
+        ageMin: args.age_min,
+        ageMax: args.age_max,
+      });
+    } catch (popError) {
+      console.error(`[get_hospitalization_rates] Erro população (year=${hospYear}, uf=${hospUf}): ${popError}`);
+    }
+
+    const nHosp = Number(row.n_hospitalizations) || 0;
+    const deaths = Number(row.deaths) || 0;
+    const rate = population > 0 ? (nHosp / population) * ratePer : 0;
+
+    results.push({
+      ...(hasYearGrouping ? { year: hospYear } : {}),
+      ...(hasUfGrouping ? { uf: hospUf } : {}),
+      n_hospitalizations: nHosp,
+      deaths,
+      population,
+      rate: Math.round(rate * 100) / 100,
+      rate_per: ratePer,
+      // Deprecado: mantido uma versão para quem lia o nome antigo. Até a 1.1.x
+      // este campo carregava a taxa na base `rate_per` (por mil, por 10 mil),
+      // contradizendo o próprio nome; agora vale sempre por 100 mil.
+      rate_per_100k: population > 0 ? Math.round((nHosp / population) * 100000 * 100) / 100 : 0,
+      population_source: popSources[hospYear] ?? null,
+      mortality_rate: nHosp > 0 ? Math.round((deaths / nHosp) * 10000) / 100 : 0,
+    });
+  }
+
+  // Calcula totais
+  const totalHosp = results.reduce((acc, r) => acc + r.n_hospitalizations, 0);
+  const totalPop = results.reduce((acc, r) => acc + r.population, 0);
+  const overallRate = totalPop > 0 ? (totalHosp / totalPop) * ratePer : 0;
+
+  return {
+    data: results,
+    summary: {
+      total_hospitalizations: totalHosp,
+      total_population: totalPop,
+      overall_rate: Math.round(overallRate * 100) / 100,
+      rate_per: ratePer,
+      rate_type: args.rate_type || "crude",
+    },
+    metadata: {
+      population_source: popSources,
+      population_notes: populationNotes(popSources),
+      filters_applied: { ...args, uf: normalizedUfs, year: validYears },
+    },
+  };
 }
 
 interface CompareIcsapTrendsArgs {
@@ -1529,10 +1474,8 @@ async function handleCompareIcsapTrends(args: CompareIcsapTrendsArgs) {
 
   // Se usa taxa, verifica população
   if (indicatorType === "rate_per_10k" && !hasPopulationData()) {
-    return {
-      error: `Taxa por população requer dados populacionais. ${POPULATION_MISSING_MESSAGE}`,
-      series: [],
-    };
+    // Falha da fonte, como em handleGetHospitalizationRates (decisão 49).
+    throw new FalhaDaFonte(`Taxa por população requer dados populacionais. ${POPULATION_MISSING_MESSAGE}`);
   }
 
   // Normaliza compare_values (UFs para uppercase)
@@ -1553,176 +1496,169 @@ async function handleCompareIcsapTrends(args: CompareIcsapTrendsArgs) {
     return respostaSemAnos(allYears, availableYears, "series");
   }
 
-  try {
-    const filters: IcsapFilters = {
-      years,
-      csapGroups: compare_by === "csap_group" ? compare_values : undefined,
-      ufs: compare_by === "uf" ? compare_values : undefined,
-    };
+  const filters: IcsapFilters = {
+    years,
+    csapGroups: compare_by === "csap_group" ? compare_values : undefined,
+    ufs: compare_by === "uf" ? compare_values : undefined,
+  };
 
-    // Determina groupBy baseado em compare_by
-    const groupBy = ["year"];
-    if (compare_by) {
-      groupBy.push(compare_by);
-    }
-
-    // Busca dados ICSAP
-    const data = await calculateIcsapIndicators({
-      filters,
-      groupBy,
-      universe: args.universe,
-    });
-
-    // Organiza série temporal
-    const seriesMap: Record<string, Record<number, { icsap: number; total: number; population?: number }>> = {};
-
-    for (const row of data as Array<Record<string, unknown>>) {
-      const year = Number(row.year);
-      const compareKey = compare_by ? String(row[compare_by]) : "total";
-      const icsap = Number(row.n_icsap) || 0;
-      const total = Number(row.n_total) || 0;
-
-      if (!seriesMap[compareKey]) {
-        seriesMap[compareKey] = {};
-      }
-      seriesMap[compareKey][year] = { icsap, total };
-    }
-
-    // Se precisa de taxa, busca população por ano
-    if (indicatorType === "rate_per_10k") {
-      for (const compareKey of Object.keys(seriesMap)) {
-        for (const year of years) {
-          if (seriesMap[compareKey][year]) {
-            try {
-              const ufFilter = compare_by === "uf" ? [compareKey] : undefined;
-              const pop = await getPopulation({ year, uf: ufFilter });
-              seriesMap[compareKey][year].population = pop;
-            } catch {
-              seriesMap[compareKey][year].population = 0;
-            }
-          }
-        }
-      }
-    }
-
-    // Constrói séries e calcula indicadores
-    const series: Array<Record<string, unknown>> = [];
-    const trendData: Record<string, { values: number[]; years: number[] }> = {};
-
-    for (const year of years) {
-      const row: Record<string, unknown> = { year };
-
-      for (const compareKey of Object.keys(seriesMap)) {
-        const entry = seriesMap[compareKey][year];
-        if (entry) {
-          let value: number;
-
-          switch (indicatorType) {
-            case "count":
-              value = entry.icsap;
-              break;
-            case "rate_per_10k":
-              value = entry.population && entry.population > 0
-                ? (entry.icsap / entry.population) * 10000
-                : 0;
-              break;
-            case "percentage":
-            default:
-              value = entry.total > 0 ? (entry.icsap / entry.total) * 100 : 0;
-          }
-
-          row[compareKey] = Math.round(value * 100) / 100;
-
-          // Acumula para cálculo de tendência
-          if (!trendData[compareKey]) {
-            trendData[compareKey] = { values: [], years: [] };
-          }
-          trendData[compareKey].values.push(value);
-          trendData[compareKey].years.push(year);
-        }
-      }
-
-      series.push(row);
-    }
-
-    // Calcula tendências (regressão linear simples)
-    const trends: Record<string, {
-      slope: number;
-      direction: "increasing" | "decreasing" | "stable";
-      avg_annual_change: number;
-      start_value: number;
-      end_value: number;
-      change_pct: number;
-    }> = {};
-
-    if (includeTrend) {
-      for (const [compareKey, td] of Object.entries(trendData)) {
-        const n = td.values.length;
-        if (n < 2) continue;
-
-        // Regressão linear simples
-        const sumX = td.years.reduce((a, b) => a + b, 0);
-        const sumY = td.values.reduce((a, b) => a + b, 0);
-        const sumXY = td.years.reduce((acc, x, i) => acc + x * td.values[i], 0);
-        const sumX2 = td.years.reduce((acc, x) => acc + x * x, 0);
-
-        const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-        const startValue = td.values[0];
-        const endValue = td.values[n - 1];
-        const changePct = startValue > 0 ? ((endValue - startValue) / startValue) * 100 : 0;
-
-        trends[compareKey] = {
-          slope: Math.round(slope * 1000) / 1000,
-          direction: slope > 0.1 ? "increasing" : slope < -0.1 ? "decreasing" : "stable",
-          avg_annual_change: Math.round(slope * 100) / 100,
-          start_value: Math.round(startValue * 100) / 100,
-          end_value: Math.round(endValue * 100) / 100,
-          change_pct: Math.round(changePct * 100) / 100,
-        };
-      }
-    }
-
-    // Identifica melhor/pior desempenho (para percentage, menor é melhor)
-    let bestPerformer: string | undefined;
-    let worstPerformer: string | undefined;
-
-    if (Object.keys(trends).length > 1) {
-      const sortedByChange = Object.entries(trends).sort((a, b) => a[1].change_pct - b[1].change_pct);
-      if (indicatorType === "percentage") {
-        // Para porcentagem ICSAP, queda é melhor
-        bestPerformer = sortedByChange[0][0];
-        worstPerformer = sortedByChange[sortedByChange.length - 1][0];
-      } else {
-        // Para contagem e taxa, menor variação positiva ou maior queda é melhor
-        bestPerformer = sortedByChange[0][0];
-        worstPerformer = sortedByChange[sortedByChange.length - 1][0];
-      }
-    }
-
-    return {
-      indicator: indicatorType,
-      period: { start: start_year, end: end_year },
-      compare_by: compare_by || "total",
-      series,
-      ...notesField(years, { icsap: true }, [
-        universeNote(args.universe),
-        ...(indicatorType === "rate_per_10k" ? populationNotes(await popSourcesFor(years)) : []),
-      ]),
-      trends: includeTrend ? trends : undefined,
-      summary: {
-        best_performer: bestPerformer,
-        worst_performer: worstPerformer,
-        note: indicatorType === "percentage"
-          ? "Para % ICSAP, queda indica melhoria na Atenção Primária"
-          : undefined,
-      },
-    };
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "Erro na análise de tendências",
-      series: [],
-    };
+  // Determina groupBy baseado em compare_by
+  const groupBy = ["year"];
+  if (compare_by) {
+    groupBy.push(compare_by);
   }
+
+  // Busca dados ICSAP
+  const data = await calculateIcsapIndicators({
+    filters,
+    groupBy,
+    universe: args.universe,
+  });
+
+  // Organiza série temporal
+  const seriesMap: Record<string, Record<number, { icsap: number; total: number; population?: number }>> = {};
+
+  for (const row of data as Array<Record<string, unknown>>) {
+    const year = Number(row.year);
+    const compareKey = compare_by ? String(row[compare_by]) : "total";
+    const icsap = Number(row.n_icsap) || 0;
+    const total = Number(row.n_total) || 0;
+
+    if (!seriesMap[compareKey]) {
+      seriesMap[compareKey] = {};
+    }
+    seriesMap[compareKey][year] = { icsap, total };
+  }
+
+  // Se precisa de taxa, busca população por ano
+  if (indicatorType === "rate_per_10k") {
+    for (const compareKey of Object.keys(seriesMap)) {
+      for (const year of years) {
+        if (seriesMap[compareKey][year]) {
+          try {
+            const ufFilter = compare_by === "uf" ? [compareKey] : undefined;
+            const pop = await getPopulation({ year, uf: ufFilter });
+            seriesMap[compareKey][year].population = pop;
+          } catch {
+            seriesMap[compareKey][year].population = 0;
+          }
+        }
+      }
+    }
+  }
+
+  // Constrói séries e calcula indicadores
+  const series: Array<Record<string, unknown>> = [];
+  const trendData: Record<string, { values: number[]; years: number[] }> = {};
+
+  for (const year of years) {
+    const row: Record<string, unknown> = { year };
+
+    for (const compareKey of Object.keys(seriesMap)) {
+      const entry = seriesMap[compareKey][year];
+      if (entry) {
+        let value: number;
+
+        switch (indicatorType) {
+          case "count":
+            value = entry.icsap;
+            break;
+          case "rate_per_10k":
+            value = entry.population && entry.population > 0
+              ? (entry.icsap / entry.population) * 10000
+              : 0;
+            break;
+          case "percentage":
+          default:
+            value = entry.total > 0 ? (entry.icsap / entry.total) * 100 : 0;
+        }
+
+        row[compareKey] = Math.round(value * 100) / 100;
+
+        // Acumula para cálculo de tendência
+        if (!trendData[compareKey]) {
+          trendData[compareKey] = { values: [], years: [] };
+        }
+        trendData[compareKey].values.push(value);
+        trendData[compareKey].years.push(year);
+      }
+    }
+
+    series.push(row);
+  }
+
+  // Calcula tendências (regressão linear simples)
+  const trends: Record<string, {
+    slope: number;
+    direction: "increasing" | "decreasing" | "stable";
+    avg_annual_change: number;
+    start_value: number;
+    end_value: number;
+    change_pct: number;
+  }> = {};
+
+  if (includeTrend) {
+    for (const [compareKey, td] of Object.entries(trendData)) {
+      const n = td.values.length;
+      if (n < 2) continue;
+
+      // Regressão linear simples
+      const sumX = td.years.reduce((a, b) => a + b, 0);
+      const sumY = td.values.reduce((a, b) => a + b, 0);
+      const sumXY = td.years.reduce((acc, x, i) => acc + x * td.values[i], 0);
+      const sumX2 = td.years.reduce((acc, x) => acc + x * x, 0);
+
+      const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+      const startValue = td.values[0];
+      const endValue = td.values[n - 1];
+      const changePct = startValue > 0 ? ((endValue - startValue) / startValue) * 100 : 0;
+
+      trends[compareKey] = {
+        slope: Math.round(slope * 1000) / 1000,
+        direction: slope > 0.1 ? "increasing" : slope < -0.1 ? "decreasing" : "stable",
+        avg_annual_change: Math.round(slope * 100) / 100,
+        start_value: Math.round(startValue * 100) / 100,
+        end_value: Math.round(endValue * 100) / 100,
+        change_pct: Math.round(changePct * 100) / 100,
+      };
+    }
+  }
+
+  // Identifica melhor/pior desempenho (para percentage, menor é melhor)
+  let bestPerformer: string | undefined;
+  let worstPerformer: string | undefined;
+
+  if (Object.keys(trends).length > 1) {
+    const sortedByChange = Object.entries(trends).sort((a, b) => a[1].change_pct - b[1].change_pct);
+    if (indicatorType === "percentage") {
+      // Para porcentagem ICSAP, queda é melhor
+      bestPerformer = sortedByChange[0][0];
+      worstPerformer = sortedByChange[sortedByChange.length - 1][0];
+    } else {
+      // Para contagem e taxa, menor variação positiva ou maior queda é melhor
+      bestPerformer = sortedByChange[0][0];
+      worstPerformer = sortedByChange[sortedByChange.length - 1][0];
+    }
+  }
+
+  return {
+    indicator: indicatorType,
+    period: { start: start_year, end: end_year },
+    compare_by: compare_by || "total",
+    series,
+    ...notesField(years, { icsap: true }, [
+      universeNote(args.universe),
+      ...(indicatorType === "rate_per_10k" ? populationNotes(await popSourcesFor(years)) : []),
+    ]),
+    trends: includeTrend ? trends : undefined,
+    summary: {
+      best_performer: bestPerformer,
+      worst_performer: worstPerformer,
+      note: indicatorType === "percentage"
+        ? "Para % ICSAP, queda indica melhoria na Atenção Primária"
+        : undefined,
+    },
+  };
 }
 
 // =============================================================================
