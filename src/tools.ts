@@ -54,6 +54,7 @@ import {
 import { getFreshness } from "./freshness.js";
 import { outputSchemaFor } from "./output-schemas.js";
 import { CLASSE_DO_ERRO_META, classeDaExcecao, withUpstreamCall } from "./upstream.js";
+import type { ClasseDoErro } from "./erros.js";
 import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cachedCubesManifest, causasSummaryState, cubesCacheDir, ensureCausasEstratosYears, ensureCausasSummary, ensureEstratosYears, ensureIcsapSummary, ensurePopulation, ensureSidecars, ensureYears, icsapSummaryState, loadCubesManifest, populationPresent, publishedYears, yearsFromArgs } from "./cache.js";
 import type { CubeKind } from "./cache.js";
 
@@ -1965,6 +1966,22 @@ function respostaSemAnos(anosPedidos: number[], atendiveis: Iterable<number>, ch
 }
 
 /**
+ * O ÚNICO lugar de `src/` que monta um resultado de erro (`isError: true`) —
+ * guardado por tests/guarda-classe-do-erro.test.ts. A classe é parâmetro
+ * OBRIGATÓRIO: quem monta erro diz a classe, e o compilador cobra. `undefined`
+ * só para a exceção que nenhum tipo reconhece (aí a borda classifica pela
+ * frase, como último recurso). A classe vai à borda em `_meta` (ver
+ * CLASSE_DO_ERRO_META em src/upstream.ts); o texto não muda.
+ */
+function resultadoDeErro(texto: string, classe: ClasseDoErro | undefined): CallToolResult {
+  return {
+    content: [{ type: "text", text: texto }],
+    isError: true,
+    ...(classe ? { _meta: { [CLASSE_DO_ERRO_META]: classe } } : {}),
+  };
+}
+
+/**
  * Executa uma ferramenta pelo nome e devolve o resultado MCP com o bloco de
  * proveniência. Erros viram `isError: true` com mensagem acionável — nunca
  * exceção para o transporte.
@@ -2135,10 +2152,10 @@ async function executarTool(name: string, args: ToolArgs): Promise<CallToolResul
         break;
 
       default:
-        return {
-          content: [{ type: "text", text: `Ferramenta desconhecida: ${name}` }],
-          isError: true,
-        };
+        // Inalcançável: o SDK recusa ferramenta fora da lista antes de chegar
+        // aqui ("Tool X not found", erro JSON-RPC). Chegar é bug nosso — uma
+        // tool listada sem `case` —, por isso `defeito` e não `contrato`.
+        return resultadoDeErro(`Ferramenta desconhecida: ${name}`, "defeito");
     }
 
     // Toda resposta sai com o bloco de proveniência do contrato (concise):
@@ -2163,13 +2180,8 @@ async function executarTool(name: string, args: ToolArgs): Promise<CallToolResul
     return withProvenance(capData(result), provenanceFor(name, args)) as CallToolResult;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    // A classe pelo TIPO vai à borda em `_meta` (ver CLASSE_DO_ERRO_META em
-    // src/upstream.ts); sem ela, o Worker classifica pela frase.
-    const classe = classeDaExcecao(error);
-    return {
-      content: [{ type: "text", text: `Erro ao executar ${name}: ${errorMessage}` }],
-      isError: true,
-      ...(classe ? { _meta: { [CLASSE_DO_ERRO_META]: classe } } : {}),
-    };
+    // A classe pelo TIPO (OrigemError, src/erros.ts, TypeError & cia.); sem
+    // ela, o Worker classifica pela frase.
+    return resultadoDeErro(`Erro ao executar ${name}: ${errorMessage}`, classeDaExcecao(error));
   }
 }

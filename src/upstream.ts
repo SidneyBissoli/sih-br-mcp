@@ -86,6 +86,7 @@ import {
 } from "@sbissoli/mcp-upstream";
 import { currentCall, withCall } from "@sbissoli/mcp-upstream/als";
 import type { RetrievalInput } from "@sbissoli/mcp-provenance";
+import { ErroComClasse, type ClasseDoErro } from "./erros.js";
 
 const VERSION: string = createRequire(import.meta.url)("../package.json").version;
 
@@ -239,10 +240,15 @@ export const CLASSE_DO_ERRO_META = "br.com.sidneybissoli.sih/classe-do-erro";
  * A classe que uma exceção declara pelo TIPO, ou `undefined` (aí a borda
  * classifica pela frase, como sempre). Erro de programa (`TypeError` & cia.)
  * é `defeito`, pelo mesmo critério do `classifyThrown` dos irmãos: pela frase,
- * o texto do motor de JS caía em `outro`.
+ * o texto do motor de JS caía em `outro`. Exceção de `src/erros.ts` traz a
+ * classe declarada no tipo.
  */
-export function classeDaExcecao(error: unknown): "nao_encontrado" | "fonte" | "defeito" | undefined {
+export function classeDaExcecao(error: unknown): ClasseDoErro | undefined {
   if (error instanceof OrigemError) return error.classe;
+  // Os tipos de src/erros.ts declaram a classe na construção (ErroInterno,
+  // ErroDeContrato, FalhaDaFonte): é o caminho de todo `throw` de src/db,
+  // src/tools.ts e src/cache.ts.
+  if (error instanceof ErroComClasse) return error.classe;
   if (
     error instanceof TypeError ||
     error instanceof RangeError ||

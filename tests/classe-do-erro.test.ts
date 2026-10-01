@@ -14,7 +14,7 @@
  * de tests/ano-ausente-frio.test.ts.
  */
 
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -109,5 +109,133 @@ describe("404 continua ausência respondida", () => {
     const r = await chamar();
     expect(r.isError).toBe(true);
     expect(classeNoMeta(r)).toBe("nao_encontrado");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DEFEITOS (30/09/2026, onda 2): `throw new Error(...)` genérico saía sem
+// `_meta`, e a borda caía na FRASE. Cada caso abaixo FALHAVA no código
+// anterior (conferido com o src de master): a classe pela frase está no nome.
+//
+// As variáveis de ambiente são lidas na CARGA dos módulos, então cada caso
+// recarrega o grafo (`vi.resetModules`) com a pasta de dados que precisa.
+// ---------------------------------------------------------------------------
+
+const FIXTURES = resolve(import.meta.dirname, "fixtures/sih");
+const envOriginal = { ...process.env };
+
+async function carregar(env: Record<string, string>) {
+  vi.resetModules();
+  Object.assign(process.env, { SIH_CUBES_CACHE: "off", SIH_FRESHNESS_CHECK: "off" }, env);
+  const tools = await import("../src/tools.js");
+  const upstream = await import("../src/upstream.js");
+  return { callTool: tools.callTool, classeDaExcecao: upstream.classeDaExcecao };
+}
+
+function pastaCom(arquivos: Record<string, string | Buffer>): string {
+  const dir = mkdtempSync(join(tmpdir(), "sih-classe-defeito-"));
+  for (const [nome, corpo] of Object.entries(arquivos)) writeFileSync(join(dir, nome), corpo);
+  return dir;
+}
+
+describe("defeitos declarados pelo tipo (antes: classe pela frase)", () => {
+  afterEach(() => {
+    vi.doUnmock("@duckdb/node-api");
+    for (const k of Object.keys(process.env)) if (!(k in envOriginal)) delete process.env[k];
+    Object.assign(process.env, envOriginal);
+  });
+
+  // As consultas DENTRO do `try` de cada handler viram erro-mole (`{error}`
+  // num sucesso) e não chegam ao `catch` final; a cobertura populacional de
+  // get_hospitalization_rates roda FORA dele, e é por ela que o caso passa.
+  it("'Erro na query' (Parquet que o DuckDB recusa) é `defeito` — pela frase ('Invalid Input Error') era `contrato`", async () => {
+    const dir = pastaCom({
+      "sih_causas_2023.parquet": readFileSync(join(FIXTURES, "sih_causas_2023.parquet")),
+      "pop_uf.parquet": "isto não é parquet",
+    });
+    const { callTool } = await carregar({ SIH_DATA_DIR: dir });
+    const r = await callTool("get_hospitalization_rates", { year: [ANO] });
+    expect(r.isError).toBe(true);
+    expect(JSON.stringify(r.content)).toContain("Erro na query");
+    expect(classeNoMeta(r)).toBe("defeito");
+  });
+
+  it("'Nenhum arquivo SIH Parquet' (cache desligado, pasta vazia) é `defeito` — pela frase era `nao_encontrado`", async () => {
+    const dir = pastaCom({});
+    const { callTool } = await carregar({ SIH_DATA_DIR: dir });
+    const r = await callTool("get_hospitalization_trends", { year_start: ANO, year_end: ANO, granularity: "month" });
+    expect(r.isError).toBe(true);
+    expect(JSON.stringify(r.content)).toContain("Nenhum arquivo SIH Parquet");
+    expect(classeNoMeta(r)).toBe("defeito");
+  });
+
+  it("'Nenhum cubo de series' (tipo de cubo ausente na pasta) é `defeito` — pela frase era `outro`", async () => {
+    // cubeSource só roda dentro do `try` dos handlers (erro-mole): o caso vai
+    // direto na camada de dados, que é de onde a exceção sai.
+    const dir = pastaCom({ "sih_causas_2023.parquet": readFileSync(join(FIXTURES, "sih_causas_2023.parquet")) });
+    const { classeDaExcecao } = await carregar({ SIH_DATA_DIR: dir });
+    const { cubeSource } = await import("../src/db/duckdb.js");
+    let erro: unknown = null;
+    try {
+      cubeSource("series");
+    } catch (e) {
+      erro = e;
+    }
+    expect(String(erro)).toContain("Nenhum cubo de series");
+    expect(classeDaExcecao(erro)).toBe("defeito");
+  });
+
+  it("'Erro ao criar banco DuckDB' é `defeito` — pela frase era `outro`", async () => {
+    vi.doMock("@duckdb/node-api", async (original) => {
+      const mod = (await original()) as Record<string, unknown>;
+      return {
+        ...mod,
+        DuckDBInstance: {
+          create: async () => {
+            throw new Error("sem memória para a instância");
+          },
+        },
+      };
+    });
+    const { callTool } = await carregar({ SIH_DATA_DIR: FIXTURES });
+    const r = await callTool("get_hospitalization_rates", { year: [ANO] });
+    expect(r.isError).toBe(true);
+    expect(JSON.stringify(r.content)).toContain("Erro ao criar banco DuckDB");
+    expect(classeNoMeta(r)).toBe("defeito");
+  });
+
+  it("'Ferramenta desconhecida' (ramo inalcançável do switch) é `defeito` — pela frase era `contrato`", async () => {
+    const { callTool } = await carregar({ SIH_DATA_DIR: FIXTURES });
+    const r = await callTool("ferramenta_que_nao_existe", {});
+    expect(r.isError).toBe(true);
+    expect(JSON.stringify(r.content)).toContain("Ferramenta desconhecida");
+    expect(classeNoMeta(r)).toBe("defeito");
+  });
+
+  it("população ausente (POPULATION_MISSING_MESSAGE) é `fonte` — pela frase era `outro`", async () => {
+    // Os handlers checam hasPopulationData() antes (erro-mole); quem LANÇA é
+    // a camada de dados, por isso o caso vai direto nela.
+    const dir = pastaCom({ "sih_series_2023.parquet": readFileSync(join(FIXTURES, "sih_series_2023.parquet")) });
+    const { classeDaExcecao } = await carregar({ SIH_DATA_DIR: dir });
+    const { getPopulation, getPopulationByUf } = await import("../src/db/duckdb.js");
+    for (const chamada of [() => getPopulation({ year: ANO }), () => getPopulationByUf({ year: ANO })]) {
+      const erro = await chamada().then(
+        () => null,
+        (e: unknown) => e,
+      );
+      expect(String(erro)).toContain("Dados populacionais não disponíveis");
+      expect(classeDaExcecao(erro)).toBe("fonte");
+    }
+  });
+
+  it("faixa etária fora das faixas antes de 2000 continua `contrato` (agora declarado)", async () => {
+    const { classeDaExcecao } = await carregar({ SIH_DATA_DIR: FIXTURES });
+    const { getPopulation } = await import("../src/db/duckdb.js");
+    const erro = await getPopulation({ year: 1995, ageMin: 3, ageMax: 7 }).then(
+      () => null,
+      (e: unknown) => e,
+    );
+    expect(String(erro)).toContain("só existe em faixas etárias");
+    expect(classeDaExcecao(erro)).toBe("contrato");
   });
 });

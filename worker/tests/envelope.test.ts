@@ -115,6 +115,30 @@ describe("classe pelo TIPO, em `_meta` (30/09/2026)", () => {
     });
   });
 
+  it("'Erro na query' do DuckDB: pela frase era `contrato` ('Invalid Input Error'); `defeito` em `_meta` vence", () => {
+    // Texto medido em 30/09/2026 (tests/classe-do-erro.test.ts, Parquet que o
+    // DuckDB recusa), encurtado; o container agora manda `defeito` (ErroInterno).
+    const erroQuery = (meta?: Record<string, unknown>) => ({
+      jsonrpc: "2.0",
+      id: 1,
+      result: {
+        content: [
+          {
+            type: "text",
+            text: "Erro ao executar get_hospitalization_rates: Erro na query: Invalid Input Error: No magic bytes found at end of file '/x/pop_uf.parquet'\nSQL: SELECT 1",
+          },
+        ],
+        isError: true,
+        ...(meta ? { _meta: meta } : {}),
+      },
+    });
+    expect(desfechoDaResposta(erroQuery())?.desfecho).toEqual({ erro: true, classe: "contrato" });
+    expect(desfechoDaResposta(erroQuery({ [CLASSE_DO_ERRO_META]: "defeito" }))?.desfecho).toEqual({
+      erro: true,
+      classe: "defeito",
+    });
+  });
+
   it("a chave é a MESMA dos dois lados do fio (container e borda)", () => {
     const container = readFileSync(resolve(import.meta.dirname, "../../src/upstream.ts"), "utf8");
     expect(container).toContain(`export const CLASSE_DO_ERRO_META = "${CLASSE_DO_ERRO_META}";`);

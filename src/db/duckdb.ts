@@ -17,6 +17,7 @@ import { fileURLToPath } from "url";
 import { dirname, join, resolve } from "path";
 import { existsSync, mkdirSync, readdirSync } from "fs";
 import { CUBES_BASE_URL, CUBES_CACHE_ENABLED, cubesCacheDir } from "../cache.js";
+import { ErroDeContrato, ErroInterno, FalhaDaFonte } from "../erros.js";
 
 // Obtém diretório do projeto
 const __filename = fileURLToPath(import.meta.url);
@@ -94,7 +95,9 @@ export function getDataDirectory(): string {
     return dataDirectory;
   }
 
-  throw new Error(
+  // Configuração nossa (cache desligado e pasta vazia): `defeito`. Pela frase
+  // ("Nenhum arquivo … encontrado") caía em `nao_encontrado`.
+  throw new ErroInterno(
     `Nenhum arquivo SIH Parquet encontrado em ${DATA_DIR} e o cache está desligado (SIH_CUBES_CACHE=off). Execute os scripts R de agregação ou baixe os cubos de ${CUBES_BASE_URL}.`
   );
 }
@@ -140,7 +143,13 @@ export function cubeFiles(cube: CubeKind): string[] {
 export function cubeSource(cube: CubeKind): string {
   const files = cubeFiles(cube);
   if (files.length === 0) {
-    throw new Error(
+    // `defeito`, não `fonte`: com o cache ligado o callTool garante os anos
+    // (ensureYears) ANTES da consulta, e download que falha lança ali mesmo um
+    // OrigemError (`fonte`); ano que o canal não publica é respondido pela
+    // guarda de ano ausente. Chegar aqui sem cubo é o cache desligado com a
+    // pasta vazia (configuração) ou `cubesForCall` sem o tipo que a consulta lê
+    // (bug). Pela frase caía em `outro`.
+    throw new ErroInterno(
       `Nenhum cubo de ${cube} em ${getDataDirectory()} (esperado sih_${cube}_<ano>.parquet). ` +
         `Com o cache ligado, os anos são baixados do canal antes da consulta; com SIH_CUBES_CACHE=off, a pasta precisa tê-los.`,
     );
@@ -181,7 +190,7 @@ export async function getDatabase(): Promise<DuckDBConnection> {
       instance = await DuckDBInstance.create(":memory:");
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      throw new Error(`Erro ao criar banco DuckDB: ${message}`);
+      throw new ErroInterno(`Erro ao criar banco DuckDB: ${message}`);
     }
     const connection = await instance.connect();
 
@@ -265,7 +274,10 @@ export async function query<T = Record<string, unknown>>(
     rows = result.getRowObjectsJS();
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    throw new Error(`Erro na query: ${message}\nSQL: ${sql}`);
+    // SQL que o motor recusou é bug nosso (`defeito`): os argumentos já
+    // passaram pela validação. Pela frase, a mensagem do DuckDB e o SQL ecoado
+    // (que interpola valores do usuário) caíam em contrato/nao_encontrado/outro.
+    throw new ErroInterno(`Erro na query: ${message}\nSQL: ${sql}`);
   }
 
   // Converte BigInt para Number para serialização JSON
@@ -767,7 +779,7 @@ async function queryIcsapAggregate<T = Record<string, unknown>>(options: {
         await connection.run(index === 0 ? `CREATE TEMP TABLE ${table} AS ${sql}` : `INSERT INTO ${table} ${sql}`);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        throw new Error(`Erro na query (ano ${year}): ${message}\nSQL: ${sql}`);
+        throw new ErroInterno(`Erro na query (ano ${year}): ${message}\nSQL: ${sql}`);
       }
     }
     const groupCols = groupBy.length > 0 ? `${groupBy.join(", ")}, ` : "";
@@ -1382,7 +1394,7 @@ export async function getPopulation(options: {
   ageMax?: number;
 }): Promise<number> {
   if (!hasPopulationData()) {
-    throw new Error(POPULATION_MISSING_MESSAGE);
+    throw new FalhaDaFonte(POPULATION_MISSING_MESSAGE);
   }
 
   // Tenta pop_uf.parquet para anos >= 2000 (idade simples)
@@ -1406,7 +1418,7 @@ export async function getPopulation(options: {
   if (options.year < 2000) {
     const ageGroups = aggregatedAgeGroupsFor(options.ageMin, options.ageMax);
     if (ageGroups === null) {
-      throw new Error(
+      throw new ErroDeContrato(
         `Antes de 2000 a população por UF só existe em faixas etárias quinquenais (${AGGREGATED_AGE_GROUPS.join(", ")}): ` +
           `o intervalo de idade ${options.ageMin ?? 0}–${options.ageMax ?? "+"} não cai nos limites das faixas. Use age_min múltiplo de 5 e age_max terminado em 4 ou 9 (ou 80+).`,
       );
@@ -1441,7 +1453,7 @@ export async function getPopulationByUf(options: {
   ageMax?: number;
 }): Promise<Record<string, number>> {
   if (!hasPopulationData()) {
-    throw new Error(POPULATION_MISSING_MESSAGE);
+    throw new FalhaDaFonte(POPULATION_MISSING_MESSAGE);
   }
 
   let result: Array<{ uf: string; population: number }>;
@@ -1459,7 +1471,7 @@ export async function getPopulationByUf(options: {
   } else if (options.year < 2000) {
     const ageGroups = aggregatedAgeGroupsFor(options.ageMin, options.ageMax);
     if (ageGroups === null) {
-      throw new Error(
+      throw new ErroDeContrato(
         `Antes de 2000 a população por UF só existe em faixas etárias quinquenais (${AGGREGATED_AGE_GROUPS.join(", ")}): ` +
           `o intervalo de idade ${options.ageMin ?? 0}–${options.ageMax ?? "+"} não cai nos limites das faixas.`,
       );
@@ -1472,7 +1484,7 @@ export async function getPopulationByUf(options: {
         groupBy: ["uf"],
       });
     } catch {
-      if (ageGroups) throw new Error("pop_uf_agregado.parquet indisponível: sem população por faixa etária antes de 2000.");
+      if (ageGroups) throw new FalhaDaFonte("pop_uf_agregado.parquet indisponível: sem população por faixa etária antes de 2000.");
       // Fallback (sem idade)
       result = await queryPopulationFromMunicipios<{ uf: string; population: number }>({
         years: [options.year],
