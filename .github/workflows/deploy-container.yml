@@ -73,6 +73,18 @@ jobs:
           npm ci
           npm ci --prefix worker
 
+      # OS TESTES DA RAIZ ANTES DO DEPLOY. Até 02/10/2026 só os do worker
+      # rodavam aqui. Entre eles está a trava da superfície declarada
+      # (tests/surface-lock.test.ts): superfície mudou sem subir a versão =
+      # vermelho aqui, e nem o container nem a borda sobem. O build vem antes
+      # porque a trava da borda (worker/tests/surface-lock.test.ts) roda o
+      # handler real do container a partir de dist/.
+      - if: steps.cf.outputs.ok == 'true'
+        name: Build e testes da raiz — inclui a trava da superfície declarada
+        run: |
+          npm run build
+          npm test
+
       # OS TESTES DO WORKER ANTES DO DEPLOY. Eles comparam a identidade entre as
       # três superfícies (SERVER_TITLE, server.json e o SERVER_CONFIG do worker)
       # e a lista de ferramentas que o worker anuncia contra a da raiz. Ficaram
@@ -118,3 +130,11 @@ jobs:
           done
           echo "::error::deriva: depois de 4 min o endpoint ainda não serve $ESPERADA"
           exit 1
+
+      # O que subiu é o que foi travado: superfície declarada servida sem
+      # credencial e, método a método, quem responde sem token (produção =
+      # API_KEY ausente). Os testes provam o CÓDIGO; isto prova o ENDPOINT.
+      # Roda depois da guarda de versão, que já esperou o container novo.
+      - if: steps.cf.outputs.ok == 'true'
+        name: Superfície no ar = surface.lock.json
+        run: npx mcp-surface verificar https://sih.sidneybissoli.com/mcp --tool list_cid_chapters --args '{}'
