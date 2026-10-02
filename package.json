@@ -19,6 +19,7 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
+    "surface:lock": "npm run build && mcp-surface travar --cmd \"vitest run tests/surface-lock.test.ts\" --cmd \"cd worker && npx vitest run tests/surface-lock.test.ts\"",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "prepare": "npm run build",
@@ -71,6 +72,7 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "^2.0.0",
+    "@sbissoli/mcp-surface": "^0.1.1",
     "@types/node": "^26.5.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.0",
