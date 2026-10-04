@@ -105,8 +105,9 @@ const validadorDeEntrada = new CfWorkerJsonSchemaValidator();
 /**
  * O `outputSchema` é ANUNCIADO verbatim, não imposto em runtime (molde do bcb,
  * `passthroughSchema` em register.ts). Quem prova que toda resposta obedece ao
- * esquema é tests/output-contract.test.ts, com o mesmo validador do SDK, caso
- * cheio e caso magro por ferramenta. Validar aqui também transformaria um
+ * esquema é tests/output-contract.test.ts, pelo `Client` do SDK contra o
+ * esquema LISTADO (`@sbissoli/mcp-surface/cliente`), caso cheio e caso magro
+ * por ferramenta. Validar aqui também transformaria um
  * descompasso entre esquema e resposta em erro para o usuário em produção —
  * o lugar de pegar isso é o CI, não o chat.
  */

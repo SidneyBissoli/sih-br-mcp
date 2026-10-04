@@ -18,8 +18,20 @@
  * mão (src/output-schemas.ts) a partir das formas MEDIDAS, então o caminho
  * feliz passa mesmo com um esquema desonesto; o defeito mora onde a fonte
  * OMITE um campo ou o anula — por isso cada ferramenta tem caso CHEIO e caso
- * MAGRO, e a validação é feita com o MESMO validador do SDK sobre o JSON que
- * atravessa o fio.
+ * MAGRO.
+ *
+ * Desde 04/10/2026 o teste tem FORMA DE CLIENTE (ideia de leitor,
+ * https://dev.to/arhancanli/comment/3g4i4): o servidor de verdade
+ * (`createServer`, o mesmo que os transportes montam) é interrogado pelo
+ * `Client` do SDK, que faz `tools/list` e `tools/call` e reprova o resultado
+ * contra o schema LISTADO — sem validador escolhido por nós (antes era o
+ * `CfWorkerJsonSchemaValidator`, o mesmo do servidor; o Inspector usa outro).
+ * O teste falha como a sessão do usuário falharia. Aqui isso pesa: o servidor
+ * ANUNCIA o `outputSchema` mas não o impõe (validador permissivo em
+ * src/server.ts), então só o cliente pega um schema desonesto. O circuito é o
+ * `@sbissoli/mcp-surface/cliente`, comum aos sete servidores: lista antes de
+ * chamar (sem `tools/list` o `Client` não valida nada) e passa cada mensagem
+ * do servidor por JSON, como a rede.
  *
  * Três defeitos reais deste portfólio vivem no envelope, e nenhum dos gates
  * de baseline os alcança:
@@ -29,8 +41,9 @@
  *    avisos e a série de 34 anos passou a responder sem dizer que 1992–1997
  *    usa lista CID-9 derivada.
  * 2. CHAVE QUE SOME NO FIO. `JSON.stringify` apaga a chave cujo valor é
- *    `undefined`; o transporte em memória não serializa, então o teste
- *    serializa por conta própria e compara os dois lados.
+ *    `undefined`; o transporte em memória não serializa, então o circuito do
+ *    cliente serializa cada mensagem, e o conferidor ainda compara os dois
+ *    lados por conta própria.
  * 3. TEXTO E ESTRUTURA DISCORDANDO. Cliente que só lê texto tem de receber a
  *    mesma resposta do cliente que lê estrutura.
  *
@@ -42,15 +55,43 @@
  *
  * O servidor é o de verdade (createServer), pelo transporte em memória, contra
  * as fixtures versionadas. A rede nunca é tocada (vitest.config.ts desliga o
- * cache de cubos).
+ * cache de cubos e aponta o DuckDB para tests/fixtures/sih; nada aqui grava
+ * nessa pasta).
  */
 
-import { Client } from "@modelcontextprotocol/client";
-import { InMemoryTransport } from "@modelcontextprotocol/server";
-import { CfWorkerJsonSchemaValidator } from "@modelcontextprotocol/server/validators/cf-worker";
+import type { Client } from "@modelcontextprotocol/client";
+import type { InMemoryTransport } from "@modelcontextprotocol/server";
+import { chamarComoCliente, conectarComoCliente, controlesNegativos } from "@sbissoli/mcp-surface/cliente";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createServer } from "../src/server.js";
+
+type ServidorReal = ReturnType<typeof createServer>;
+type FerramentaListada = { name: string; outputSchema?: unknown };
+
+/**
+ * Servidor de verdade cujo `tools/list` sai ADULTERADO a caminho do cliente
+ * (o resultado de `tools/call`, não). Serve à prova pelo lado do schema: o
+ * helper comum só mexe no resultado de `tools/call`. Clona antes de mexer —
+ * o objeto da mensagem pode ser o mesmo que o servidor registrou.
+ */
+function comListagemAdulterada(server: ServidorReal, adulterar: (tools: FerramentaListada[]) => void) {
+  return {
+    connect(transporte: InMemoryTransport): Promise<void> {
+      const enviar = transporte.send.bind(transporte);
+      transporte.send = async (mensagem, extra) => {
+        const r = (mensagem as { result?: { tools?: unknown } }).result;
+        if (r && Array.isArray(r.tools)) {
+          const copia = JSON.parse(JSON.stringify(mensagem)) as typeof mensagem;
+          adulterar((copia as unknown as { result: { tools: FerramentaListada[] } }).result.tools);
+          return enviar(copia, extra);
+        }
+        return enviar(mensagem, extra);
+      };
+      return server.connect(transporte);
+    },
+  };
+}
 
 // ---------------------------------------------------------------------------
 // O conferidor do envelope
@@ -209,36 +250,16 @@ const SEM_PARAMETRO = new Set(["list_cid_chapters", "get_available_years"]);
 
 // ---------------------------------------------------------------------------
 
-let cliente: Client;
-/** `outputSchema` por ferramenta, como o `tools/list` publica. */
-let esquemas: Map<string, unknown>;
-const validador = new CfWorkerJsonSchemaValidator();
-
 /**
- * Valida o que o CLIENTE vê: `structuredContent` atravessa como JSON, e
- * `JSON.stringify` apaga chave cujo valor é `undefined` — num campo obrigatório
- * isso é "missing required property" do outro lado. O transporte em memória
- * não serializa, então serializa-se aqui.
+ * Uma conexão no percurso do cliente para a suíte inteira: o `Client` lista
+ * uma vez e, a partir daí, reprova todo `tools/call` cujo `structuredContent`
+ * não obedeça ao schema listado. `chamarComoCliente` lança nesse caso e também
+ * quando a ferramenta responde `isError`.
  */
-function validarContraEsquema(nome: string, structuredContent: unknown): { valid: boolean; errorMessage?: string } {
-  const esquema = esquemas.get(nome);
-  if (esquema === undefined) return { valid: false, errorMessage: `${nome} sem outputSchema em tools/list` };
-  const noFio = JSON.parse(JSON.stringify(structuredContent)) as unknown;
-  return validador.getValidator(esquema as never)(noFio);
-}
-
-async function conectar(): Promise<Client> {
-  const server = createServer();
-  const [doCliente, doServidor] = InMemoryTransport.createLinkedPair();
-  const c = new Client({ name: "output-contract", version: "0.0.0" });
-  await Promise.all([server.connect(doServidor), c.connect(doCliente)]);
-  return c;
-}
+let cliente: Client;
 
 beforeAll(async () => {
-  cliente = await conectar();
-  const { tools } = await cliente.listTools();
-  esquemas = new Map(tools.map((t) => [t.name, t.outputSchema]));
+  cliente = await conectarComoCliente(createServer());
 });
 
 afterAll(async () => {
@@ -247,12 +268,8 @@ afterAll(async () => {
 
 describe("toda resposta de sucesso sai envelopada e obedece ao outputSchema anunciado", () => {
   it.each(CASOS.map((c) => [`${c.nome} — ${c.magro ? "MAGRO" : "cheio"} — ${c.cobre}`, c] as const))("%s", async (_titulo, caso) => {
-    const resultado = await cliente.callTool({ name: caso.nome, arguments: caso.args });
-    const texto = (resultado.content as Array<{ text?: string }> | undefined)?.[0]?.text;
-    expect(resultado.isError, `${caso.nome} devolveu erro: ${texto}`).toBeFalsy();
+    const resultado = await chamarComoCliente(cliente, caso.nome, caso.args);
     expect(conferirEnvelope(resultado), `${caso.nome} (${caso.cobre})`).toEqual([]);
-    const veredicto = validarContraEsquema(caso.nome, resultado.structuredContent);
-    expect(veredicto.valid, `${caso.nome} (${caso.cobre}): ${veredicto.errorMessage}`).toBe(true);
   });
 
   /**
@@ -273,44 +290,35 @@ describe("toda resposta de sucesso sai envelopada e obedece ao outputSchema anun
     ["compare_icsap_trends", { start_year: 2029, end_year: 2030 }],
     ["list_csap_groups", { group_code: "g99" }],
   ] as const)("erro-mole de %s obedece ao esquema", async (nome, args) => {
-    const resultado = await cliente.callTool({ name: nome, arguments: args as Record<string, unknown> });
-    expect(resultado.isError).toBeFalsy();
+    const resultado = await chamarComoCliente(cliente, nome, args as Record<string, unknown>);
     const sc = resultado.structuredContent as Record<string, unknown>;
     expect(typeof sc.error).toBe("string");
-    const veredicto = validarContraEsquema(nome, sc);
-    expect(veredicto.valid, `${nome}: ${veredicto.errorMessage}`).toBe(true);
   });
 
   /**
    * Um portão que não pode reprovar não vale nada — e um esquema em que tudo é
-   * opcional passaria qualquer coisa. Três provas: (1) esquema DESONESTO
-   * contra uma resposta real — anunciar como `string` o que a fonte anula é a
-   * mentira exata que este arquivo existe para pegar; (2) resposta MUTILADA
-   * contra o esquema honesto — sem `summary`, o caminho feliz não fecha e o
-   * de erro-mole também não; (3) chave INTRUSA — o topo é fechado.
+   * opcional passaria qualquer coisa. Prova pelo lado do SCHEMA: o servidor
+   * responde certo, mas o `tools/list` que chega ao cliente ANUNCIA uma
+   * mentira — `csap_group` como `string`, quando a fonte o anula (código fora
+   * da lista). É a mentira exata que este arquivo existe para pegar, e quem a
+   * recusa é o próprio `Client`, nomeando o campo. A prova pelo lado do
+   * RESULTADO (resposta mutilada, chave intrusa) está nos controles negativos
+   * abaixo.
    */
-  it("reprova esquema desonesto e resposta mutilada (prova de que o portão fecha)", async () => {
-    const magro = await cliente.callTool({ name: "classify_as_csap", arguments: { cid_codes: ["ZZZZ"] } });
-    expect(validarContraEsquema("classify_as_csap", magro.structuredContent).valid).toBe(true);
-    const desonesto = JSON.parse(JSON.stringify(esquemas.get("classify_as_csap"))) as {
-      properties: { classifications: { items: { properties: Record<string, unknown> } } };
-    };
-    desonesto.properties.classifications.items.properties.csap_group = { type: "string" };
-    const v1 = validador.getValidator(desonesto as never)(JSON.parse(JSON.stringify(magro.structuredContent)));
-    expect(v1.valid).toBe(false);
-    expect(v1.errorMessage).toContain("csap_group");
+  it("reprova esquema desonesto (prova de que o portão fecha)", async () => {
+    await chamarComoCliente(cliente, "classify_as_csap", { cid_codes: ["ZZZZ"] });
 
-    const cheio = await cliente.callTool({ name: "get_hospitalizations", arguments: { year: [2023], group_by: ["uf"] } });
-    expect(validarContraEsquema("get_hospitalizations", cheio.structuredContent).valid).toBe(true);
-    const semSummary = JSON.parse(JSON.stringify(cheio.structuredContent)) as Record<string, unknown>;
-    delete semSummary.summary;
-    expect(validarContraEsquema("get_hospitalizations", semSummary).valid).toBe(false);
-
-    const comIntruso = JSON.parse(JSON.stringify(cheio.structuredContent)) as Record<string, unknown>;
-    comIntruso.intruso = 1;
-    const v3 = validarContraEsquema("get_hospitalizations", comIntruso);
-    expect(v3.valid).toBe(false);
-    expect(v3.errorMessage).toContain("intruso");
+    const desonesto = await conectarComoCliente(comListagemAdulterada(createServer(), (tools) => {
+      const t = tools.find((x) => x.name === "classify_as_csap") as {
+        outputSchema: { properties: { classifications: { items: { properties: Record<string, unknown> } } } };
+      };
+      t.outputSchema.properties.classifications.items.properties.csap_group = { type: "string" };
+    }));
+    try {
+      await expect(chamarComoCliente(desonesto, "classify_as_csap", { cid_codes: ["ZZZZ"] })).rejects.toThrow(/csap_group/);
+    } finally {
+      await desonesto.close();
+    }
   });
 
   /**
@@ -347,7 +355,7 @@ describe("toda resposta de sucesso sai envelopada e obedece ao outputSchema anun
    * e o conferidor tem de recusar cada uma.
    */
   it("reprova envelope mutilado (prova de que o conferidor do envelope fecha)", async () => {
-    const bom = (await cliente.callTool({ name: "get_available_years", arguments: {} })) as Record<string, unknown>;
+    const bom = (await chamarComoCliente(cliente, "get_available_years", {})) as Record<string, unknown>;
     expect(conferirEnvelope(bom)).toEqual([]);
 
     const clonar = () => JSON.parse(JSON.stringify(bom)) as Record<string, unknown>;
@@ -372,6 +380,42 @@ describe("toda resposta de sucesso sai envelopada e obedece ao outputSchema anun
     const p = (proveniênciaIncompleta.structuredContent as Record<string, unknown>).provenance;
     delete (Array.isArray(p) ? (p[0] as Record<string, unknown>) : (p as Record<string, unknown>)).license;
     expect(conferirEnvelope(proveniênciaIncompleta).join(" ")).toContain("license");
+  });
+});
+
+// ==================== controle negativo, no percurso do cliente ====================
+//
+// Prova pelo lado do RESULTADO: o servidor responde certo e o resultado é
+// quebrado NO FIO, entre servidor e cliente — como chegaria de um servidor com
+// defeito. Cada quebra tem de fazer a chamada falhar. As genéricas saem do
+// schema listado (structuredContent ausente, cada obrigatório do topo ausente,
+// tipo trocado); as duas deste servidor: sem `summary` (obrigatório só dentro
+// do ramo do caminho feliz do `anyOf`, que as genéricas não veem — sem ele o
+// caminho feliz não fecha e o de erro-mole também não) e a chave intrusa,
+// porque o topo é FECHADO (`additionalProperties: false`, afirmado abaixo
+// sobre o schema listado, não suposto). O último veredito é a armadilha: sem
+// `tools/list` antes, o Client não valida — se o SDK mudar isso, ele acusa.
+
+describe("o validador do cliente reprova resultado quebrado no fio", () => {
+  it("get_hospitalizations: toda quebra reprova, e a armadilha se confirma", async () => {
+    const { tools } = await cliente.listTools();
+    const esquema = tools.find((t) => t.name === "get_hospitalizations")?.outputSchema as { additionalProperties?: unknown } | undefined;
+    expect(esquema?.additionalProperties, "topo do outputSchema deixou de ser fechado").toBe(false);
+
+    const vs = await controlesNegativos(() => createServer(), "get_hospitalizations", { year: [2023], group_by: ["uf"] }, [
+      {
+        descricao: "sem summary (ramo do caminho feliz do anyOf)",
+        adulterar: (r) => void delete r.structuredContent?.summary,
+      },
+      {
+        descricao: "campo que o topo fechado proíbe (intruso)",
+        adulterar: (r) => {
+          if (r.structuredContent) r.structuredContent.intruso = 1;
+        },
+      },
+    ]);
+    expect(vs.length).toBeGreaterThanOrEqual(5);
+    for (const v of vs) expect(v.obtido, `${v.descricao}: ${v.mensagem ?? ""}`).toBe(v.esperado);
   });
 });
 
