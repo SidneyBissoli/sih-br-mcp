@@ -25,7 +25,7 @@ claude.ai ──HTTPS──▶ Worker sih-br-mcp-edge (sih.sidneybissoli.com)
 | `/health` | Worker de pé + sonda do `/healthz` do container (`container: "up" \| "asleep" \| "down"`, timeout 3 s). **Não acorda** o container: "asleep" é o estado normal fora de uso. Monitores externos devem usar esta rota, não o `/mcp`. | `src/index.ts`, `src/container.ts` |
 | `/status` | Versão + id/tag/timestamp do último deploy | `src/status.ts` |
 | `/metrics` | Estatísticas de uso agregadas (30 dias, Durable Object) | `src/usage.ts` |
-| `/.well-known/mcp/server-card.json` | Server card: ferramentas lidas do container (cache por isolate); lista estática se ele não responde (`source: "static"`) | `src/card.ts` |
+| `/.well-known/mcp/server-card.json` | Server card na forma da Smithery (`serverInfo`, `authentication`), gerado por `@sbissoli/mcp-surface/card` a partir do container (cache por isolate); lista estática se ele não responde (`source: "static"`, sem cache) | `src/card.ts` |
 | `/.well-known/glama.json` | Descritor do Glama | `src/index.ts` |
 | `/mcp` | **Proxy** ao container: POST/GET/DELETE, corpo e resposta em stream (SSE de até ~30 s), cabeçalhos do transporte por lista positiva | `src/index.ts`, `src/mcp-proxy.ts` |
 

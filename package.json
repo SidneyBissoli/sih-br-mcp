@@ -72,7 +72,7 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "^2.0.0",
-    "@sbissoli/mcp-surface": "^0.2.0",
+    "@sbissoli/mcp-surface": "^0.4.0",
     "@types/node": "^26.5.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.0",
