@@ -14,13 +14,14 @@
  * container voltar, o card volta com ele.
  */
 
-import { autenticacaoDaTrava, capturarCardPorFetch } from "@sbissoli/mcp-surface/card";
+import { autenticacaoDaTrava, capturarCardPorFetch } from "@sbissoli/mcp-surface/card/http";
 
-import trava from "../../surface.lock.json" with { type: "json" };
+// Import nomeado: o esbuild descarta o resto da trava e só a medição `semToken` entra no bundle.
+import { semToken } from "../../surface.lock.json";
 import { SERVER_CONFIG, TOOLS } from "./config.js";
 import { logger } from "./logger.js";
 
-const authentication = autenticacaoDaTrava(trava);
+const authentication = autenticacaoDaTrava({ semToken });
 
 /** O card quando o container não responde: mesma forma, ferramentas da lista estática. */
 export function staticServerCard(): Record<string, unknown> {
