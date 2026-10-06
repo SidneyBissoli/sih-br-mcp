@@ -106,7 +106,7 @@ export const PROVENANCE_BLOCK_SCHEMA: Schema = {
     source: descrever(CONCISE.properties.source!, "Fonte oficial do dado"),
     source_url: descrever(CONCISE.properties.source_url!, "URL canônica que reproduz a consulta ou localiza a fonte"),
     data_vintage: descrever(CONCISE.properties.data_vintage!, "Competência ou safra do dado segundo a fonte; null quando a fonte não expõe"),
-    retrieved_at: descrever(CONCISE.properties.retrieved_at!, "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"),
+    retrieved_at: descrever(CONCISE.properties.retrieved_at!, "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, o download MAIS ANTIGO, do FTP do DATASUS, entre os .dbc que alimentaram a resposta (cópia idêntica ao original naquela data, MD5 registrado no sidecar), nunca o instante da chamada"),
     retrieval: descrever(
       CONCISE.properties.retrieval!,
       "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)",

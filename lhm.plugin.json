@@ -1,7 +1,7 @@
 {
   "identifier": "sidneybissoli-sih-br-mcp",
   "name": "DATASUS SIH/SUS — Brazil Hospital Admissions (AIH) MCP",
-  "version": "1.2.3",
+  "version": "1.3.0",
   "icon": "🏥",
   "description": "Servidor MCP do DATASUS SIH/SUS: internações hospitalares do Brasil (AIH, 1992–2025) — causas CID-10 e CID-9, séries mensais, ICSAP e taxas por UF e município, sem baixar .dbc nem usar TabNet. Brazilian hospital admissions (SIH/SUS) MCP server: ICD-10 causes, monthly series, ambulatory-care-sensitive conditions (ICSAP) and rates by state and municipality, with source, data vintage and citation on every answer. Hosted on Cloudflare (Streamable HTTP, no auth) or local stdio via npm.",
   "author": "Sidney Bissoli",
@@ -176,7 +176,7 @@
               },
               "retrieved_at": {
                 "type": "string",
-                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, o download MAIS ANTIGO, do FTP do DATASUS, entre os .dbc que alimentaram a resposta (cópia idêntica ao original naquela data, MD5 registrado no sidecar), nunca o instante da chamada"
               },
               "retrieval": {
                 "oneOf": [
@@ -382,7 +382,7 @@
               },
               "retrieved_at": {
                 "type": "string",
-                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, o download MAIS ANTIGO, do FTP do DATASUS, entre os .dbc que alimentaram a resposta (cópia idêntica ao original naquela data, MD5 registrado no sidecar), nunca o instante da chamada"
               },
               "retrieval": {
                 "oneOf": [
@@ -1028,7 +1028,7 @@
               },
               "retrieved_at": {
                 "type": "string",
-                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, o download MAIS ANTIGO, do FTP do DATASUS, entre os .dbc que alimentaram a resposta (cópia idêntica ao original naquela data, MD5 registrado no sidecar), nunca o instante da chamada"
               },
               "retrieval": {
                 "oneOf": [
@@ -1583,7 +1583,7 @@
               },
               "retrieved_at": {
                 "type": "string",
-                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, o download MAIS ANTIGO, do FTP do DATASUS, entre os .dbc que alimentaram a resposta (cópia idêntica ao original naquela data, MD5 registrado no sidecar), nunca o instante da chamada"
               },
               "retrieval": {
                 "oneOf": [
@@ -1919,7 +1919,7 @@
               },
               "retrieved_at": {
                 "type": "string",
-                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, o download MAIS ANTIGO, do FTP do DATASUS, entre os .dbc que alimentaram a resposta (cópia idêntica ao original naquela data, MD5 registrado no sidecar), nunca o instante da chamada"
               },
               "retrieval": {
                 "oneOf": [
@@ -2226,7 +2226,7 @@
               },
               "retrieved_at": {
                 "type": "string",
-                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, o download MAIS ANTIGO, do FTP do DATASUS, entre os .dbc que alimentaram a resposta (cópia idêntica ao original naquela data, MD5 registrado no sidecar), nunca o instante da chamada"
               },
               "retrieval": {
                 "oneOf": [
@@ -2741,7 +2741,7 @@
                 },
                 "retrieved_at": {
                   "type": "string",
-                  "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                  "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, o download MAIS ANTIGO, do FTP do DATASUS, entre os .dbc que alimentaram a resposta (cópia idêntica ao original naquela data, MD5 registrado no sidecar), nunca o instante da chamada"
                 },
                 "retrieval": {
                   "oneOf": [
@@ -3124,7 +3124,7 @@
                 },
                 "retrieved_at": {
                   "type": "string",
-                  "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                  "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, o download MAIS ANTIGO, do FTP do DATASUS, entre os .dbc que alimentaram a resposta (cópia idêntica ao original naquela data, MD5 registrado no sidecar), nunca o instante da chamada"
                 },
                 "retrieval": {
                   "oneOf": [
@@ -3488,7 +3488,7 @@
                 },
                 "retrieved_at": {
                   "type": "string",
-                  "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                  "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, o download MAIS ANTIGO, do FTP do DATASUS, entre os .dbc que alimentaram a resposta (cópia idêntica ao original naquela data, MD5 registrado no sidecar), nunca o instante da chamada"
                 },
                 "retrieval": {
                   "oneOf": [
@@ -3739,7 +3739,7 @@
               },
               "retrieved_at": {
                 "type": "string",
-                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, o download MAIS ANTIGO, do FTP do DATASUS, entre os .dbc que alimentaram a resposta (cópia idêntica ao original naquela data, MD5 registrado no sidecar), nunca o instante da chamada"
               },
               "retrieval": {
                 "oneOf": [
@@ -4353,7 +4353,7 @@
                 },
                 "retrieved_at": {
                   "type": "string",
-                  "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                  "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, o download MAIS ANTIGO, do FTP do DATASUS, entre os .dbc que alimentaram a resposta (cópia idêntica ao original naquela data, MD5 registrado no sidecar), nunca o instante da chamada"
                 },
                 "retrieval": {
                   "oneOf": [
@@ -4757,7 +4757,7 @@
                 },
                 "retrieved_at": {
                   "type": "string",
-                  "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, a safra do sidecar (extração no FTP do DATASUS), nunca o instante do download"
+                  "description": "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, o download MAIS ANTIGO, do FTP do DATASUS, entre os .dbc que alimentaram a resposta (cópia idêntica ao original naquela data, MD5 registrado no sidecar), nunca o instante da chamada"
                 },
                 "retrieval": {
                   "oneOf": [
