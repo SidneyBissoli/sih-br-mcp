@@ -1,8 +1,8 @@
 {
   "$comentario": "Impressão digital da superfície (@sbissoli/mcp-surface). Não editar à mão: `npm run surface:lock` regrava, e só aceita superfície nova sob versão nova.",
   "declarada": {
-    "versao": "1.3.0",
-    "sha256": "d55a02ea715312b78a863e32235670dbe0823bdce2bdb3b91d25cdceb2379db3",
+    "versao": "1.4.0",
+    "sha256": "873091ada6bf0d8c1f4e9298f7dd5c20b54242a3ed9ea95a002e3abf12a591f8",
     "conteudo": {
       "initialize": {
         "capabilities": {
@@ -138,6 +138,65 @@
                       "string",
                       "null"
                     ]
+                  },
+                  "field_sources": {
+                    "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só",
+                    "items": {
+                      "additionalProperties": false,
+                      "description": "Proveniência de um grupo de campos da resposta: de onde veio e quando foi extraído",
+                      "properties": {
+                        "data_vintage": {
+                          "description": "Vintage/competência da sub-fonte",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "dataset_id": {
+                          "description": "Identificador do conjunto da sub-fonte",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "fields": {
+                          "description": "Campos do payload atribuídos a esta sub-fonte",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "retrieved_at": {
+                          "description": "ISO-8601 da extração desta sub-fonte na origem",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "served_from_cache": {
+                          "description": "true se esta sub-fonte veio do cache do servidor (retrieved_at é o da extração original); false se foi buscada nesta chamada; null se o servidor não distingue",
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "source_url": {
+                          "description": "URL canônica da sub-fonte que originou estes campos",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "fields",
+                        "source_url",
+                        "dataset_id",
+                        "data_vintage",
+                        "retrieved_at"
+                      ],
+                      "type": "object"
+                    },
+                    "minItems": 1,
+                    "type": "array"
                   },
                   "license": {
                     "description": "Regime legal do dado (id SPDX quando há)",
@@ -455,6 +514,65 @@
                         "string",
                         "null"
                       ]
+                    },
+                    "field_sources": {
+                      "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só",
+                      "items": {
+                        "additionalProperties": false,
+                        "description": "Proveniência de um grupo de campos da resposta: de onde veio e quando foi extraído",
+                        "properties": {
+                          "data_vintage": {
+                            "description": "Vintage/competência da sub-fonte",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "dataset_id": {
+                            "description": "Identificador do conjunto da sub-fonte",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "fields": {
+                            "description": "Campos do payload atribuídos a esta sub-fonte",
+                            "items": {
+                              "type": "string"
+                            },
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "retrieved_at": {
+                            "description": "ISO-8601 da extração desta sub-fonte na origem",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "served_from_cache": {
+                            "description": "true se esta sub-fonte veio do cache do servidor (retrieved_at é o da extração original); false se foi buscada nesta chamada; null se o servidor não distingue",
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source_url": {
+                            "description": "URL canônica da sub-fonte que originou estes campos",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "fields",
+                          "source_url",
+                          "dataset_id",
+                          "data_vintage",
+                          "retrieved_at"
+                        ],
+                        "type": "object"
+                      },
+                      "minItems": 1,
+                      "type": "array"
                     },
                     "license": {
                       "description": "Regime legal do dado (id SPDX quando há)",
@@ -810,6 +928,65 @@
                       "string",
                       "null"
                     ]
+                  },
+                  "field_sources": {
+                    "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só",
+                    "items": {
+                      "additionalProperties": false,
+                      "description": "Proveniência de um grupo de campos da resposta: de onde veio e quando foi extraído",
+                      "properties": {
+                        "data_vintage": {
+                          "description": "Vintage/competência da sub-fonte",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "dataset_id": {
+                          "description": "Identificador do conjunto da sub-fonte",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "fields": {
+                          "description": "Campos do payload atribuídos a esta sub-fonte",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "retrieved_at": {
+                          "description": "ISO-8601 da extração desta sub-fonte na origem",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "served_from_cache": {
+                          "description": "true se esta sub-fonte veio do cache do servidor (retrieved_at é o da extração original); false se foi buscada nesta chamada; null se o servidor não distingue",
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "source_url": {
+                          "description": "URL canônica da sub-fonte que originou estes campos",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "fields",
+                        "source_url",
+                        "dataset_id",
+                        "data_vintage",
+                        "retrieved_at"
+                      ],
+                      "type": "object"
+                    },
+                    "minItems": 1,
+                    "type": "array"
                   },
                   "license": {
                     "description": "Regime legal do dado (id SPDX quando há)",
@@ -1494,6 +1671,65 @@
                       "null"
                     ]
                   },
+                  "field_sources": {
+                    "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só",
+                    "items": {
+                      "additionalProperties": false,
+                      "description": "Proveniência de um grupo de campos da resposta: de onde veio e quando foi extraído",
+                      "properties": {
+                        "data_vintage": {
+                          "description": "Vintage/competência da sub-fonte",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "dataset_id": {
+                          "description": "Identificador do conjunto da sub-fonte",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "fields": {
+                          "description": "Campos do payload atribuídos a esta sub-fonte",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "retrieved_at": {
+                          "description": "ISO-8601 da extração desta sub-fonte na origem",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "served_from_cache": {
+                          "description": "true se esta sub-fonte veio do cache do servidor (retrieved_at é o da extração original); false se foi buscada nesta chamada; null se o servidor não distingue",
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "source_url": {
+                          "description": "URL canônica da sub-fonte que originou estes campos",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "fields",
+                        "source_url",
+                        "dataset_id",
+                        "data_vintage",
+                        "retrieved_at"
+                      ],
+                      "type": "object"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                  },
                   "license": {
                     "description": "Regime legal do dado (id SPDX quando há)",
                     "type": [
@@ -2085,6 +2321,65 @@
                         "null"
                       ]
                     },
+                    "field_sources": {
+                      "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só",
+                      "items": {
+                        "additionalProperties": false,
+                        "description": "Proveniência de um grupo de campos da resposta: de onde veio e quando foi extraído",
+                        "properties": {
+                          "data_vintage": {
+                            "description": "Vintage/competência da sub-fonte",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "dataset_id": {
+                            "description": "Identificador do conjunto da sub-fonte",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "fields": {
+                            "description": "Campos do payload atribuídos a esta sub-fonte",
+                            "items": {
+                              "type": "string"
+                            },
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "retrieved_at": {
+                            "description": "ISO-8601 da extração desta sub-fonte na origem",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "served_from_cache": {
+                            "description": "true se esta sub-fonte veio do cache do servidor (retrieved_at é o da extração original); false se foi buscada nesta chamada; null se o servidor não distingue",
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source_url": {
+                            "description": "URL canônica da sub-fonte que originou estes campos",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "fields",
+                          "source_url",
+                          "dataset_id",
+                          "data_vintage",
+                          "retrieved_at"
+                        ],
+                        "type": "object"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
                     "license": {
                       "description": "Regime legal do dado (id SPDX quando há)",
                       "type": [
@@ -2421,6 +2716,65 @@
                       "string",
                       "null"
                     ]
+                  },
+                  "field_sources": {
+                    "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só",
+                    "items": {
+                      "additionalProperties": false,
+                      "description": "Proveniência de um grupo de campos da resposta: de onde veio e quando foi extraído",
+                      "properties": {
+                        "data_vintage": {
+                          "description": "Vintage/competência da sub-fonte",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "dataset_id": {
+                          "description": "Identificador do conjunto da sub-fonte",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "fields": {
+                          "description": "Campos do payload atribuídos a esta sub-fonte",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "retrieved_at": {
+                          "description": "ISO-8601 da extração desta sub-fonte na origem",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "served_from_cache": {
+                          "description": "true se esta sub-fonte veio do cache do servidor (retrieved_at é o da extração original); false se foi buscada nesta chamada; null se o servidor não distingue",
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "source_url": {
+                          "description": "URL canônica da sub-fonte que originou estes campos",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "fields",
+                        "source_url",
+                        "dataset_id",
+                        "data_vintage",
+                        "retrieved_at"
+                      ],
+                      "type": "object"
+                    },
+                    "minItems": 1,
+                    "type": "array"
                   },
                   "license": {
                     "description": "Regime legal do dado (id SPDX quando há)",
@@ -2959,6 +3313,65 @@
                       "null"
                     ]
                   },
+                  "field_sources": {
+                    "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só",
+                    "items": {
+                      "additionalProperties": false,
+                      "description": "Proveniência de um grupo de campos da resposta: de onde veio e quando foi extraído",
+                      "properties": {
+                        "data_vintage": {
+                          "description": "Vintage/competência da sub-fonte",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "dataset_id": {
+                          "description": "Identificador do conjunto da sub-fonte",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "fields": {
+                          "description": "Campos do payload atribuídos a esta sub-fonte",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "retrieved_at": {
+                          "description": "ISO-8601 da extração desta sub-fonte na origem",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "served_from_cache": {
+                          "description": "true se esta sub-fonte veio do cache do servidor (retrieved_at é o da extração original); false se foi buscada nesta chamada; null se o servidor não distingue",
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "source_url": {
+                          "description": "URL canônica da sub-fonte que originou estes campos",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "fields",
+                        "source_url",
+                        "dataset_id",
+                        "data_vintage",
+                        "retrieved_at"
+                      ],
+                      "type": "object"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                  },
                   "license": {
                     "description": "Regime legal do dado (id SPDX quando há)",
                     "type": [
@@ -3469,6 +3882,65 @@
                         "null"
                       ]
                     },
+                    "field_sources": {
+                      "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só",
+                      "items": {
+                        "additionalProperties": false,
+                        "description": "Proveniência de um grupo de campos da resposta: de onde veio e quando foi extraído",
+                        "properties": {
+                          "data_vintage": {
+                            "description": "Vintage/competência da sub-fonte",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "dataset_id": {
+                            "description": "Identificador do conjunto da sub-fonte",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "fields": {
+                            "description": "Campos do payload atribuídos a esta sub-fonte",
+                            "items": {
+                              "type": "string"
+                            },
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "retrieved_at": {
+                            "description": "ISO-8601 da extração desta sub-fonte na origem",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "served_from_cache": {
+                            "description": "true se esta sub-fonte veio do cache do servidor (retrieved_at é o da extração original); false se foi buscada nesta chamada; null se o servidor não distingue",
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source_url": {
+                            "description": "URL canônica da sub-fonte que originou estes campos",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "fields",
+                          "source_url",
+                          "dataset_id",
+                          "data_vintage",
+                          "retrieved_at"
+                        ],
+                        "type": "object"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
                     "license": {
                       "description": "Regime legal do dado (id SPDX quando há)",
                       "type": [
@@ -3896,6 +4368,65 @@
                         "null"
                       ]
                     },
+                    "field_sources": {
+                      "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só",
+                      "items": {
+                        "additionalProperties": false,
+                        "description": "Proveniência de um grupo de campos da resposta: de onde veio e quando foi extraído",
+                        "properties": {
+                          "data_vintage": {
+                            "description": "Vintage/competência da sub-fonte",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "dataset_id": {
+                            "description": "Identificador do conjunto da sub-fonte",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "fields": {
+                            "description": "Campos do payload atribuídos a esta sub-fonte",
+                            "items": {
+                              "type": "string"
+                            },
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "retrieved_at": {
+                            "description": "ISO-8601 da extração desta sub-fonte na origem",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "served_from_cache": {
+                            "description": "true se esta sub-fonte veio do cache do servidor (retrieved_at é o da extração original); false se foi buscada nesta chamada; null se o servidor não distingue",
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source_url": {
+                            "description": "URL canônica da sub-fonte que originou estes campos",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "fields",
+                          "source_url",
+                          "dataset_id",
+                          "data_vintage",
+                          "retrieved_at"
+                        ],
+                        "type": "object"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
                     "license": {
                       "description": "Regime legal do dado (id SPDX quando há)",
                       "type": [
@@ -4136,6 +4667,65 @@
                       "string",
                       "null"
                     ]
+                  },
+                  "field_sources": {
+                    "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só",
+                    "items": {
+                      "additionalProperties": false,
+                      "description": "Proveniência de um grupo de campos da resposta: de onde veio e quando foi extraído",
+                      "properties": {
+                        "data_vintage": {
+                          "description": "Vintage/competência da sub-fonte",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "dataset_id": {
+                          "description": "Identificador do conjunto da sub-fonte",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "fields": {
+                          "description": "Campos do payload atribuídos a esta sub-fonte",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "retrieved_at": {
+                          "description": "ISO-8601 da extração desta sub-fonte na origem",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "served_from_cache": {
+                          "description": "true se esta sub-fonte veio do cache do servidor (retrieved_at é o da extração original); false se foi buscada nesta chamada; null se o servidor não distingue",
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "source_url": {
+                          "description": "URL canônica da sub-fonte que originou estes campos",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "fields",
+                        "source_url",
+                        "dataset_id",
+                        "data_vintage",
+                        "retrieved_at"
+                      ],
+                      "type": "object"
+                    },
+                    "minItems": 1,
+                    "type": "array"
                   },
                   "license": {
                     "description": "Regime legal do dado (id SPDX quando há)",
@@ -4414,6 +5004,65 @@
                       "string",
                       "null"
                     ]
+                  },
+                  "field_sources": {
+                    "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só",
+                    "items": {
+                      "additionalProperties": false,
+                      "description": "Proveniência de um grupo de campos da resposta: de onde veio e quando foi extraído",
+                      "properties": {
+                        "data_vintage": {
+                          "description": "Vintage/competência da sub-fonte",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "dataset_id": {
+                          "description": "Identificador do conjunto da sub-fonte",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "fields": {
+                          "description": "Campos do payload atribuídos a esta sub-fonte",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "retrieved_at": {
+                          "description": "ISO-8601 da extração desta sub-fonte na origem",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "served_from_cache": {
+                          "description": "true se esta sub-fonte veio do cache do servidor (retrieved_at é o da extração original); false se foi buscada nesta chamada; null se o servidor não distingue",
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "source_url": {
+                          "description": "URL canônica da sub-fonte que originou estes campos",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "fields",
+                        "source_url",
+                        "dataset_id",
+                        "data_vintage",
+                        "retrieved_at"
+                      ],
+                      "type": "object"
+                    },
+                    "minItems": 1,
+                    "type": "array"
                   },
                   "license": {
                     "description": "Regime legal do dado (id SPDX quando há)",
@@ -4695,6 +5344,65 @@
                         "string",
                         "null"
                       ]
+                    },
+                    "field_sources": {
+                      "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só",
+                      "items": {
+                        "additionalProperties": false,
+                        "description": "Proveniência de um grupo de campos da resposta: de onde veio e quando foi extraído",
+                        "properties": {
+                          "data_vintage": {
+                            "description": "Vintage/competência da sub-fonte",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "dataset_id": {
+                            "description": "Identificador do conjunto da sub-fonte",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "fields": {
+                            "description": "Campos do payload atribuídos a esta sub-fonte",
+                            "items": {
+                              "type": "string"
+                            },
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "retrieved_at": {
+                            "description": "ISO-8601 da extração desta sub-fonte na origem",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "served_from_cache": {
+                            "description": "true se esta sub-fonte veio do cache do servidor (retrieved_at é o da extração original); false se foi buscada nesta chamada; null se o servidor não distingue",
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source_url": {
+                            "description": "URL canônica da sub-fonte que originou estes campos",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "fields",
+                          "source_url",
+                          "dataset_id",
+                          "data_vintage",
+                          "retrieved_at"
+                        ],
+                        "type": "object"
+                      },
+                      "minItems": 1,
+                      "type": "array"
                     },
                     "license": {
                       "description": "Regime legal do dado (id SPDX quando há)",
