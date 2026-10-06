@@ -9,8 +9,8 @@
  *
  * O elo que amarra a resposta à versão dos arquivos é o sidecar
  * `sih_provenance_<ano>.json` gravado ao lado de cada cubo pelo script R.
- * Dele saem `retrieved_at` (data de download do .dbc mais recente no
- * espelho — extração no upstream, não o instante da chamada) e
+ * Dele saem `retrieved_at` (data de download do .dbc MAIS ANTIGO entre as
+ * partições usadas — extração no upstream, não o instante da chamada) e
  * `data_vintage`. Por isso o bloco é determinístico e o golden pode
  * gravá-lo.
  */
@@ -364,6 +364,30 @@ function safraOf(iso: string): string {
 }
 
 /**
+ * `processing_timestamp` do manifesto ("AAAA-MM-DD HH:MM:SS.ffffff", UTC, sem
+ * fuso) -> "AAAA-MM-DDTHH:MM:SSZ" — a mesma conversão do `iso_utc()` do
+ * build-aggregations.R, que grava o `retrieved_at` de topo do sidecar. Sem
+ * normalizar, o espaço ordena antes do "T" e a comparação por string erra.
+ */
+export function isoUtc(ts: string): string {
+  return ts.replace(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2}).*$/, "$1T$2Z");
+}
+
+/**
+ * Download mais antigo entre as partições (os .dbc) que alimentaram os cubos
+ * usados (decisão 51 do CONTEXT.md, 2026-10-06). O `retrieved_at` de topo do
+ * sidecar é o MAIS RECENTE do cubo; o bloco quer o oposto: "nada nesta
+ * resposta é mais velho que isto". Sidecar sem partições cai no topo dele.
+ */
+export function oldestDownload(used: SihSidecar[]): string {
+  return used
+    .flatMap((s) =>
+      s.partitions.length > 0 ? s.partitions.map((p) => isoUtc(p.processing_timestamp)) : [s.retrieved_at],
+    )
+    .sort()[0]!;
+}
+
+/**
  * Marca de frescor no vintage — o modo concise não mostra `notices`, então a
  * única chave do bloco que o leitor vê é esta. Só aparece quando o cubo está
  * ATRÁS do espelho (ver src/freshness.ts); em dia, pendente, desligado ou sem
@@ -436,7 +460,7 @@ export function sihProvenance(years?: number[]): CanonicalProvenance {
     });
   }
 
-  const retrievedAt = used.map((s) => s.retrieved_at).sort().at(-1)!;
+  const retrievedAt = oldestDownload(used);
   const manifestVersion = used.map((s) => s.distributor.manifest_last_updated).sort().at(-1)!;
   const builtAt = used.map((s) => s.built_at).sort().at(-1)!;
   const files = used.reduce((n, s) => n + s.partitions.length, 0);
@@ -455,7 +479,8 @@ export function sihProvenance(years?: number[]): CanonicalProvenance {
     retrieved_at: retrievedAt,
     citation:
       `Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. ` +
-      `Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), safra ${safraOf(retrievedAt)}; ` +
+      `Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS ` +
+      `na data do download (MD5 de cada arquivo registrado), o mais antigo em ${safraOf(retrievedAt)}; ` +
       `agregados por sih-br-mcp v${SERVER_VERSION}.`,
     derived: true,
     derivation_note:
@@ -470,8 +495,8 @@ export function sihProvenance(years?: number[]): CanonicalProvenance {
     // NESTA chamada — manifesto e arquivos que faltavam no disco. `null` = a
     // resposta veio do disco (cache aquecido, memo do manifesto válido): é
     // assim que o bloco diz QUAL camada respondeu. `retrieved_at` continua
-    // sendo a safra do sidecar (extração no upstream), nunca o instante do
-    // download — o golden depende disso.
+    // vindo do sidecar (o download mais antigo dos .dbc usados, extração no
+    // upstream), nunca o instante desta chamada — o golden depende disso.
     retrieval: currentRetrieval(),
   });
 }
