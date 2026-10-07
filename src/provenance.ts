@@ -542,7 +542,7 @@ export function csapCid9Provenance(): CanonicalProvenance {
   return provenance.build({
     source: {
       name: "sih-br-mcp — lista ICSAP em CID-9 derivada da Portaria MS/SAS nº 221/2008 (NÃO oficial)",
-      agency: "sih-br-mcp (Sidney Bissoli)",
+      agency: "sih-br-mcp (Sidney da Silva Pereira Bissoli)",
       database: "src/data/csap-groups-cid9.json",
       endpoint: null,
     },
