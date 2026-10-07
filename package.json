@@ -61,7 +61,7 @@
     "saude-publica",
     "epidemiologia"
   ],
-  "author": "Sidney Bissoli",
+  "author": "Sidney da Silva Pereira Bissoli",
   "license": "MIT",
   "dependencies": {
     "@duckdb/node-api": "^1.5.5-r.4",
