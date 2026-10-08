@@ -35,10 +35,15 @@ import cidChapters from "./data/cid-chapters.json" with { type: "json" };
 // nas 0.11 e 0.12 e o handshake anunciava versão errada (achado em 08/09/2026).
 export const SERVER_VERSION: string = createRequire(import.meta.url)("../package.json").version;
 
+// Contrato 1.2 (tempo 2): `field_sources` sairia no concise quando uma resposta
+// fundisse sub-fontes — nenhuma ferramenta do sih funde hoje (cada bloco é de
+// uma procedência; respostas de várias procedências levam um bloco por fonte),
+// então o fio não muda. A 1.3 (`revision` no fio) é o passo seguinte, com prazo.
 export const provenance = createProvenanceContext({
   metaNamespace: "br.sbissoli.sih",
   locale: "pt-BR",
   defaultMode: "concise",
+  contractVersion: "1.2",
 });
 
 // =============================================================================
@@ -419,6 +424,51 @@ function vintageOf(s: SihSidecar): string {
   return `${s.cube_year}: ${janela}, UF de arquivo ${s.ufs_arquivo.join("/")}, safra healthbr-data ${safraOf(s.retrieved_at)}${behindMark(s.cube_year)}`;
 }
 
+// =============================================================================
+// REVISÃO (contrato v1.3; decisão do dono, 08/10/2026)
+// =============================================================================
+
+/** Situação de revisão de um bloco (vocabulário fechado do contrato; `final` ninguém usa sem prova da fonte). */
+export interface SihRevision {
+  status: "current" | "provisional";
+  note: string | null;
+}
+
+/**
+ * Nota do `current` dos cubos: a mesma afirmação que as `instructions` do
+ * servidor já publicam ("DATASUS re-edits files of past billing months, so
+ * every number is the version of the mirror's download … not a final count").
+ */
+const NOTA_REVISAO_CUBOS =
+  "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final.";
+
+function listaDeAnos(anos: number[]): string {
+  return anos.length <= 1 ? anos.join("") : `${anos.slice(0, -1).join(", ")} e ${anos[anos.length - 1]}`;
+}
+
+/**
+ * `revision` do bloco dos cubos. `provisional` quando ALGUM ano usado tem a
+ * janela de competências INCOMPLETA no sidecar (`window.complete === false`) —
+ * o bloco vale para todos os anos da resposta, e somar ou comparar com um ano
+ * aberto é o erro que o campo existe para evitar; a `note` nomeia os anos.
+ * `current` nos demais, inclusive sidecar sem `window` (builder antigo).
+ */
+export function revisionOf(used: readonly Pick<SihSidecar, "cube_year" | "window">[]): SihRevision {
+  const abertos = [...new Set(used.filter((s) => s.window && !s.window.complete).map((s) => s.cube_year))].sort(
+    (a, b) => a - b,
+  );
+  if (abertos.length > 0) {
+    return {
+      status: "provisional",
+      note: `Internações de ${listaDeAnos(abertos)}: competências ainda abertas no SIH; o total ainda pode crescer.`,
+    };
+  }
+  return { status: "current", note: NOTA_REVISAO_CUBOS };
+}
+
+/** Listas de referência e população: versão vigente na fonte, sem texto próprio publicado sobre revisão. */
+const REVISAO_VIGENTE: SihRevision = { status: "current", note: null };
+
 /** Avisos de frescor (bloco canônico/detailed). Vazio quando não há o que dizer. */
 function freshnessNotices(used: SihSidecar[]): string[] {
   const f = getFreshness();
@@ -508,6 +558,7 @@ export function sihProvenance(years?: number[]): CanonicalProvenance {
     // vindo do sidecar (o download mais antigo dos .dbc usados, extração no
     // upstream), nunca o instante desta chamada — o golden depende disso.
     retrieval: currentRetrieval(),
+    revision: revisionOf(used),
   });
 }
 
@@ -539,6 +590,7 @@ export function csapProvenance(): CanonicalProvenance {
       "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
     derived: false,
     served_from_cache: null,
+    revision: REVISAO_VIGENTE,
   });
 }
 
@@ -578,6 +630,7 @@ export function csapCid9Provenance(): CanonicalProvenance {
       "Correspondência MANUAL por rubrica CID-9 (OMS 1975) ↔ CID-10 para cada um dos 19 grupos da Portaria 221/2008, conferida nos rótulos do DATASUS e nas listas de origem em CID-9 (Caminal 2004, AHRQ PQI v6.0/2016, CIHI 2008; GEMs só em 514); " +
       "perímetro da Portaria manda (485/486, 482.4, 483, 558, 590.2, 430/431, 410 ficam fora). Validada empiricamente na fronteira 1997/98 (participação por grupo em CID-9 vs CID-10): razão global 1,05; g03 e g05 com comparabilidade baixa por mudança de prática de codificação. Não é ato normativo.",
     served_from_cache: null,
+    revision: REVISAO_VIGENTE,
   });
 }
 
@@ -617,6 +670,7 @@ export function csapAihProvenance(): CanonicalProvenance {
     derivation_note:
       "Universo reproduzido em tabela versionada e conferido contra o próprio pacote em 2023/RR (48.480 AIH): mesmas 38.020 internações no universo, 18 dos 19 grupos idênticos; o g01 difere em 18 AIH porque a regex da listaBRMS do pacote inclui B55–B56 e omite B05–B06 e B77.x, contra a Portaria — este servidor segue a Portaria (= listaBRAlfradique do pacote).",
     served_from_cache: null,
+    revision: REVISAO_VIGENTE,
   });
 }
 
@@ -646,6 +700,7 @@ export function cidProvenance(): CanonicalProvenance {
       ".",
     derived: false,
     served_from_cache: null,
+    revision: REVISAO_VIGENTE,
   });
 }
 
@@ -695,6 +750,7 @@ export function populationProvenance(): CanonicalProvenance {
     // Mesmo canal (sih/cubos/) e mesmo coletor da chamada: quando a população
     // foi baixada nesta chamada, a ida está aqui; do disco, `null`.
     retrieval: fromChannel ? currentRetrieval() : null,
+    revision: REVISAO_VIGENTE,
   });
 }
 
