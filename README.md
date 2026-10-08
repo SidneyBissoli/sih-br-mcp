@@ -195,6 +195,26 @@ fixture cheia, não alcança — e o caminho de erro-mole ("ano sem dado") tamb�
 é validado. Os esquemas de saída estão em `src/output-schemas.ts`, escritos à
 mão a partir das formas medidas, como os de entrada.
 
+### Impressão digital da superfície, conferível pelo registro
+
+Cada release publica, na sua entrada do [MCP Registry](https://registry.modelcontextprotocol.io),
+o sha256 da superfície que esta versão serve (`initialize`, ferramentas, resources, prompts) e
+quais métodos respondem sem credencial. Mudar a superfície sem subir a versão reprova o build
+(`surface.lock.json`); a impressão digital no registro deixa o cliente conferir o mesmo do lado
+dele. Forma canônica e procedimento: [SPEC.md do `@sbissoli/mcp-surface`](https://github.com/SidneyBissoli/mcp-br-commons/blob/main/packages/mcp-surface/SPEC.md)
+(em inglês). Para conferir por conta própria (Node 18+, sem dependência):
+
+```sh
+curl -sO https://raw.githubusercontent.com/SidneyBissoli/mcp-br-commons/main/packages/mcp-surface/exemplos/verify.mjs
+node verify.mjs io.github.SidneyBissoli/sih-br-mcp
+```
+
+Quem mantém: `npm run surface:lock` grava o bloco no `server.json` (`mcp-surface registro`),
+o teste da trava reprova `server.json` defasado, e o `publish.yml` termina com
+`mcp-surface conferir-registro` — a entrada desta versão no registro contra o endpoint no ar,
+como um cliente, sem ler a trava. Ideia de dois leitores do artigo do replay no dev.to
+(Mike Dabydeen e Valentina Koniukhova).
+
 ## Documentação
 
 - `CONTEXT.md` — decisões arquiteturais numeradas (a 27 é a migração do produtor; a 29, o servidor remoto).

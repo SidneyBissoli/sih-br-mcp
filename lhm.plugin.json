@@ -1,7 +1,7 @@
 {
   "identifier": "sidneybissoli-sih-br-mcp",
   "name": "DATASUS SIH/SUS — Brazil Hospital Admissions (AIH) MCP",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "icon": "🏥",
   "description": "Servidor MCP do DATASUS SIH/SUS: internações hospitalares do Brasil (AIH, 1992–2025) — causas CID-10 e CID-9, séries mensais, ICSAP e taxas por UF e município, sem baixar .dbc nem usar TabNet. Brazilian hospital admissions (SIH/SUS) MCP server: ICD-10 causes, monthly series, ambulatory-care-sensitive conditions (ICSAP) and rates by state and municipality, with source, data vintage and citation on every answer. Hosted on Cloudflare (Streamable HTTP, no auth) or local stdio via npm.",
   "author": "Sidney da Silva Pereira Bissoli",
