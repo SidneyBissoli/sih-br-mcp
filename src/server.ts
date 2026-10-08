@@ -59,7 +59,11 @@ export const SERVER_INSTRUCTIONS =
   "care sensitive conditions (ICSAP, the Brazilian list) and crude, age-specific or " +
   "age-standardized rates per 100,000 by state and municipality. Every stratum carries " +
   "admissions, length of stay, amount paid by SUS and deaths; every response carries a " +
-  "provenance block with the data vintage and the citation. Typical flow: get_available_years " +
+  "provenance block with the data vintage and the citation. Years and months are those of the " +
+  "ADMISSION date (DT_INTER), read from the billing months of that year plus the following ones — " +
+  "not the billing month; the most recent year is incomplete until its window closes and grows as " +
+  "hospitals bill late, and DATASUS re-edits files of past billing months, so every number is the " +
+  "version of the mirror's download (the provenance extraction date), not a final count. Typical flow: get_available_years " +
   "first (which years each cube covers), then get_hospitalizations for counts by cause, place, " +
   "age, sex and race, get_hospitalization_trends for monthly or annual series, " +
   "get_hospitalization_rates and compare_regions for rates; get_icsap, get_icsap_indicators, " +

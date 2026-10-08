@@ -21,6 +21,33 @@ de dados pelo `rebuild-cubes.yml`, antes de o produtor migrar para o healthbr-da
 
 ## [Não lançado]
 
+## [1.5.0] — 2026-10-08
+
+O que cada número é, e em que versão. Duas lacunas apontadas por um leitor do artigo do
+bcb no dev.to (Daniel Oliveira, sobre os dados XBRL da SEC): o período de cada número
+precisa vir com ele, e o servidor tem de dizer se o número é definitivo ou revisável.
+
+### Corrigido
+
+- **O esquema contradizia o dado.** `year_month` da série mensal era descrito como
+  "Competência AAAA-MM", mas a série é pela data de INTERNAÇÃO (DT_INTER), lida das
+  competências do ano e dos meses seguintes (decisão 10) — a competência só vale nas
+  internações sem DT_INTER na fonte (1992-01..04, 1993-01). Os campos `year` dizem agora
+  "Ano da internação (DT_INTER)".
+- O intervalo de competências do `data_vintage` é o mínimo e o máximo, não as pontas da
+  lista do sidecar (que só acertavam porque o sidecar vem ordenado); teste com a lista
+  embaralhada.
+
+### Alterado
+
+- `get_hospitalization_trends` e as `instructions` dizem que ano e mês são os da
+  internação, que o ano mais recente cresce até a janela fechar (AIH faturada com atraso)
+  e que o DATASUS reedita arquivos de competências passadas — cada número é a versão do
+  download do espelho, não contagem final. Até aqui isso só aparecia quando o cubo estava
+  atrás do espelho, e como "(janela INCOMPLETA)" dentro do `data_vintage`.
+- Superfície declarada nova: trava, `server.json`, `lhm.plugin.json`, referência do smoke
+  e golden (só a versão na citação) regravados.
+
 ## [1.4.2] — 2026-10-08
 
 A impressão digital da superfície passa a ir **na entrada do MCP Registry**, para o

@@ -190,7 +190,9 @@ const definicoes: Tool[] = [
     title: "Séries temporais de internações",
     description:
       "Retorna séries temporais de internações (mensal ou anual). " +
-      "Útil para análise de tendências e sazonalidade. Série desde 1992; em 1992–1997 `uf` é a UF do arquivo (estabelecimento) " +
+      "Útil para análise de tendências e sazonalidade. O ano e o mês são os da INTERNAÇÃO (DT_INTER), não a " +
+      "competência de faturamento; o ano mais recente cresce até a janela dele fechar (AIH faturada com atraso), " +
+      "e o DATASUS reedita arquivos de competências passadas — cada número é a versão do download do espelho. Série desde 1992; em 1992–1997 `uf` é a UF do arquivo (estabelecimento) " +
       "e as internações sem data na fonte (1992-01..04 e 1993-01) entram no mês de faturamento — ver get_available_years e as `notes`.",
     inputSchema: {
       type: "object",
