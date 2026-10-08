@@ -1,6 +1,6 @@
 {
   "name": "sih-br-mcp",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "mcpName": "io.github.SidneyBissoli/sih-br-mcp",
   "description": "Servidor MCP do DATASUS SIH/SUS: internações hospitalares do Brasil (AIH, 1992–2025) — causas CID-10 e CID-9, séries mensais, ICSAP e taxas por UF e município, sem baixar .dbc nem usar TabNet. Brazilian hospital admissions (SIH/SUS) MCP server.",
   "repository": {
@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "surface:lock": "npm run build && mcp-surface travar --cmd \"vitest run tests/surface-lock.test.ts\" --cmd \"cd worker && npx vitest run tests/surface-lock.test.ts\"",
+    "surface:lock": "npm run build && mcp-surface travar --cmd \"vitest run tests/surface-lock.test.ts\" --cmd \"cd worker && npx vitest run tests/surface-lock.test.ts\" && mcp-surface registro --tool list_cid_chapters",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "prepare": "npm run build",
@@ -72,7 +72,7 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "^2.0.0",
-    "@sbissoli/mcp-surface": "^0.4.0",
+    "@sbissoli/mcp-surface": "^0.5.0",
     "@types/node": "^26.5.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.0",
