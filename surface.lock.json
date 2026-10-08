@@ -1,8 +1,8 @@
 {
   "$comentario": "Impressão digital da superfície (@sbissoli/mcp-surface). Não editar à mão: `npm run surface:lock` regrava, e só aceita superfície nova sob versão nova.",
   "declarada": {
-    "versao": "1.4.0",
-    "sha256": "873091ada6bf0d8c1f4e9298f7dd5c20b54242a3ed9ea95a002e3abf12a591f8",
+    "versao": "1.5.0",
+    "sha256": "265f6bf9b71027bfbc8f8933f98ad0d5147ba705cc1ba14992fb3cb12f009e1a",
     "conteudo": {
       "initialize": {
         "capabilities": {
@@ -10,7 +10,7 @@
             "listChanged": true
           }
         },
-        "instructions": "Brazilian hospital admissions from DATASUS SIH/SUS (AIH records, 1992-2025), read from pre-aggregated public cubes of the healthbr-data Parquet mirror, never from the FTP or TabNet: causes by ICD-10 chapter and group (ICD-9 before 1998), monthly series, ambulatory care sensitive conditions (ICSAP, the Brazilian list) and crude, age-specific or age-standardized rates per 100,000 by state and municipality. Every stratum carries admissions, length of stay, amount paid by SUS and deaths; every response carries a provenance block with the data vintage and the citation. Typical flow: get_available_years first (which years each cube covers), then get_hospitalizations for counts by cause, place, age, sex and race, get_hospitalization_trends for monthly or annual series, get_hospitalization_rates and compare_regions for rates; get_icsap, get_icsap_indicators, rank_csap_groups and compare_icsap_trends for ICSAP; list_cid_chapters, list_csap_groups and classify_as_csap resolve codes and groups before querying. Do not use this server for individual AIH records, for variables the cubes do not carry (procedure performed, facility CNES, secondary diagnosis) or for other DATASUS systems (SIM, SINASC, SIA, SINAN): use microdatasus, PySUS or the healthbr-data mirror for those.",
+        "instructions": "Brazilian hospital admissions from DATASUS SIH/SUS (AIH records, 1992-2025), read from pre-aggregated public cubes of the healthbr-data Parquet mirror, never from the FTP or TabNet: causes by ICD-10 chapter and group (ICD-9 before 1998), monthly series, ambulatory care sensitive conditions (ICSAP, the Brazilian list) and crude, age-specific or age-standardized rates per 100,000 by state and municipality. Every stratum carries admissions, length of stay, amount paid by SUS and deaths; every response carries a provenance block with the data vintage and the citation. Years and months are those of the ADMISSION date (DT_INTER), read from the billing months of that year plus the following ones — not the billing month; the most recent year is incomplete until its window closes and grows as hospitals bill late, and DATASUS re-edits files of past billing months, so every number is the version of the mirror's download (the provenance extraction date), not a final count. Typical flow: get_available_years first (which years each cube covers), then get_hospitalizations for counts by cause, place, age, sex and race, get_hospitalization_trends for monthly or annual series, get_hospitalization_rates and compare_regions for rates; get_icsap, get_icsap_indicators, rank_csap_groups and compare_icsap_trends for ICSAP; list_cid_chapters, list_csap_groups and classify_as_csap resolve codes and groups before querying. Do not use this server for individual AIH records, for variables the cubes do not carry (procedure performed, facility CNES, secondary diagnosis) or for other DATASUS systems (SIM, SINASC, SIA, SINAN): use microdatasus, PySUS or the healthbr-data mirror for those.",
         "protocolVersion": "2025-06-18",
         "serverInfo": {
           "icons": [
@@ -2055,7 +2055,7 @@
                       "type": "string"
                     },
                     "year": {
-                      "description": "Ano (quando agrupado por ano ou mais de um ano)",
+                      "description": "Ano da internação (DT_INTER), quando agrupado por ano ou mais de um ano",
                       "type": "number"
                     }
                   },
@@ -2579,7 +2579,7 @@
             "openWorldHint": false,
             "readOnlyHint": true
           },
-          "description": "Retorna séries temporais de internações (mensal ou anual). Útil para análise de tendências e sazonalidade. Série desde 1992; em 1992–1997 `uf` é a UF do arquivo (estabelecimento) e as internações sem data na fonte (1992-01..04 e 1993-01) entram no mês de faturamento — ver get_available_years e as `notes`.",
+          "description": "Retorna séries temporais de internações (mensal ou anual). Útil para análise de tendências e sazonalidade. O ano e o mês são os da INTERNAÇÃO (DT_INTER), não a competência de faturamento; o ano mais recente cresce até a janela dele fechar (AIH faturada com atraso), e o DATASUS reedita arquivos de competências passadas — cada número é a versão do download do espelho. Série desde 1992; em 1992–1997 `uf` é a UF do arquivo (estabelecimento) e as internações sem data na fonte (1992-01..04 e 1993-01) entram no mês de faturamento — ver get_available_years e as `notes`.",
           "inputSchema": {
             "additionalProperties": false,
             "properties": {
@@ -2897,7 +2897,7 @@
                           "type": "number"
                         },
                         "year": {
-                          "description": "Ano",
+                          "description": "Ano da internação (DT_INTER)",
                           "type": "number"
                         }
                       },
@@ -2921,7 +2921,7 @@
                           "type": "number"
                         },
                         "year_month": {
-                          "description": "Competência AAAA-MM",
+                          "description": "Ano-mês da INTERNAÇÃO (DT_INTER), AAAA-MM — não a competência de faturamento; só nas internações sem DT_INTER na fonte (1992-01..04, 1993-01) é a competência",
                           "type": "string"
                         }
                       },
@@ -3182,7 +3182,7 @@
                       "type": "string"
                     },
                     "year": {
-                      "description": "Ano (group_by: year)",
+                      "description": "Ano da internação (DT_INTER) — group_by: year",
                       "type": "number"
                     }
                   },
@@ -3754,7 +3754,7 @@
                       "type": "string"
                     },
                     "year": {
-                      "description": "Ano (group_by: year)",
+                      "description": "Ano da internação (DT_INTER) — group_by: year",
                       "type": "number"
                     }
                   },
@@ -4313,7 +4313,7 @@
                       "type": "string"
                     },
                     "year": {
-                      "description": "Ano (group_by: year)",
+                      "description": "Ano da internação (DT_INTER) — group_by: year",
                       "type": "number"
                     }
                   },

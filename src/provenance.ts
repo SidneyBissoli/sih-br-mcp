@@ -400,9 +400,19 @@ function behindMark(year: number): string {
   return ` [ATRÁS do espelho healthbr-data: ${describeBehind(c, getFreshness().manifest_last_updated_remote)}]`;
 }
 
+/**
+ * Primeira e última competência são o MÍNIMO e o MÁXIMO (AAAA-MM ordena certo
+ * como texto), não as pontas da lista: até a 1.4.2 eram `[0]` e `[length − 1]`
+ * e só acertavam porque o sidecar vem em ordem — mesma classe do intervalo do
+ * ibge, que ordenava rótulos por extenso.
+ */
+export function intervaloDeCompetencias(competencias: readonly string[]): { first: string; last: string } {
+  const ordenadas = [...competencias].sort();
+  return { first: ordenadas[0] ?? "", last: ordenadas[ordenadas.length - 1] ?? "" };
+}
+
 function vintageOf(s: SihSidecar): string {
-  const first = s.competencias[0];
-  const last = s.competencias[s.competencias.length - 1];
+  const { first, last } = intervaloDeCompetencias(s.competencias);
   const janela = s.window
     ? `internações de ${s.cube_year} em competências ${first} a ${last}${s.window.complete ? "" : " (janela INCOMPLETA)"}`
     : `competências ${first} a ${last}`;

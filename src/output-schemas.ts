@@ -231,7 +231,7 @@ function ecoDosArgumentos(inputSchema: JsonSchemaType, description: string): Sch
 
 /** Colunas de agrupamento do cubo de CAUSAS (enum `group_by` de get_hospitalizations). */
 const COLUNAS_CAUSAS: Record<string, Schema> = {
-  year: num("Ano (group_by: year)"),
+  year: num("Ano da internação (DT_INTER) — group_by: year"),
   month: num("Mês, 1–12 (group_by: month)"),
   uf: str("UF de residência — do estabelecimento em 1992–1997 (group_by: uf)"),
   cid_chapter: num("Capítulo da CID, 1–22 (group_by: cid_chapter)"),
@@ -259,7 +259,7 @@ const LINHA_CAUSAS: Schema = obj(
 
 /** Colunas de agrupamento do cubo ICSAP (enums `group_by` de get_icsap e get_icsap_indicators). */
 const COLUNAS_ICSAP: Record<string, Schema> = {
-  year: num("Ano (group_by: year)"),
+  year: num("Ano da internação (DT_INTER) — group_by: year"),
   uf: str("UF de residência — do estabelecimento em 1992–1997 (group_by: uf)"),
   municipality_code: strOuNulo("Código IBGE do município de residência (6 dígitos); null em 1992–1997 (group_by: municipality_code)"),
   cid_revision: num("Revisão da CID: 9 ou 10 (group_by: cid_revision)"),
@@ -559,12 +559,12 @@ const get_hospitalization_trends: Corpo = {
       {
         anyOf: [
           obj(
-            { year: num("Ano"), n_hospitalizations: num("Internações no ano"), deaths: num("Óbitos no ano") },
+            { year: num("Ano da internação (DT_INTER)"), n_hospitalizations: num("Internações no ano"), deaths: num("Óbitos no ano") },
             ["year", "n_hospitalizations", "deaths"],
             "Ponto anual",
           ),
           obj(
-            { year_month: str("Competência AAAA-MM"), n: num("Internações no mês"), deaths: num("Óbitos no mês") },
+            { year_month: str("Ano-mês da INTERNAÇÃO (DT_INTER), AAAA-MM — não a competência de faturamento; só nas internações sem DT_INTER na fonte (1992-01..04, 1993-01) é a competência"), n: num("Internações no mês"), deaths: num("Óbitos no mês") },
             ["year_month", "n", "deaths"],
             "Ponto mensal",
           ),
@@ -696,7 +696,7 @@ const get_hospitalization_rates = (inputSchema: JsonSchemaType): Corpo => ({
     data: lista(
       obj(
         {
-          year: num("Ano (quando agrupado por ano ou mais de um ano)"),
+          year: num("Ano da internação (DT_INTER), quando agrupado por ano ou mais de um ano"),
           uf: str("UF (quando agrupado por UF ou mais de uma UF)"),
           n_hospitalizations: num("Internações"),
           deaths: num("Óbitos"),

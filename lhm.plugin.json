@@ -1,7 +1,7 @@
 {
   "identifier": "sidneybissoli-sih-br-mcp",
   "name": "DATASUS SIH/SUS — Brazil Hospital Admissions (AIH) MCP",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "icon": "🏥",
   "description": "Servidor MCP do DATASUS SIH/SUS: internações hospitalares do Brasil (AIH, 1992–2025) — causas CID-10 e CID-9, séries mensais, ICSAP e taxas por UF e município, sem baixar .dbc nem usar TabNet. Brazilian hospital admissions (SIH/SUS) MCP server: ICD-10 causes, monthly series, ambulatory-care-sensitive conditions (ICSAP) and rates by state and municipality, with source, data vintage and citation on every answer. Hosted on Cloudflare (Streamable HTTP, no auth) or local stdio via npm.",
   "author": "Sidney da Silva Pereira Bissoli",
@@ -1449,7 +1449,7 @@
               "properties": {
                 "year": {
                   "type": "number",
-                  "description": "Ano (group_by: year)"
+                  "description": "Ano da internação (DT_INTER) — group_by: year"
                 },
                 "month": {
                   "type": "number",
@@ -1949,7 +1949,7 @@
     {
       "name": "get_hospitalization_trends",
       "title": "Séries temporais de internações",
-      "description": "Retorna séries temporais de internações (mensal ou anual). Útil para análise de tendências e sazonalidade. Série desde 1992; em 1992–1997 `uf` é a UF do arquivo (estabelecimento) e as internações sem data na fonte (1992-01..04 e 1993-01) entram no mês de faturamento — ver get_available_years e as `notes`.",
+      "description": "Retorna séries temporais de internações (mensal ou anual). Útil para análise de tendências e sazonalidade. O ano e o mês são os da INTERNAÇÃO (DT_INTER), não a competência de faturamento; o ano mais recente cresce até a janela dele fechar (AIH faturada com atraso), e o DATASUS reedita arquivos de competências passadas — cada número é a versão do download do espelho. Série desde 1992; em 1992–1997 `uf` é a UF do arquivo (estabelecimento) e as internações sem data na fonte (1992-01..04 e 1993-01) entram no mês de faturamento — ver get_available_years e as `notes`.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -2032,7 +2032,7 @@
                   "properties": {
                     "year": {
                       "type": "number",
-                      "description": "Ano"
+                      "description": "Ano da internação (DT_INTER)"
                     },
                     "n_hospitalizations": {
                       "type": "number",
@@ -2056,7 +2056,7 @@
                   "properties": {
                     "year_month": {
                       "type": "string",
-                      "description": "Competência AAAA-MM"
+                      "description": "Ano-mês da INTERNAÇÃO (DT_INTER), AAAA-MM — não a competência de faturamento; só nas internações sem DT_INTER na fonte (1992-01..04, 1993-01) é a competência"
                     },
                     "n": {
                       "type": "number",
@@ -2802,7 +2802,7 @@
               "properties": {
                 "year": {
                   "type": "number",
-                  "description": "Ano (group_by: year)"
+                  "description": "Ano da internação (DT_INTER) — group_by: year"
                 },
                 "uf": {
                   "type": "string",
@@ -3361,7 +3361,7 @@
               "properties": {
                 "year": {
                   "type": "number",
-                  "description": "Ano (group_by: year)"
+                  "description": "Ano da internação (DT_INTER) — group_by: year"
                 },
                 "uf": {
                   "type": "string",
@@ -4540,7 +4540,7 @@
               "properties": {
                 "year": {
                   "type": "number",
-                  "description": "Ano (quando agrupado por ano ou mais de um ano)"
+                  "description": "Ano da internação (DT_INTER), quando agrupado por ano ou mais de um ano"
                 },
                 "uf": {
                   "type": "string",
