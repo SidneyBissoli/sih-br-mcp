@@ -84,8 +84,8 @@ const mapa = (valor: Schema, description: string): Schema => ({
 // =============================================================================
 
 /**
- * Projeção `concise` do bloco de proveniência (contrato @sbissoli/mcp-provenance
- * v1.1): a forma que `withProvenance` põe em `structuredContent`.
+ * Projeção `concise` do bloco de proveniência (contrato @sbissoli/mcp-provenance):
+ * a forma que `withProvenance` põe em `structuredContent`.
  *
  * A FORMA é a que o pacote publica (`CONCISE_BLOCK_JSON_SCHEMA`, desde a
  * 0.2.0), não uma transcrição: até a 1.0.1 as seis chaves da v1.0 estavam
@@ -100,7 +100,9 @@ const CONCISE = CONCISE_BLOCK_JSON_SCHEMA as { properties: Record<string, Schema
 const descrever = (schema: Schema, description: string): Schema => ({ ...schema, description });
 export const PROVENANCE_BLOCK_SCHEMA: Schema = {
   ...CONCISE,
-  description: "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
+  description:
+    "Bloco de proveniência do portfólio: fonte, URL, competência, extração, diagnóstico de origem, citação e licença; " +
+    "e, só quando há o que dizer, avisos, o que o servidor calculou e se o número ainda pode mudar",
   properties: {
     ...CONCISE.properties,
     source: descrever(CONCISE.properties.source!, "Fonte oficial do dado"),
@@ -109,10 +111,26 @@ export const PROVENANCE_BLOCK_SCHEMA: Schema = {
     retrieved_at: descrever(CONCISE.properties.retrieved_at!, "Instante REAL da extração na origem (ISO-8601) — para os cubos SIH, o download MAIS ANTIGO, do FTP do DATASUS, entre os .dbc que alimentaram a resposta (cópia idêntica ao original naquela data, MD5 registrado no sidecar), nunca o instante da chamada"),
     retrieval: descrever(
       CONCISE.properties.retrieval!,
-      "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)",
+      "Diagnóstico de origem desta chamada: idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)",
     ),
     citation: descrever(CONCISE.properties.citation!, "Citação pronta para uso"),
     license: descrever(CONCISE.properties.license!, "Regime legal do dado (id SPDX quando há)"),
+    // As quatro chaves da v1.3: OPCIONAIS (ausentes quando não há o que dizer;
+    // nunca em `required` — o `required` é o do pacote). Forma do pacote, só a
+    // descrição é deste servidor.
+    notices: descrever(
+      CONCISE.properties.notices!,
+      "Avisos que acompanham o dado (ex.: cubo atrás do espelho healthbr-data, frescor não verificado). Ausente quando não há aviso",
+    ),
+    derived: descrever(
+      CONCISE.properties.derived!,
+      "Presente (true) quando o número foi calculado por este servidor — os cubos SIH são somas das internações dos arquivos do DATASUS",
+    ),
+    derivation_note: descrever(CONCISE.properties.derivation_note!, "Como o número foi calculado; presente junto com derived"),
+    revision: descrever(
+      CONCISE.properties.revision!,
+      "Se o número ainda pode mudar: provisional quando algum ano da resposta ainda tem competências abertas no SIH (o total ainda pode crescer); current nos demais — o DATASUS reedita arquivos de competências passadas",
+    ),
   },
 };
 

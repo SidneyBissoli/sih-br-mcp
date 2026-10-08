@@ -21,6 +21,29 @@ de dados pelo `rebuild-cubes.yml`, antes de o produtor migrar para o healthbr-da
 
 ## [Não lançado]
 
+## [1.6.0] — 2026-10-08
+
+Contrato de proveniência: tempo 2 da v1.2 e tempo 1 da v1.3 (decisão 54). As respostas
+de hoje saem byte a byte iguais; muda o esquema de saída (só acréscimo), daí o minor.
+
+### Adicionado
+
+- O esquema de saída declara as quatro chaves da v1.3 do bloco conciso — `notices`,
+  `derived`, `derivation_note` e `revision` —, opcionais, com descrição deste servidor.
+  Cliente que já guardou a lista de ferramentas aceita o bloco 1.3 quando ele for ligado.
+- **`revision` informada pelo servidor** (ainda fora do fio, que segue no contrato 1.2):
+  `provisional` quando algum ano da resposta ainda tem competências abertas no SIH (a
+  janela do ano está incompleta no sidecar), com a nota nomeando os anos; `current` nos
+  demais. Teste dos dois casos em `tests/revisao.test.ts`.
+
+### Alterado
+
+- `@sbissoli/mcp-provenance` ^0.3.0 → ^0.4.0 e `@sbissoli/mcp-upstream` ^0.4.0 → ^0.4.2.
+- O servidor declara `contractVersion: "1.2"`. Nenhuma ferramenta do sih funde sub-fontes
+  (cada procedência tem o seu bloco), então `field_sources` não aparece e o fio não muda.
+- As descrições do bloco no esquema deixam de citar o número do contrato ("contrato
+  v1.1"), que envelhecia a cada versão.
+
 ## [1.5.0] — 2026-10-08
 
 O que cada número é, e em que versão. Duas lacunas apontadas por um leitor do artigo do
