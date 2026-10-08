@@ -1,6 +1,6 @@
 # SIH-BR-MCP: Contexto do Projeto
 
-> **Este arquivo resume as decisões tomadas no planejamento e orienta o Claude Code sobre o estado atual e próximos passos.**
+> **Este arquivo resume as decisões tomadas no planejamento — o diário numerado do porquê.** Desde 2026-10-08 quem orienta o Claude Code é o `CLAUDE.md` (o único que ele carrega sozinho: comandos, arquitetura, release, pontos que mordem), e o histórico por versão está no `CHANGELOG.md`; os dois citam as decisões daqui pelo número.
 
 ## Objetivo
 
@@ -15,6 +15,7 @@ Desenvolver um **MCP Server** para análise de dados do Sistema de Informações
 ### Passo 3 (Geração de Dados de Teste) ✅
 ### Passo 4 (Ferramentas MCP em TypeScript) ✅
 - 12 ferramentas implementadas (todas)
+- Cada uma anuncia `outputSchema` (`src/output-schemas.ts`, decisão 39), com o contrato de saída testado pelo `Client` do SDK, como um cliente o veria (decisão 50); superfície travada em `surface.lock.json` desde a 1.2.3 e publicada no MCP Registry desde a 1.4.2 (decisão 53)
 
 ### Passo 5 (Dados Populacionais) ✅
 - [x] Script R `build-population.R` criado e funcional (desde 2026-09-08 vive no healthbr-data, `scripts/pipeline/sih-cubos/`; decisão 28)
@@ -24,9 +25,9 @@ Desenvolver um **MCP Server** para análise de dados do Sistema de Informações
 - [x] Os três publicados no canal `sih/cubos/` e baixados pelo servidor (0.12.0, decisão 28)
 
 ### Passo 6 (Ferramentas Finais) ✅
-- [x] `get_hospitalization_rates` implementada (taxa por 100 mil hab, anos 2000-2024)
+- [x] `get_hospitalization_rates` implementada (taxa por 100 mil hab; no início, anos 2000-2024 — hoje de 1992 ao último ano com população, ver abaixo)
 - [x] `compare_icsap_trends` implementada (tendências com taxa, regressão linear)
-- [x] Validação: erro se ano < 2000 (sem dados populacionais UF)
+- [x] Validação: no início, erro se ano < 2000. Hoje o intervalo é LIDO dos arquivos de população (`getPopulationYearRange()`, exposto em `get_available_years.population_years`): 2000 em diante por `pop_uf.parquet` (decisão 17, que estendeu a 2025) e 1991–1999 por `pop_uf_agregado.parquet` (decisão 25, taxas de 1992–1999)
 - [x] Build sem erros, testes de população passando
 
 ---
@@ -95,6 +96,10 @@ Desenvolver um **MCP Server** para análise de dados do Sistema de Informações
 50. **O contrato de saída tem forma de cliente** (2026-10-04; item "Teste com forma de cliente" do roadmap, ideia de leitor https://dev.to/arhancanli/comment/3g4i4). `tests/output-contract.test.ts` não valida mais o `structuredContent` com um validador escolhido por nós (`CfWorkerJsonSchemaValidator`, o mesmo do servidor). Agora o servidor de verdade (`createServer`) é interrogado pelo `Client` do SDK, que faz `tools/list` e `tools/call` e reprova o resultado contra o schema **listado**, como a sessão do usuário reprovaria. Aqui isso pesa: o servidor anuncia o `outputSchema` mas não o impõe (validador permissivo, decisão 39), então só o cliente pega um schema desonesto. O circuito é o `@sbissoli/mcp-surface/cliente` 0.2.0 (dev dependency), comum aos sete servidores: lista antes de chamar (sem isso o `Client` não valida) e passa cada mensagem por JSON, como a rede. Os 22 casos cheio/magro e os 9 de erro-mole passam pelo `Client`; o conferidor de envelope e o contrato de entrada ficam. A prova do schema desonesto (`csap_group` como `string`) passa a adulterar o `tools/list` a caminho do cliente, e quem recusa é o `Client`. Entram controles negativos pelo lado do RESULTADO em `get_hospitalizations` (quebra no fio: `structuredContent` ausente, obrigatórios ausentes, tipo trocado, sem `summary` e chave intrusa — esta porque o topo é fechado, afirmado sobre o schema listado — mais a armadilha de chamar sem `tools/list`, que passa calada). Prova de que o portão pode falhar: `csap_group` de `classify_as_csap` anunciado como `string` não anulável fez o próprio `Client` recusar o caso magro (`ProtocolError: Structured content does not match the tool's output schema: data/classifications/0/csap_group must be string`); código restaurado. 167 testes na raiz (eram 166). Sem mudança de superfície nem de versão: só testes e dependência de desenvolvimento.
 
 51. **`retrieved_at` = download MAIS ANTIGO entre as partições usadas** (2026-10-06, 1.3.0; reescreve o "maior data de download" da decisão 11). Pedido do dono em 05/10/2026: "não interessa quando foi baixado; interessa se é IGUAL ao original". Até a 1.2.3 o bloco levava o MAX dos `retrieved_at` de topo dos sidecars, e cada um desses já é o MAX das partições do cubo (`iso_utc()` + `max()` no build-aggregations.R do healthbr-data): um MAX de MAX, que escondia o `.dbc` baixado há mais tempo. Agora `oldestDownload()` (src/provenance.ts) desce às `partitions[]` dos sidecars usados e devolve o MENOR `processing_timestamp`, normalizado como o builder faz (`"AAAA-MM-DD HH:MM:SS.ffffff"` UTC → `"AAAA-MM-DDTHH:MM:SSZ"`; sem normalizar, o espaço ordena antes do `T` e a comparação por string erra). Leitura: "nada nesta resposta é mais velho que isto". A citação diz que os microdados são "idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em AAAA-MM-DD". Sidecar sem partições cai no topo dele. Muda o VALOR, não o formato: o golden mudou de propósito (só `retrieved_at` e `citation`, 30 blocos; fixture 2023/RR: `04:02:47Z` → `03:05:34Z`), a descrição do campo no outputSchema também, daí o minor. `data_vintage` segue com a safra de topo por ano (o mais recente), que descreve até onde o cubo vai. Teste: `tests/retrieved-at-mais-antigo.test.ts`, que falha com o MIN dos topos e com a ordenação sem normalizar. **Ainda não diz "conferido em"**: o sync-check semanal do healthbr-data compara só o TAMANHO do arquivo no FTP e não grava instante por partição. O item S2 (gravar por partição `last_checked_at` + `check_method`) está no roadmap do healthbr-data, e o item que o incorpora aqui está no ROADMAP, bloqueado por ele. Um vigia no portfolio-monitor acende quando o campo aparecer no `manifest-summary.json`. `freshness.ts` não serve de "conferido em": `checked_at` só em memória, marcado também em falha, e o atalho por Range aprova sem hash.
+
+52. **1.4.0 — passo 1 do contrato de proveniência v1.2, como nos seis irmãos** (2026-10-06; fio "instante por dependência" do portfólio, PR #47). `@sbissoli/mcp-provenance` 0.3.0 e `@sbissoli/mcp-upstream` 0.4.0: o esquema de saída passa a DECLARAR a chave opcional `field_sources` do bloco conciso, sem emiti-la. O servidor segue emitindo o contrato 1.1, byte a byte igual; a diferença de superfície é só aditiva, por isso minor — e por isso a trava foi regravada nesta versão (`873091ada6bf`). A 1.4.1 (mesmo dia, PRs #48/#49) foi só dependência: SDK 2.1.0 → 2.3.0 e os alertas GHSA-6qxp-vccf-f47h (`@modelcontextprotocol/client`, só testes e scripts) e GHSA-68fv-2mgg-jv7q (`source-map-js`); nenhuma resposta nem esquema mudou (as 30 linhas do golden são a versão dentro da citação).
+
+53. **1.4.2 — a impressão digital da superfície vai na entrada do MCP Registry, para o CLIENTE conferir** (2026-10-07/08; ideia de dois leitores do artigo do replay no dev.to — Mike Dabydeen e Valentina Koniukhova —, implementada nos sete servidores por ordem do dono; PR #51). A trava fazia o publicador cumprir "superfície nova = versão nova", mas o hash morava no repositório e a entrada do registro só levava a versão. Agora o `server.json` publica, sob `_meta["io.modelcontextprotocol.registry/publisher-provided"]["io.github.sidneybissoli/mcp-surface"]`, o sha256 da superfície declarada (inalterado: `873091ada6bf`) e quem responde sem credencial no endpoint de produção, com a sonda `list_cid_chapters` (forma `mcp-surface/1`, SPEC.md do `@sbissoli/mcp-surface` 0.5.0). O `surface:lock` grava o bloco (`mcp-surface registro`); o teste da trava reprova `server.json` defasado (fora do modo de escrita, porque o `registro` roda depois do `travar`); o `publish.yml` termina com `mcp-surface conferir-registro` — a entrada da versão no registro contra o ar, sem ler a trava. Medido em 07/10: o run do publish deu "registro = ar" e o `verify.mjs` do pacote, rodado de fora contra o registro oficial, deu `declared ok` e `anonymous 7 methods ok`. O registro não deixa mudar versão publicada, e a SPEC §6.1 ensina a conferir o hash contra o código do tag. **Erro de processo no caminho:** a tag `v1.4.2` foi empurrada sozinha, e nenhum dos dois workflows cria a release do GitHub — a versão saiu sem página; o conserto sem republicar é `gh release create v1.4.2 --verify-tag`, e a receita certa (no `CLAUDE.md`) é `gh release create v<x> --target master`.
 
 ## REGRAS PARA DADOS POPULACIONAIS
 
@@ -171,11 +176,11 @@ Para anos onde não há projeção UF com idade (antes de 2000), agregado dos da
 |------------|--------|-----------|
 | `get_hospitalizations` | ✅ | Contagens de internações |
 | `get_hospitalization_trends` | ✅ | Séries temporais |
-| `get_hospitalization_rates` | ✅ | Taxas por 100 mil hab (anos 2000-2024) |
+| `get_hospitalization_rates` | ✅ | Taxas por 100 mil hab (1992 ao último ano com população; intervalo em `population_years` — decisões 17 e 25) |
 | `compare_regions` | ✅ | Comparação entre regiões |
 | `get_icsap` | ✅ | Internações ICSAP |
 | `get_icsap_indicators` | ✅ | Indicadores ICSAP |
-| `compare_icsap_trends` | ✅ | Tendências ICSAP com taxas (anos 2000-2024) |
+| `compare_icsap_trends` | ✅ | Tendências ICSAP com taxas (mesmo intervalo das taxas) |
 | `rank_csap_groups` | ✅ | Ranking grupos CSAP |
 | `classify_as_csap` | ✅ | Classifica CID como CSAP |
 | `list_csap_groups` | ✅ | Lista grupos CSAP |
@@ -190,6 +195,9 @@ Para anos onde não há projeção UF com idade (antes de 2000), agregado dos da
 
 ```
 sih-br-mcp/
+├── CLAUDE.md, CHANGELOG.md          (orientação do Claude Code e histórico por versão — desde 2026-10-08; este CONTEXT.md é o diário das decisões)
+├── surface.lock.json, server.json   (trava da superfície desde a 1.2.3; server.json publica a impressão digital no MCP Registry desde a 1.4.2 — decisão 53)
+├── tests/                           (vitest: contrato de saída com forma de cliente, classe do erro, fixture congelada, trava da superfície, taxa-base… — decisões 45–51)
 ├── data/                            (gitignored; sem sidecar versionado desde a 0.11.0; população opcional — tem precedência se houver pop_uf.parquet)
 ├── ~/.cache/sih-br-mcp/cubos/       (cache: cubos + sidecar por ano E pop_uf/pop_uf_agregado/pop_municipios + pop_provenance.json, baixados do canal)
 ├── scripts/
@@ -200,13 +208,13 @@ sih-br-mcp/
 │   ├── warm-cache.mjs               (pré-aquece população/cubos; roda na construção da imagem)
 │   └── estudo-*.{py,mjs}            (evidência das analise-002/003)
 ├── Dockerfile, .dockerignore        (imagem do container: dist/http.js + população — PLAN-004)
-├── worker/                          (Worker de borda na Cloudflare: sih.sidneybissoli.com → container)
+├── worker/                          (Worker de borda na Cloudflare: sih.sidneybissoli.com → container; testes em worker/tests/)
 ├── src/data/                        (CÓPIAS das tabelas do produtor + brazil-regions, cid-chapters)
 ├── .github/workflows/
 │   ├── ci.yml                       (smoke stdio + smoke http + golden + selftests + tables:check)
 │   ├── mcpscore.yml                 (catraca de conformidade: stdio no PR, produção depois do deploy — decisão 43)
-│   ├── deploy-container.yml         (Worker + container na tag)
-│   └── publish.yml
+│   ├── deploy-container.yml         (Worker + container na tag; termina com `mcp-surface verificar`)
+│   └── publish.yml                  (npm + MCP Registry na tag; termina com `mcp-surface conferir-registro` desde a 1.4.2)
 ├── src/
 │   ├── tools.ts                     (as 12 ferramentas + callTool(), o despacho único dos dois transportes)
 │   ├── server.ts                    (factory createServer(): McpServer v2, títulos, anotações, instructions — decisões 29 e 43)
@@ -215,6 +223,8 @@ sih-br-mcp/
 │   ├── pagination.ts, discover.ts   (cursor inválido → -32602; server/discover anuncia as revisões atendidas — decisão 43)
 │   ├── upstream.ts                  (ponto ÚNICO de rede: fetch comum do portfólio, política medida, coletor do `retrieval` — decisão 44)
 │   ├── cache.ts, freshness.ts, provenance.ts
+│   ├── output-schemas.ts            (o outputSchema das 12 ferramentas — decisão 39)
+│   ├── erros.ts                     (classes de erro declaradas: a telemetria classifica pelo TIPO — decisões 47 e 48)
 │   ├── db/duckdb.ts                 (queries DuckDB + população)
 │   └── utils/                       (age-groups, population)
 └── (produtor dos cubos E da população: healthbr-data/scripts/pipeline/sih-cubos/ — rebuild-sih-cubes.yml, build-sih-population.yml)
