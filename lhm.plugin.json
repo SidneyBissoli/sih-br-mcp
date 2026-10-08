@@ -1,7 +1,7 @@
 {
   "identifier": "sidneybissoli-sih-br-mcp",
   "name": "DATASUS SIH/SUS — Brazil Hospital Admissions (AIH) MCP",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "icon": "🏥",
   "description": "Servidor MCP do DATASUS SIH/SUS: internações hospitalares do Brasil (AIH, 1992–2025) — causas CID-10 e CID-9, séries mensais, ICSAP e taxas por UF e município, sem baixar .dbc nem usar TabNet. Brazilian hospital admissions (SIH/SUS) MCP server: ICD-10 causes, monthly series, ambulatory-care-sensitive conditions (ICSAP) and rates by state and municipality, with source, data vintage and citation on every answer. Hosted on Cloudflare (Streamable HTTP, no auth) or local stdio via npm.",
   "author": "Sidney da Silva Pereira Bissoli",
@@ -157,7 +157,7 @@
           },
           "provenance": {
             "type": "object",
-            "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
+            "description": "Bloco de proveniência do portfólio: fonte, URL, competência, extração, diagnóstico de origem, citação e licença; e, só quando há o que dizer, avisos, o que o servidor calculou e se o número ainda pode mudar",
             "properties": {
               "source": {
                 "type": "string",
@@ -242,7 +242,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
+                "description": "Diagnóstico de origem desta chamada: idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
               },
               "citation": {
                 "type": "string",
@@ -313,6 +313,49 @@
                 },
                 "minItems": 1,
                 "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só"
+              },
+              "notices": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1,
+                "description": "Avisos que acompanham o dado (ex.: cubo atrás do espelho healthbr-data, frescor não verificado). Ausente quando não há aviso"
+              },
+              "derived": {
+                "type": "boolean",
+                "description": "Presente (true) quando o número foi calculado por este servidor — os cubos SIH são somas das internações dos arquivos do DATASUS"
+              },
+              "derivation_note": {
+                "type": "string",
+                "description": "Como o número foi calculado; presente junto com derived"
+              },
+              "revision": {
+                "type": "object",
+                "description": "Se o número ainda pode mudar: provisional quando algum ano da resposta ainda tem competências abertas no SIH (o total ainda pode crescer); current nos demais — o DATASUS reedita arquivos de competências passadas",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "current",
+                      "provisional",
+                      "final"
+                    ],
+                    "description": "current = versão vigente, a fonte pode revisá-la; provisional = preliminar, incompleta ou sujeita a mudança (não compare como se fosse fechada); final = não muda mais, declarado pela fonte"
+                  },
+                  "note": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "O específico da fonte: o que revisa, quando, por quê"
+                  }
+                },
+                "required": [
+                  "status",
+                  "note"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -422,7 +465,7 @@
           },
           "provenance": {
             "type": "object",
-            "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
+            "description": "Bloco de proveniência do portfólio: fonte, URL, competência, extração, diagnóstico de origem, citação e licença; e, só quando há o que dizer, avisos, o que o servidor calculou e se o número ainda pode mudar",
             "properties": {
               "source": {
                 "type": "string",
@@ -507,7 +550,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
+                "description": "Diagnóstico de origem desta chamada: idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
               },
               "citation": {
                 "type": "string",
@@ -578,6 +621,49 @@
                 },
                 "minItems": 1,
                 "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só"
+              },
+              "notices": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1,
+                "description": "Avisos que acompanham o dado (ex.: cubo atrás do espelho healthbr-data, frescor não verificado). Ausente quando não há aviso"
+              },
+              "derived": {
+                "type": "boolean",
+                "description": "Presente (true) quando o número foi calculado por este servidor — os cubos SIH são somas das internações dos arquivos do DATASUS"
+              },
+              "derivation_note": {
+                "type": "string",
+                "description": "Como o número foi calculado; presente junto com derived"
+              },
+              "revision": {
+                "type": "object",
+                "description": "Se o número ainda pode mudar: provisional quando algum ano da resposta ainda tem competências abertas no SIH (o total ainda pode crescer); current nos demais — o DATASUS reedita arquivos de competências passadas",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "current",
+                      "provisional",
+                      "final"
+                    ],
+                    "description": "current = versão vigente, a fonte pode revisá-la; provisional = preliminar, incompleta ou sujeita a mudança (não compare como se fosse fechada); final = não muda mais, declarado pela fonte"
+                  },
+                  "note": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "O específico da fonte: o que revisa, quando, por quê"
+                  }
+                },
+                "required": [
+                  "status",
+                  "note"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -1127,7 +1213,7 @@
           },
           "provenance": {
             "type": "object",
-            "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
+            "description": "Bloco de proveniência do portfólio: fonte, URL, competência, extração, diagnóstico de origem, citação e licença; e, só quando há o que dizer, avisos, o que o servidor calculou e se o número ainda pode mudar",
             "properties": {
               "source": {
                 "type": "string",
@@ -1212,7 +1298,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
+                "description": "Diagnóstico de origem desta chamada: idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
               },
               "citation": {
                 "type": "string",
@@ -1283,6 +1369,49 @@
                 },
                 "minItems": 1,
                 "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só"
+              },
+              "notices": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1,
+                "description": "Avisos que acompanham o dado (ex.: cubo atrás do espelho healthbr-data, frescor não verificado). Ausente quando não há aviso"
+              },
+              "derived": {
+                "type": "boolean",
+                "description": "Presente (true) quando o número foi calculado por este servidor — os cubos SIH são somas das internações dos arquivos do DATASUS"
+              },
+              "derivation_note": {
+                "type": "string",
+                "description": "Como o número foi calculado; presente junto com derived"
+              },
+              "revision": {
+                "type": "object",
+                "description": "Se o número ainda pode mudar: provisional quando algum ano da resposta ainda tem competências abertas no SIH (o total ainda pode crescer); current nos demais — o DATASUS reedita arquivos de competências passadas",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "current",
+                      "provisional",
+                      "final"
+                    ],
+                    "description": "current = versão vigente, a fonte pode revisá-la; provisional = preliminar, incompleta ou sujeita a mudança (não compare como se fosse fechada); final = não muda mais, declarado pela fonte"
+                  },
+                  "note": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "O específico da fonte: o que revisa, quando, por quê"
+                  }
+                },
+                "required": [
+                  "status",
+                  "note"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -1741,7 +1870,7 @@
           },
           "provenance": {
             "type": "object",
-            "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
+            "description": "Bloco de proveniência do portfólio: fonte, URL, competência, extração, diagnóstico de origem, citação e licença; e, só quando há o que dizer, avisos, o que o servidor calculou e se o número ainda pode mudar",
             "properties": {
               "source": {
                 "type": "string",
@@ -1826,7 +1955,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
+                "description": "Diagnóstico de origem desta chamada: idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
               },
               "citation": {
                 "type": "string",
@@ -1897,6 +2026,49 @@
                 },
                 "minItems": 1,
                 "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só"
+              },
+              "notices": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1,
+                "description": "Avisos que acompanham o dado (ex.: cubo atrás do espelho healthbr-data, frescor não verificado). Ausente quando não há aviso"
+              },
+              "derived": {
+                "type": "boolean",
+                "description": "Presente (true) quando o número foi calculado por este servidor — os cubos SIH são somas das internações dos arquivos do DATASUS"
+              },
+              "derivation_note": {
+                "type": "string",
+                "description": "Como o número foi calculado; presente junto com derived"
+              },
+              "revision": {
+                "type": "object",
+                "description": "Se o número ainda pode mudar: provisional quando algum ano da resposta ainda tem competências abertas no SIH (o total ainda pode crescer); current nos demais — o DATASUS reedita arquivos de competências passadas",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "current",
+                      "provisional",
+                      "final"
+                    ],
+                    "description": "current = versão vigente, a fonte pode revisá-la; provisional = preliminar, incompleta ou sujeita a mudança (não compare como se fosse fechada); final = não muda mais, declarado pela fonte"
+                  },
+                  "note": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "O específico da fonte: o que revisa, quando, por quê"
+                  }
+                },
+                "required": [
+                  "status",
+                  "note"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -2136,7 +2308,7 @@
           },
           "provenance": {
             "type": "object",
-            "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
+            "description": "Bloco de proveniência do portfólio: fonte, URL, competência, extração, diagnóstico de origem, citação e licença; e, só quando há o que dizer, avisos, o que o servidor calculou e se o número ainda pode mudar",
             "properties": {
               "source": {
                 "type": "string",
@@ -2221,7 +2393,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
+                "description": "Diagnóstico de origem desta chamada: idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
               },
               "citation": {
                 "type": "string",
@@ -2292,6 +2464,49 @@
                 },
                 "minItems": 1,
                 "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só"
+              },
+              "notices": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1,
+                "description": "Avisos que acompanham o dado (ex.: cubo atrás do espelho healthbr-data, frescor não verificado). Ausente quando não há aviso"
+              },
+              "derived": {
+                "type": "boolean",
+                "description": "Presente (true) quando o número foi calculado por este servidor — os cubos SIH são somas das internações dos arquivos do DATASUS"
+              },
+              "derivation_note": {
+                "type": "string",
+                "description": "Como o número foi calculado; presente junto com derived"
+              },
+              "revision": {
+                "type": "object",
+                "description": "Se o número ainda pode mudar: provisional quando algum ano da resposta ainda tem competências abertas no SIH (o total ainda pode crescer); current nos demais — o DATASUS reedita arquivos de competências passadas",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "current",
+                      "provisional",
+                      "final"
+                    ],
+                    "description": "current = versão vigente, a fonte pode revisá-la; provisional = preliminar, incompleta ou sujeita a mudança (não compare como se fosse fechada); final = não muda mais, declarado pela fonte"
+                  },
+                  "note": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "O específico da fonte: o que revisa, quando, por quê"
+                  }
+                },
+                "required": [
+                  "status",
+                  "note"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -2502,7 +2717,7 @@
           },
           "provenance": {
             "type": "object",
-            "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
+            "description": "Bloco de proveniência do portfólio: fonte, URL, competência, extração, diagnóstico de origem, citação e licença; e, só quando há o que dizer, avisos, o que o servidor calculou e se o número ainda pode mudar",
             "properties": {
               "source": {
                 "type": "string",
@@ -2587,7 +2802,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
+                "description": "Diagnóstico de origem desta chamada: idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
               },
               "citation": {
                 "type": "string",
@@ -2658,6 +2873,49 @@
                 },
                 "minItems": 1,
                 "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só"
+              },
+              "notices": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1,
+                "description": "Avisos que acompanham o dado (ex.: cubo atrás do espelho healthbr-data, frescor não verificado). Ausente quando não há aviso"
+              },
+              "derived": {
+                "type": "boolean",
+                "description": "Presente (true) quando o número foi calculado por este servidor — os cubos SIH são somas das internações dos arquivos do DATASUS"
+              },
+              "derivation_note": {
+                "type": "string",
+                "description": "Como o número foi calculado; presente junto com derived"
+              },
+              "revision": {
+                "type": "object",
+                "description": "Se o número ainda pode mudar: provisional quando algum ano da resposta ainda tem competências abertas no SIH (o total ainda pode crescer); current nos demais — o DATASUS reedita arquivos de competências passadas",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "current",
+                      "provisional",
+                      "final"
+                    ],
+                    "description": "current = versão vigente, a fonte pode revisá-la; provisional = preliminar, incompleta ou sujeita a mudança (não compare como se fosse fechada); final = não muda mais, declarado pela fonte"
+                  },
+                  "note": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "O específico da fonte: o que revisa, quando, por quê"
+                  }
+                },
+                "required": [
+                  "status",
+                  "note"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -3076,7 +3334,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
+              "description": "Bloco de proveniência do portfólio: fonte, URL, competência, extração, diagnóstico de origem, citação e licença; e, só quando há o que dizer, avisos, o que o servidor calculou e se o número ainda pode mudar",
               "properties": {
                 "source": {
                   "type": "string",
@@ -3161,7 +3419,7 @@
                       "type": "null"
                     }
                   ],
-                  "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
+                  "description": "Diagnóstico de origem desta chamada: idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
                 },
                 "citation": {
                   "type": "string",
@@ -3232,6 +3490,49 @@
                   },
                   "minItems": 1,
                   "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só"
+                },
+                "notices": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "description": "Avisos que acompanham o dado (ex.: cubo atrás do espelho healthbr-data, frescor não verificado). Ausente quando não há aviso"
+                },
+                "derived": {
+                  "type": "boolean",
+                  "description": "Presente (true) quando o número foi calculado por este servidor — os cubos SIH são somas das internações dos arquivos do DATASUS"
+                },
+                "derivation_note": {
+                  "type": "string",
+                  "description": "Como o número foi calculado; presente junto com derived"
+                },
+                "revision": {
+                  "type": "object",
+                  "description": "Se o número ainda pode mudar: provisional quando algum ano da resposta ainda tem competências abertas no SIH (o total ainda pode crescer); current nos demais — o DATASUS reedita arquivos de competências passadas",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "current",
+                        "provisional",
+                        "final"
+                      ],
+                      "description": "current = versão vigente, a fonte pode revisá-la; provisional = preliminar, incompleta ou sujeita a mudança (não compare como se fosse fechada); final = não muda mais, declarado pela fonte"
+                    },
+                    "note": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "O específico da fonte: o que revisa, quando, por quê"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "note"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -3518,7 +3819,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
+              "description": "Bloco de proveniência do portfólio: fonte, URL, competência, extração, diagnóstico de origem, citação e licença; e, só quando há o que dizer, avisos, o que o servidor calculou e se o número ainda pode mudar",
               "properties": {
                 "source": {
                   "type": "string",
@@ -3603,7 +3904,7 @@
                       "type": "null"
                     }
                   ],
-                  "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
+                  "description": "Diagnóstico de origem desta chamada: idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
                 },
                 "citation": {
                   "type": "string",
@@ -3674,6 +3975,49 @@
                   },
                   "minItems": 1,
                   "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só"
+                },
+                "notices": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "description": "Avisos que acompanham o dado (ex.: cubo atrás do espelho healthbr-data, frescor não verificado). Ausente quando não há aviso"
+                },
+                "derived": {
+                  "type": "boolean",
+                  "description": "Presente (true) quando o número foi calculado por este servidor — os cubos SIH são somas das internações dos arquivos do DATASUS"
+                },
+                "derivation_note": {
+                  "type": "string",
+                  "description": "Como o número foi calculado; presente junto com derived"
+                },
+                "revision": {
+                  "type": "object",
+                  "description": "Se o número ainda pode mudar: provisional quando algum ano da resposta ainda tem competências abertas no SIH (o total ainda pode crescer); current nos demais — o DATASUS reedita arquivos de competências passadas",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "current",
+                        "provisional",
+                        "final"
+                      ],
+                      "description": "current = versão vigente, a fonte pode revisá-la; provisional = preliminar, incompleta ou sujeita a mudança (não compare como se fosse fechada); final = não muda mais, declarado pela fonte"
+                    },
+                    "note": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "O específico da fonte: o que revisa, quando, por quê"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "note"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -3941,7 +4285,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
+              "description": "Bloco de proveniência do portfólio: fonte, URL, competência, extração, diagnóstico de origem, citação e licença; e, só quando há o que dizer, avisos, o que o servidor calculou e se o número ainda pode mudar",
               "properties": {
                 "source": {
                   "type": "string",
@@ -4026,7 +4370,7 @@
                       "type": "null"
                     }
                   ],
-                  "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
+                  "description": "Diagnóstico de origem desta chamada: idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
                 },
                 "citation": {
                   "type": "string",
@@ -4097,6 +4441,49 @@
                   },
                   "minItems": 1,
                   "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só"
+                },
+                "notices": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "description": "Avisos que acompanham o dado (ex.: cubo atrás do espelho healthbr-data, frescor não verificado). Ausente quando não há aviso"
+                },
+                "derived": {
+                  "type": "boolean",
+                  "description": "Presente (true) quando o número foi calculado por este servidor — os cubos SIH são somas das internações dos arquivos do DATASUS"
+                },
+                "derivation_note": {
+                  "type": "string",
+                  "description": "Como o número foi calculado; presente junto com derived"
+                },
+                "revision": {
+                  "type": "object",
+                  "description": "Se o número ainda pode mudar: provisional quando algum ano da resposta ainda tem competências abertas no SIH (o total ainda pode crescer); current nos demais — o DATASUS reedita arquivos de competências passadas",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "current",
+                        "provisional",
+                        "final"
+                      ],
+                      "description": "current = versão vigente, a fonte pode revisá-la; provisional = preliminar, incompleta ou sujeita a mudança (não compare como se fosse fechada); final = não muda mais, declarado pela fonte"
+                    },
+                    "note": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "O específico da fonte: o que revisa, quando, por quê"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "note"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -4251,7 +4638,7 @@
           },
           "provenance": {
             "type": "object",
-            "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
+            "description": "Bloco de proveniência do portfólio: fonte, URL, competência, extração, diagnóstico de origem, citação e licença; e, só quando há o que dizer, avisos, o que o servidor calculou e se o número ainda pode mudar",
             "properties": {
               "source": {
                 "type": "string",
@@ -4336,7 +4723,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
+                "description": "Diagnóstico de origem desta chamada: idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
               },
               "citation": {
                 "type": "string",
@@ -4407,6 +4794,49 @@
                 },
                 "minItems": 1,
                 "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só"
+              },
+              "notices": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1,
+                "description": "Avisos que acompanham o dado (ex.: cubo atrás do espelho healthbr-data, frescor não verificado). Ausente quando não há aviso"
+              },
+              "derived": {
+                "type": "boolean",
+                "description": "Presente (true) quando o número foi calculado por este servidor — os cubos SIH são somas das internações dos arquivos do DATASUS"
+              },
+              "derivation_note": {
+                "type": "string",
+                "description": "Como o número foi calculado; presente junto com derived"
+              },
+              "revision": {
+                "type": "object",
+                "description": "Se o número ainda pode mudar: provisional quando algum ano da resposta ainda tem competências abertas no SIH (o total ainda pode crescer); current nos demais — o DATASUS reedita arquivos de competências passadas",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "current",
+                      "provisional",
+                      "final"
+                    ],
+                    "description": "current = versão vigente, a fonte pode revisá-la; provisional = preliminar, incompleta ou sujeita a mudança (não compare como se fosse fechada); final = não muda mais, declarado pela fonte"
+                  },
+                  "note": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "O específico da fonte: o que revisa, quando, por quê"
+                  }
+                },
+                "required": [
+                  "status",
+                  "note"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -4924,7 +5354,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
+              "description": "Bloco de proveniência do portfólio: fonte, URL, competência, extração, diagnóstico de origem, citação e licença; e, só quando há o que dizer, avisos, o que o servidor calculou e se o número ainda pode mudar",
               "properties": {
                 "source": {
                   "type": "string",
@@ -5009,7 +5439,7 @@
                       "type": "null"
                     }
                   ],
-                  "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
+                  "description": "Diagnóstico de origem desta chamada: idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
                 },
                 "citation": {
                   "type": "string",
@@ -5080,6 +5510,49 @@
                   },
                   "minItems": 1,
                   "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só"
+                },
+                "notices": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "description": "Avisos que acompanham o dado (ex.: cubo atrás do espelho healthbr-data, frescor não verificado). Ausente quando não há aviso"
+                },
+                "derived": {
+                  "type": "boolean",
+                  "description": "Presente (true) quando o número foi calculado por este servidor — os cubos SIH são somas das internações dos arquivos do DATASUS"
+                },
+                "derivation_note": {
+                  "type": "string",
+                  "description": "Como o número foi calculado; presente junto com derived"
+                },
+                "revision": {
+                  "type": "object",
+                  "description": "Se o número ainda pode mudar: provisional quando algum ano da resposta ainda tem competências abertas no SIH (o total ainda pode crescer); current nos demais — o DATASUS reedita arquivos de competências passadas",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "current",
+                        "provisional",
+                        "final"
+                      ],
+                      "description": "current = versão vigente, a fonte pode revisá-la; provisional = preliminar, incompleta ou sujeita a mudança (não compare como se fosse fechada); final = não muda mais, declarado pela fonte"
+                    },
+                    "note": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "O específico da fonte: o que revisa, quando, por quê"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "note"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -5387,7 +5860,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "Bloco de proveniência (contrato v1.1): fonte, URL, competência, extração, diagnóstico de origem, citação e licença",
+              "description": "Bloco de proveniência do portfólio: fonte, URL, competência, extração, diagnóstico de origem, citação e licença; e, só quando há o que dizer, avisos, o que o servidor calculou e se o número ainda pode mudar",
               "properties": {
                 "source": {
                   "type": "string",
@@ -5472,7 +5945,7 @@
                       "type": "null"
                     }
                   ],
-                  "description": "Diagnóstico de origem desta chamada (contrato v1.1): idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
+                  "description": "Diagnóstico de origem desta chamada: idas ao canal sih/cubos/ do healthbr-data (manifesto e arquivos que faltavam no disco), tentativas somadas e anomalias contornadas; unstable=true quando houve anomalia. null = a resposta veio do DISCO (cache aquecido) ou o bloco não é do canal (listas de referência)"
                 },
                 "citation": {
                   "type": "string",
@@ -5543,6 +6016,49 @@
                   },
                   "minItems": 1,
                   "description": "Presente só quando a resposta junta partes de origens ou momentos distintos: para cada grupo de campos, a URL, a extração e se veio do cache. Ausente nas respostas de uma origem só"
+                },
+                "notices": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "description": "Avisos que acompanham o dado (ex.: cubo atrás do espelho healthbr-data, frescor não verificado). Ausente quando não há aviso"
+                },
+                "derived": {
+                  "type": "boolean",
+                  "description": "Presente (true) quando o número foi calculado por este servidor — os cubos SIH são somas das internações dos arquivos do DATASUS"
+                },
+                "derivation_note": {
+                  "type": "string",
+                  "description": "Como o número foi calculado; presente junto com derived"
+                },
+                "revision": {
+                  "type": "object",
+                  "description": "Se o número ainda pode mudar: provisional quando algum ano da resposta ainda tem competências abertas no SIH (o total ainda pode crescer); current nos demais — o DATASUS reedita arquivos de competências passadas",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "current",
+                        "provisional",
+                        "final"
+                      ],
+                      "description": "current = versão vigente, a fonte pode revisá-la; provisional = preliminar, incompleta ou sujeita a mudança (não compare como se fosse fechada); final = não muda mais, declarado pela fonte"
+                    },
+                    "note": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "O específico da fonte: o que revisa, quando, por quê"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "note"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
