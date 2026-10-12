@@ -25,7 +25,7 @@ import {
 
 import { configuredDataDirectory, getDataDirectory } from "./db/duckdb.js";
 import { CUBES_BASE_URL, cachedCubesManifest } from "./cache.js";
-import { cubeFreshness, describeBehind, getFreshness } from "./freshness.js";
+import { cubeConferencia, cubeFreshness, describeBehind, getFreshness } from "./freshness.js";
 import { currentRetrieval } from "./upstream.js";
 import csapGroups from "./data/csap-groups.json" with { type: "json" };
 import csapGroupsCid9 from "./data/csap-groups-cid9.json" with { type: "json" };
@@ -392,6 +392,70 @@ export function oldestDownload(used: SihSidecar[]): string {
     .sort()[0]!;
 }
 
+// =============================================================================
+// CONFERÊNCIA POR PARTIÇÃO (healthbr-data S2; provada no ar em 2026-10-12)
+// =============================================================================
+
+/** Marca que o sync-check do healthbr-data grava em cada partição do índice do espelho. */
+export interface MarcaDeConferencia {
+  source_hash_md5?: string;
+  source_size_bytes?: number;
+  /** Último instante em que o .dbc do FTP foi conferido igual ao que o espelho baixou ("AAAA-MM-DDTHH:MM:SSZ"). */
+  last_checked_at?: string;
+  /** "size" = conferência semanal por tamanho; "md5" = a manutenção rebaixou o .dbc e conferiu o hash. */
+  check_method?: string;
+}
+
+export interface ConferenciaDoCubo {
+  /** O MAIS ANTIGO `last_checked_at` entre as partições do cubo. */
+  at: string;
+  /** Métodos que produziram as marcas (ordenados, sem repetição). */
+  methods: string[];
+}
+
+const ISO_UTC_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
+
+/**
+ * "Conferido igual ao original em X" para um cubo: X é o `last_checked_at`
+ * MAIS ANTIGO entre as partições que o cubo usou — nada no cubo foi conferido
+ * antes disso. Só vale a marca de uma partição cuja origem no espelho é a
+ * MESMA que o cubo somou (MD5 e tamanho iguais aos do sidecar): marca sobre
+ * um .dbc reeditado afirma o arquivo novo, não o que está no cubo. Basta uma
+ * partição sem marca válida para não haver afirmação nenhuma (null) — a
+ * resposta cai no "idêntico na data do download", que continua verdadeiro.
+ */
+export function conferenciaDoCubo(
+  s: Pick<SihSidecar, "partitions">,
+  indice: Record<string, MarcaDeConferencia | undefined>,
+): ConferenciaDoCubo | null {
+  if (s.partitions.length === 0) return null;
+  let at: string | null = null;
+  const methods = new Set<string>();
+  for (const p of s.partitions) {
+    const m = indice[p.partition];
+    if (!m || m.source_hash_md5 !== p.source_hash_md5 || m.source_size_bytes !== p.source_size_bytes) return null;
+    if (!m.last_checked_at || !ISO_UTC_RE.test(m.last_checked_at) || !m.check_method) return null;
+    if (at === null || m.last_checked_at < at) at = m.last_checked_at;
+    methods.add(m.check_method);
+  }
+  return { at: at!, methods: [...methods].sort() };
+}
+
+const METODO_LEGIVEL: Record<string, string> = { size: "tamanho", md5: "MD5" };
+
+/**
+ * Trecho da citação com a conferência dos cubos usados, ou "" quando algum
+ * deles não tem conferência (checagem desligada — smoke e golden —, pendente,
+ * sem rede, ou partição sem marca). X = o mais antigo entre os cubos.
+ */
+export function trechoConferencia(conferencias: readonly (ConferenciaDoCubo | null)[]): string {
+  if (conferencias.length === 0 || conferencias.some((c) => c === null)) return "";
+  const cs = conferencias as ConferenciaDoCubo[];
+  const at = cs.map((c) => c.at).sort()[0]!;
+  const metodos = [...new Set(cs.flatMap((c) => c.methods))].sort().map((m) => METODO_LEGIVEL[m] ?? m);
+  return `, e conferidos iguais ao original no FTP do DATASUS (por ${metodos.join(" ou ")}) em ${safraOf(at)}`;
+}
+
 /**
  * Marca de frescor no vintage — o modo concise não mostra `notices`, então a
  * única chave do bloco que o leitor vê é esta. Só aparece quando o cubo está
@@ -540,7 +604,8 @@ export function sihProvenance(years?: number[]): CanonicalProvenance {
     citation:
       `Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. ` +
       `Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS ` +
-      `na data do download (MD5 de cada arquivo registrado), o mais antigo em ${safraOf(retrievedAt)}; ` +
+      `na data do download (MD5 de cada arquivo registrado), o mais antigo em ${safraOf(retrievedAt)}` +
+      `${trechoConferencia(used.map((s) => cubeConferencia(s.cube_year)))}; ` +
       `agregados por sih-br-mcp v${SERVER_VERSION}.`,
     derived: true,
     derivation_note:

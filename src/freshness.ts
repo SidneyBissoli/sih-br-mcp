@@ -36,7 +36,7 @@
  * Isto só AVISA — quem age é o workflow.
  */
 
-import { loadSidecars, type SihSidecar } from "./provenance.js";
+import { conferenciaDoCubo, loadSidecars, type ConferenciaDoCubo, type SihSidecar } from "./provenance.js";
 import { OrigemError, traduzirErro, upstreamFrescor } from "./upstream.js";
 
 export type FreshnessStatus = "disabled" | "pending" | "current" | "stale" | "unknown";
@@ -79,6 +79,9 @@ export interface MirrorManifest {
       source_hash_md5?: string;
       source_size_bytes?: number;
       output_files?: Array<{ sha256?: string }>;
+      /** healthbr-data S2: quando e como o sync-check conferiu a partição contra o FTP. */
+      last_checked_at?: string;
+      check_method?: string;
     }
   >;
 }
@@ -101,6 +104,25 @@ let state: FreshnessState = {
   error: null,
 };
 let inFlight: Promise<FreshnessState> | null = null;
+
+/**
+ * Conferência por partição de cada cubo (src/provenance.ts, conferenciaDoCubo).
+ * Fica FORA do `FreshnessState` de propósito: o estado sai verbatim em
+ * `get_available_years.freshness`, cujo outputSchema tem
+ * `additionalProperties: false` — chave nova ali quebraria o cliente que guarda
+ * o schema antigo. Quem lê é só a citação da proveniência.
+ */
+let conferencias = new Map<number, ConferenciaDoCubo>();
+
+/** Conferências de cada cubo segundo o índice do espelho (só os que têm todas as partições marcadas). */
+export function conferenciasDoIndice(sidecars: SihSidecar[], index: MirrorManifest): Map<number, ConferenciaDoCubo> {
+  const out = new Map<number, ConferenciaDoCubo>();
+  for (const s of sidecars) {
+    const c = conferenciaDoCubo(s, index.partitions ?? {});
+    if (c) out.set(s.cube_year, c);
+  }
+  return out;
+}
 
 // =============================================================================
 // COMPARAÇÃO (pura — testável offline com um trecho do manifesto)
@@ -241,7 +263,28 @@ async function fetchIndex(manifestUrl: string, remoteLastUpdated: string | null)
   return JSON.parse(full.text) as MirrorManifest;
 }
 
+/**
+ * Só o resumo, e só se ele está na data do manifesto; null em qualquer outro
+ * caso (sem convenção de caminho, rede, resumo atrás). Usado no caminho rápido,
+ * em que o frescor já está decidido e o resumo serve apenas para ler as marcas
+ * de conferência — não vale cair no manifesto inteiro (10 MB) por elas.
+ */
+async function fetchSummaryOnly(manifestUrl: string, remoteLastUpdated: string): Promise<MirrorManifest | null> {
+  const sUrl = summaryUrl(manifestUrl);
+  if (!sUrl) return null;
+  try {
+    const summary = JSON.parse((await fetchText(sUrl, FULL_TIMEOUT_MS)).text) as MirrorManifest;
+    return summary.partitions && summary.last_updated === remoteLastUpdated ? summary : null;
+  } catch (e) {
+    console.error(`[frescor] resumo indisponível para a conferência por partição (${e instanceof Error ? e.message : String(e)})`);
+    return null;
+  }
+}
+
 async function runCheck(): Promise<FreshnessState> {
+  // Sem índice lido NESTA checagem, nenhuma conferência vale (a anterior pode
+  // ser de um índice que já mudou).
+  conferencias = new Map();
   const sidecars = loadSidecars();
   const base: FreshnessState = {
     status: "unknown",
@@ -268,6 +311,10 @@ async function runCheck(): Promise<FreshnessState> {
       const remote = LAST_UPDATED_RE.exec(probe.text)?.[1] ?? null;
       const locals = new Set(sidecars.map((s) => s.distributor?.manifest_last_updated));
       if (remote && locals.size === 1 && locals.has(remote)) {
+        // Em dia pela sonda. O resumo (~3,4 MB) só é baixado para ler as
+        // marcas de conferência por partição; se falhar, o veredito não muda.
+        const summary = await fetchSummaryOnly(url, remote);
+        if (summary) conferencias = conferenciasDoIndice(sidecars, summary);
         return {
           ...base,
           status: "current",
@@ -289,6 +336,7 @@ async function runCheck(): Promise<FreshnessState> {
       //    data que o manifesto; senão o manifesto inteiro (10,4 MB).
       manifest = await fetchIndex(url, remote);
     }
+    conferencias = conferenciasDoIndice(sidecars, manifest);
     return evaluateManifest(sidecars, manifest, "full");
   } catch (e) {
     // OrigemError já diz "timeout" na mensagem; o TimeoutError cru é o prazo do CORPO (AbortSignal.timeout).
@@ -348,6 +396,16 @@ export function getFreshness(): FreshnessState {
 /** Só para testes: substitui o estado (não usa rede). */
 export function setFreshnessForTests(s: FreshnessState): void {
   state = s;
+}
+
+/** Só para testes: substitui as conferências por partição (não usa rede). */
+export function setConferenciasForTests(m: Map<number, ConferenciaDoCubo>): void {
+  conferencias = m;
+}
+
+/** Conferência por partição de um cubo; null sem conferência (desligado, pendente, sem rede ou partição sem marca). */
+export function cubeConferencia(year: number): ConferenciaDoCubo | null {
+  return conferencias.get(year) ?? null;
 }
 
 /** Frescor de um cubo específico; null se não há veredito para ele. */
