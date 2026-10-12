@@ -21,6 +21,22 @@ de dados pelo `rebuild-cubes.yml`, antes de o produtor migrar para o healthbr-da
 
 ## [Não lançado]
 
+## [1.7.0] — 2026-10-12
+
+A citação da proveniência diz quando os arquivos de origem foram conferidos iguais ao
+original no FTP do DATASUS (decisão 55). A superfície não muda; o texto da citação muda,
+daí o minor.
+
+### Adicionado
+
+- Conferência por partição do healthbr-data (S2): quando todas as partições dos cubos
+  usados têm marca de conferência no índice do espelho, com a MESMA origem que o cubo
+  somou (MD5 e tamanho), a citação acrescenta "e conferidos iguais ao original no FTP do
+  DATASUS (por tamanho) em AAAA-MM-DD", a data da marca mais antiga. Sem marca válida em
+  alguma partição, a citação fica como antes.
+- A checagem de frescor, quando o manifesto não mudou, baixa também o resumo do manifesto
+  (~3,4 MB, em segundo plano) para ler essas marcas.
+
 ## [1.6.0] — 2026-10-08
 
 Contrato de proveniência: tempo 2 da v1.2 e tempo 1 da v1.3 (decisão 54). As respostas
