@@ -110,7 +110,11 @@
         "retrieved_at": "2026-01-21T00:00:00Z",
         "retrieval": null,
         "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-        "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+        "revision": {
+          "status": "current",
+          "note": null
+        }
       },
       "attribution": [
         "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
@@ -306,7 +310,11 @@
         "retrieved_at": "2026-01-21T00:00:00Z",
         "retrieval": null,
         "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-        "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+        "revision": {
+          "status": "current",
+          "note": null
+        }
       },
       "attribution": [
         "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
@@ -482,7 +490,11 @@
         "retrieved_at": "2026-01-21T00:00:00Z",
         "retrieval": null,
         "citation": "Organização Mundial da Saúde. Classificação Estatística Internacional de Doenças e Problemas Relacionados à Saúde, 10ª revisão (CID-10), versão 2019.",
-        "license": "Classificação pública da OMS; capítulos transcritos em src/data/cid-chapters.json"
+        "license": "Classificação pública da OMS; capítulos transcritos em src/data/cid-chapters.json",
+        "revision": {
+          "status": "current",
+          "note": null
+        }
       },
       "attribution": [
         "https://icd.who.int/browse10/2019/en"
@@ -610,8 +622,14 @@
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T03:05:34Z",
         "retrieval": null,
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+        "derived": true,
+        "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+        "revision": {
+          "status": "current",
+          "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+        }
       },
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
@@ -668,7 +686,11 @@
         "retrieved_at": "2026-01-21T00:00:00Z",
         "retrieval": null,
         "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-        "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+        "revision": {
+          "status": "current",
+          "note": null
+        }
       },
       "attribution": [
         "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
@@ -718,7 +740,11 @@
         "retrieved_at": "2026-01-21T00:00:00Z",
         "retrieval": null,
         "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-        "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+        "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+        "revision": {
+          "status": "current",
+          "note": null
+        }
       },
       "attribution": [
         "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html"
@@ -761,8 +787,14 @@
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T03:05:34Z",
         "retrieval": null,
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+        "derived": true,
+        "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+        "revision": {
+          "status": "current",
+          "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+        }
       },
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
@@ -863,8 +895,14 @@
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T03:05:34Z",
         "retrieval": null,
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+        "derived": true,
+        "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+        "revision": {
+          "status": "current",
+          "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+        }
       },
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
@@ -920,8 +958,14 @@
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T03:05:34Z",
         "retrieval": null,
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+        "derived": true,
+        "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+        "revision": {
+          "status": "current",
+          "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+        }
       },
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
@@ -1120,8 +1164,14 @@
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T03:05:34Z",
         "retrieval": null,
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+        "derived": true,
+        "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+        "revision": {
+          "status": "current",
+          "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+        }
       },
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
@@ -1328,8 +1378,14 @@
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T03:05:34Z",
         "retrieval": null,
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+        "derived": true,
+        "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+        "revision": {
+          "status": "current",
+          "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+        }
       },
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
@@ -1369,8 +1425,14 @@
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T03:05:34Z",
         "retrieval": null,
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+        "derived": true,
+        "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+        "revision": {
+          "status": "current",
+          "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+        }
       },
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
@@ -1427,8 +1489,14 @@
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T03:05:34Z",
         "retrieval": null,
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+        "derived": true,
+        "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+        "revision": {
+          "status": "current",
+          "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+        }
       },
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
@@ -1518,8 +1586,14 @@
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T03:05:34Z",
         "retrieval": null,
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+        "derived": true,
+        "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+        "revision": {
+          "status": "current",
+          "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+        }
       },
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
@@ -1604,8 +1678,14 @@
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T03:05:34Z",
         "retrieval": null,
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+        "derived": true,
+        "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+        "revision": {
+          "status": "current",
+          "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+        }
       },
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
@@ -1656,8 +1736,14 @@
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T03:05:34Z",
         "retrieval": null,
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+        "derived": true,
+        "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+        "revision": {
+          "status": "current",
+          "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+        }
       },
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
@@ -1701,8 +1787,14 @@
         "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
         "retrieved_at": "2026-03-09T03:05:34Z",
         "retrieval": null,
-        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+        "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+        "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+        "derived": true,
+        "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+        "revision": {
+          "status": "current",
+          "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+        }
       },
       "attribution": [
         "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados/"
@@ -1752,8 +1844,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
@@ -1762,7 +1860,11 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         },
         {
           "source": "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R, Fúlvio B. Nedel)",
@@ -1771,7 +1873,13 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "NEDEL, F. B. csapAIH: Classificar Condições Sensíveis à Atenção Primária. Pacote R, versão 0.0.4.8, 2026. https://github.com/fulvionedel/csapAIH",
-          "license": "GPL-3.0"
+          "license": "GPL-3.0",
+          "derived": true,
+          "derivation_note": "Universo reproduzido em tabela versionada e conferido contra o próprio pacote em 2023/RR (48.480 AIH): mesmas 38.020 internações no universo, 18 dos 19 grupos idênticos; o g01 difere em 18 AIH porque a regex da listaBRMS do pacote inclui B55–B56 e omite B05–B06 e B77.x, contra a Portaria — este servidor segue a Portaria (= listaBRAlfradique do pacote).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -1993,8 +2101,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
@@ -2003,7 +2117,11 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         },
         {
           "source": "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R, Fúlvio B. Nedel)",
@@ -2012,7 +2130,13 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "NEDEL, F. B. csapAIH: Classificar Condições Sensíveis à Atenção Primária. Pacote R, versão 0.0.4.8, 2026. https://github.com/fulvionedel/csapAIH",
-          "license": "GPL-3.0"
+          "license": "GPL-3.0",
+          "derived": true,
+          "derivation_note": "Universo reproduzido em tabela versionada e conferido contra o próprio pacote em 2023/RR (48.480 AIH): mesmas 38.020 internações no universo, 18 dos 19 grupos idênticos; o g01 difere em 18 AIH porque a regex da listaBRMS do pacote inclui B55–B56 e omite B05–B06 e B77.x, contra a Portaria — este servidor segue a Portaria (= listaBRAlfradique do pacote).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -2083,8 +2207,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
@@ -2093,7 +2223,11 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         },
         {
           "source": "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R, Fúlvio B. Nedel)",
@@ -2102,7 +2236,13 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "NEDEL, F. B. csapAIH: Classificar Condições Sensíveis à Atenção Primária. Pacote R, versão 0.0.4.8, 2026. https://github.com/fulvionedel/csapAIH",
-          "license": "GPL-3.0"
+          "license": "GPL-3.0",
+          "derived": true,
+          "derivation_note": "Universo reproduzido em tabela versionada e conferido contra o próprio pacote em 2023/RR (48.480 AIH): mesmas 38.020 internações no universo, 18 dos 19 grupos idênticos; o g01 difere em 18 AIH porque a regex da listaBRMS do pacote inclui B55–B56 e omite B05–B06 e B77.x, contra a Portaria — este servidor segue a Portaria (= listaBRAlfradique do pacote).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -2172,8 +2312,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
@@ -2182,7 +2328,11 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         },
         {
           "source": "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R, Fúlvio B. Nedel)",
@@ -2191,7 +2341,13 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "NEDEL, F. B. csapAIH: Classificar Condições Sensíveis à Atenção Primária. Pacote R, versão 0.0.4.8, 2026. https://github.com/fulvionedel/csapAIH",
-          "license": "GPL-3.0"
+          "license": "GPL-3.0",
+          "derived": true,
+          "derivation_note": "Universo reproduzido em tabela versionada e conferido contra o próprio pacote em 2023/RR (48.480 AIH): mesmas 38.020 internações no universo, 18 dos 19 grupos idênticos; o g01 difere em 18 AIH porque a regex da listaBRMS do pacote inclui B55–B56 e omite B05–B06 e B77.x, contra a Portaria — este servidor segue a Portaria (= listaBRAlfradique do pacote).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -2234,8 +2390,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
@@ -2244,7 +2406,11 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         },
         {
           "source": "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R, Fúlvio B. Nedel)",
@@ -2253,7 +2419,13 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "NEDEL, F. B. csapAIH: Classificar Condições Sensíveis à Atenção Primária. Pacote R, versão 0.0.4.8, 2026. https://github.com/fulvionedel/csapAIH",
-          "license": "GPL-3.0"
+          "license": "GPL-3.0",
+          "derived": true,
+          "derivation_note": "Universo reproduzido em tabela versionada e conferido contra o próprio pacote em 2023/RR (48.480 AIH): mesmas 38.020 internações no universo, 18 dos 19 grupos idênticos; o g01 difere em 18 AIH porque a regex da listaBRMS do pacote inclui B55–B56 e omite B05–B06 e B77.x, contra a Portaria — este servidor segue a Portaria (= listaBRAlfradique do pacote).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -2363,8 +2535,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
@@ -2373,7 +2551,11 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         },
         {
           "source": "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R, Fúlvio B. Nedel)",
@@ -2382,7 +2564,13 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "NEDEL, F. B. csapAIH: Classificar Condições Sensíveis à Atenção Primária. Pacote R, versão 0.0.4.8, 2026. https://github.com/fulvionedel/csapAIH",
-          "license": "GPL-3.0"
+          "license": "GPL-3.0",
+          "derived": true,
+          "derivation_note": "Universo reproduzido em tabela versionada e conferido contra o próprio pacote em 2023/RR (48.480 AIH): mesmas 38.020 internações no universo, 18 dos 19 grupos idênticos; o g01 difere em 18 AIH porque a regex da listaBRMS do pacote inclui B55–B56 e omite B05–B06 e B77.x, contra a Portaria — este servidor segue a Portaria (= listaBRAlfradique do pacote).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -2433,8 +2621,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
@@ -2443,7 +2637,11 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         },
         {
           "source": "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R, Fúlvio B. Nedel)",
@@ -2452,7 +2650,13 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "NEDEL, F. B. csapAIH: Classificar Condições Sensíveis à Atenção Primária. Pacote R, versão 0.0.4.8, 2026. https://github.com/fulvionedel/csapAIH",
-          "license": "GPL-3.0"
+          "license": "GPL-3.0",
+          "derived": true,
+          "derivation_note": "Universo reproduzido em tabela versionada e conferido contra o próprio pacote em 2023/RR (48.480 AIH): mesmas 38.020 internações no universo, 18 dos 19 grupos idênticos; o g01 difere em 18 AIH porque a regex da listaBRMS do pacote inclui B55–B56 e omite B05–B06 e B77.x, contra a Portaria — este servidor segue a Portaria (= listaBRAlfradique do pacote).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -2499,8 +2703,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
@@ -2509,7 +2719,11 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         },
         {
           "source": "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R, Fúlvio B. Nedel)",
@@ -2518,7 +2732,13 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "NEDEL, F. B. csapAIH: Classificar Condições Sensíveis à Atenção Primária. Pacote R, versão 0.0.4.8, 2026. https://github.com/fulvionedel/csapAIH",
-          "license": "GPL-3.0"
+          "license": "GPL-3.0",
+          "derived": true,
+          "derivation_note": "Universo reproduzido em tabela versionada e conferido contra o próprio pacote em 2023/RR (48.480 AIH): mesmas 38.020 internações no universo, 18 dos 19 grupos idênticos; o g01 difere em 18 AIH porque a regex da listaBRMS do pacote inclui B55–B56 e omite B05–B06 e B77.x, contra a Portaria — este servidor segue a Portaria (= listaBRAlfradique do pacote).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -2569,8 +2789,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
@@ -2579,7 +2805,11 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         },
         {
           "source": "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R, Fúlvio B. Nedel)",
@@ -2588,7 +2818,13 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "NEDEL, F. B. csapAIH: Classificar Condições Sensíveis à Atenção Primária. Pacote R, versão 0.0.4.8, 2026. https://github.com/fulvionedel/csapAIH",
-          "license": "GPL-3.0"
+          "license": "GPL-3.0",
+          "derived": true,
+          "derivation_note": "Universo reproduzido em tabela versionada e conferido contra o próprio pacote em 2023/RR (48.480 AIH): mesmas 38.020 internações no universo, 18 dos 19 grupos idênticos; o g01 difere em 18 AIH porque a regex da listaBRMS do pacote inclui B55–B56 e omite B05–B06 e B77.x, contra a Portaria — este servidor segue a Portaria (= listaBRAlfradique do pacote).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -2783,8 +3019,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
@@ -2793,7 +3035,11 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         },
         {
           "source": "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R, Fúlvio B. Nedel)",
@@ -2802,7 +3048,13 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "NEDEL, F. B. csapAIH: Classificar Condições Sensíveis à Atenção Primária. Pacote R, versão 0.0.4.8, 2026. https://github.com/fulvionedel/csapAIH",
-          "license": "GPL-3.0"
+          "license": "GPL-3.0",
+          "derived": true,
+          "derivation_note": "Universo reproduzido em tabela versionada e conferido contra o próprio pacote em 2023/RR (48.480 AIH): mesmas 38.020 internações no universo, 18 dos 19 grupos idênticos; o g01 difere em 18 AIH porque a regex da listaBRMS do pacote inclui B55–B56 e omite B05–B06 e B77.x, contra a Portaria — este servidor segue a Portaria (= listaBRAlfradique do pacote).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -2858,8 +3110,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "IBGE — Projeção da População do Brasil e das Unidades da Federação, Revisão 2024 (UF × sexo × idade simples); DATASUS — população residente por município (POPBR/POPSVS, estimativas e censos do IBGE)",
@@ -2868,7 +3126,13 @@
           "retrieved_at": "2026-09-07T00:00:00Z",
           "retrieval": null,
           "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade simples — Revisão 2024. Ministério da Saúde/DATASUS. População residente por município (POPBR/POPSVS).",
-          "license": "Dados abertos do IBGE e do DATASUS; redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "license": "Dados abertos do IBGE e do DATASUS; redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Denominadores usados no cálculo de taxas; somente soma de estratos (município → UF), sem interpolação nem projeção própria (regras em CONTEXT.md).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -3011,8 +3275,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "IBGE — Projeção da População do Brasil e das Unidades da Federação, Revisão 2024 (UF × sexo × idade simples); DATASUS — população residente por município (POPBR/POPSVS, estimativas e censos do IBGE)",
@@ -3021,7 +3291,13 @@
           "retrieved_at": "2026-09-07T00:00:00Z",
           "retrieval": null,
           "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade simples — Revisão 2024. Ministério da Saúde/DATASUS. População residente por município (POPBR/POPSVS).",
-          "license": "Dados abertos do IBGE e do DATASUS; redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "license": "Dados abertos do IBGE e do DATASUS; redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Denominadores usados no cálculo de taxas; somente soma de estratos (município → UF), sem interpolação nem projeção própria (regras em CONTEXT.md).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -3088,8 +3364,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "IBGE — Projeção da População do Brasil e das Unidades da Federação, Revisão 2024 (UF × sexo × idade simples); DATASUS — população residente por município (POPBR/POPSVS, estimativas e censos do IBGE)",
@@ -3098,7 +3380,13 @@
           "retrieved_at": "2026-09-07T00:00:00Z",
           "retrieval": null,
           "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade simples — Revisão 2024. Ministério da Saúde/DATASUS. População residente por município (POPBR/POPSVS).",
-          "license": "Dados abertos do IBGE e do DATASUS; redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "license": "Dados abertos do IBGE e do DATASUS; redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Denominadores usados no cálculo de taxas; somente soma de estratos (município → UF), sem interpolação nem projeção própria (regras em CONTEXT.md).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -3131,8 +3419,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "IBGE — Projeção da População do Brasil e das Unidades da Federação, Revisão 2024 (UF × sexo × idade simples); DATASUS — população residente por município (POPBR/POPSVS, estimativas e censos do IBGE)",
@@ -3141,7 +3435,13 @@
           "retrieved_at": "2026-09-07T00:00:00Z",
           "retrieval": null,
           "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade simples — Revisão 2024. Ministério da Saúde/DATASUS. População residente por município (POPBR/POPSVS).",
-          "license": "Dados abertos do IBGE e do DATASUS; redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "license": "Dados abertos do IBGE e do DATASUS; redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Denominadores usados no cálculo de taxas; somente soma de estratos (município → UF), sem interpolação nem projeção própria (regras em CONTEXT.md).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -3177,8 +3477,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "IBGE — Projeção da População do Brasil e das Unidades da Federação, Revisão 2024 (UF × sexo × idade simples); DATASUS — população residente por município (POPBR/POPSVS, estimativas e censos do IBGE)",
@@ -3187,7 +3493,13 @@
           "retrieved_at": "2026-09-07T00:00:00Z",
           "retrieval": null,
           "citation": "IBGE. Projeção da população do Brasil e das Unidades da Federação por sexo e idade simples — Revisão 2024. Ministério da Saúde/DATASUS. População residente por município (POPBR/POPSVS).",
-          "license": "Dados abertos do IBGE e do DATASUS; redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "license": "Dados abertos do IBGE e do DATASUS; redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Denominadores usados no cálculo de taxas; somente soma de estratos (município → UF), sem interpolação nem projeção própria (regras em CONTEXT.md).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -3242,8 +3554,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
@@ -3252,7 +3570,11 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         },
         {
           "source": "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R, Fúlvio B. Nedel)",
@@ -3261,7 +3583,13 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "NEDEL, F. B. csapAIH: Classificar Condições Sensíveis à Atenção Primária. Pacote R, versão 0.0.4.8, 2026. https://github.com/fulvionedel/csapAIH",
-          "license": "GPL-3.0"
+          "license": "GPL-3.0",
+          "derived": true,
+          "derivation_note": "Universo reproduzido em tabela versionada e conferido contra o próprio pacote em 2023/RR (48.480 AIH): mesmas 38.020 internações no universo, 18 dos 19 grupos idênticos; o g01 difere em 18 AIH porque a regex da listaBRMS do pacote inclui B55–B56 e omite B05–B06 e B77.x, contra a Portaria — este servidor segue a Portaria (= listaBRAlfradique do pacote).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -3310,8 +3638,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
@@ -3320,7 +3654,11 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         },
         {
           "source": "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R, Fúlvio B. Nedel)",
@@ -3329,7 +3667,13 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "NEDEL, F. B. csapAIH: Classificar Condições Sensíveis à Atenção Primária. Pacote R, versão 0.0.4.8, 2026. https://github.com/fulvionedel/csapAIH",
-          "license": "GPL-3.0"
+          "license": "GPL-3.0",
+          "derived": true,
+          "derivation_note": "Universo reproduzido em tabela versionada e conferido contra o próprio pacote em 2023/RR (48.480 AIH): mesmas 38.020 internações no universo, 18 dos 19 grupos idênticos; o g01 difere em 18 AIH porque a regex da listaBRMS do pacote inclui B55–B56 e omite B05–B06 e B77.x, contra a Portaria — este servidor segue a Portaria (= listaBRAlfradique do pacote).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [
@@ -3380,8 +3724,14 @@
           "data_vintage": "2023: internações de 2023 em competências 2023-01 a 2024-04, UF de arquivo RR, safra healthbr-data 2026-03-09",
           "retrieved_at": "2026-03-09T03:05:34Z",
           "retrieval": null,
-          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.0.",
-          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0"
+          "citation": "Ministério da Saúde. Sistema de Informações Hospitalares do SUS (SIH/SUS), AIH reduzida. Brasília: DATASUS. Microdados redistribuídos em Parquet por healthbr-data (Bissoli, 2026; CC-BY-4.0), idênticos aos .dbc originais do DATASUS na data do download (MD5 de cada arquivo registrado), o mais antigo em 2026-03-09; agregados por sih-br-mcp v1.7.1.",
+          "license": "Dados abertos do DATASUS (Ministério da Saúde); redistribuição em Parquet pelo healthbr-data sob CC-BY-4.0",
+          "derived": true,
+          "derivation_note": "Agregação em cubos por ano de internação (causas, séries mensais, ICSAP) a partir de 16 arquivo(s) RD do FTP do DATASUS, lidos do espelho healthbr-data (s3://healthbr-data/sih/rd/; manifesto de 2026-08-18T12:33:31); year/month pela data de internação (DT_INTER), lendo as competências do ano e os 4 meses seguintes (cobertura esperada 99,7–99,9% do ano; dezembro 99,3–99,7%); cubos gerados em 2026-09-07T21:58:27Z por scripts/build-aggregations.R v2.6.0. Hash MD5 e data de download de cada .dbc de origem em sih_provenance_<ano>.json.",
+          "revision": {
+            "status": "current",
+            "note": "O DATASUS reedita arquivos de competências passadas: cada número é o da versão baixada pelo espelho (a data de extração), não uma contagem final."
+          }
         },
         {
           "source": "Ministério da Saúde — Portaria MS/SAS nº 221/2008 (Lista Brasileira de ICSAP)",
@@ -3390,7 +3740,11 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "BRASIL. Ministério da Saúde. Secretaria de Atenção à Saúde. Portaria nº 221, de 17 de abril de 2008. Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.",
-          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)"
+          "license": "Ato normativo público (Portaria MS/SAS nº 221, de 17 de abril de 2008)",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         },
         {
           "source": "csapAIH — Classificar Condições Sensíveis à Atenção Primária (pacote R, Fúlvio B. Nedel)",
@@ -3399,7 +3753,13 @@
           "retrieved_at": "2026-01-21T00:00:00Z",
           "retrieval": null,
           "citation": "NEDEL, F. B. csapAIH: Classificar Condições Sensíveis à Atenção Primária. Pacote R, versão 0.0.4.8, 2026. https://github.com/fulvionedel/csapAIH",
-          "license": "GPL-3.0"
+          "license": "GPL-3.0",
+          "derived": true,
+          "derivation_note": "Universo reproduzido em tabela versionada e conferido contra o próprio pacote em 2023/RR (48.480 AIH): mesmas 38.020 internações no universo, 18 dos 19 grupos idênticos; o g01 difere em 18 AIH porque a regex da listaBRMS do pacote inclui B55–B56 e omite B05–B06 e B77.x, contra a Portaria — este servidor segue a Portaria (= listaBRAlfradique do pacote).",
+          "revision": {
+            "status": "current",
+            "note": null
+          }
         }
       ],
       "attribution": [

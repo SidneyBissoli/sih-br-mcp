@@ -25,7 +25,7 @@ import {
 
 import { configuredDataDirectory, getDataDirectory } from "./db/duckdb.js";
 import { CUBES_BASE_URL, cachedCubesManifest } from "./cache.js";
-import { cubeConferencia, cubeFreshness, describeBehind, getFreshness } from "./freshness.js";
+import { cubeConferencia, cubeFreshness, getFreshness } from "./freshness.js";
 import { currentRetrieval } from "./upstream.js";
 import csapGroups from "./data/csap-groups.json" with { type: "json" };
 import csapGroupsCid9 from "./data/csap-groups-cid9.json" with { type: "json" };
@@ -35,15 +35,19 @@ import cidChapters from "./data/cid-chapters.json" with { type: "json" };
 // nas 0.11 e 0.12 e o handshake anunciava versão errada (achado em 08/09/2026).
 export const SERVER_VERSION: string = createRequire(import.meta.url)("../package.json").version;
 
-// Contrato 1.2 (tempo 2): `field_sources` sairia no concise quando uma resposta
-// fundisse sub-fontes — nenhuma ferramenta do sih funde hoje (cada bloco é de
-// uma procedência; respostas de várias procedências levam um bloco por fonte),
-// então o fio não muda. A 1.3 (`revision` no fio) é o passo seguinte, com prazo.
+// Contrato 1.3 (tempo 2 dela, 15/10/2026; decisão 56): o concise passa a levar
+// `revision` em todo bloco que a tem (`provisional` com janela de competências
+// aberta, `current` nos demais), `notices` quando há aviso (cubo atrás do
+// espelho, frescor não verificado) e `derived` + `derivation_note` nos blocos
+// dos cubos — ausentes, e não vazios, quando não há o que dizer. Da 1.2,
+// `field_sources` sairia se uma resposta fundisse sub-fontes; nenhuma
+// ferramenta do sih funde (respostas de várias procedências levam um bloco por
+// fonte).
 export const provenance = createProvenanceContext({
   metaNamespace: "br.sbissoli.sih",
   locale: "pt-BR",
   defaultMode: "concise",
-  contractVersion: "1.2",
+  contractVersion: "1.3",
 });
 
 // =============================================================================
@@ -457,19 +461,6 @@ export function trechoConferencia(conferencias: readonly (ConferenciaDoCubo | nu
 }
 
 /**
- * Marca de frescor no vintage — o modo concise não mostra `notices`, então a
- * única chave do bloco que o leitor vê é esta. Só aparece quando o cubo está
- * ATRÁS do espelho (ver src/freshness.ts); em dia, pendente, desligado ou sem
- * rede não acrescenta nada, para o golden (que roda com a checagem desligada)
- * continuar byte-idêntico.
- */
-function behindMark(year: number): string {
-  const c = cubeFreshness(year);
-  if (!c || !c.behind) return "";
-  return ` [ATRÁS do espelho healthbr-data: ${describeBehind(c, getFreshness().manifest_last_updated_remote)}]`;
-}
-
-/**
  * Primeira e última competência são o MÍNIMO e o MÁXIMO (AAAA-MM ordena certo
  * como texto), não as pontas da lista: até a 1.4.2 eram `[0]` e `[length − 1]`
  * e só acertavam porque o sidecar vem em ordem — mesma classe do intervalo do
@@ -480,12 +471,18 @@ export function intervaloDeCompetencias(competencias: readonly string[]): { firs
   return { first: ordenadas[0] ?? "", last: ordenadas[ordenadas.length - 1] ?? "" };
 }
 
+/**
+ * O vintage diz SÓ de quando é o dado (decisão 56): a janela aberta saiu daqui
+ * para `revision` (`provisional`, com a nota que nomeia os anos) e o cubo atrás
+ * do espelho virou aviso em `notices` — as duas marcas eram o remendo do tempo
+ * em que o concise só mostrava o vintage.
+ */
 function vintageOf(s: SihSidecar): string {
   const { first, last } = intervaloDeCompetencias(s.competencias);
   const janela = s.window
-    ? `internações de ${s.cube_year} em competências ${first} a ${last}${s.window.complete ? "" : " (janela INCOMPLETA)"}`
+    ? `internações de ${s.cube_year} em competências ${first} a ${last}`
     : `competências ${first} a ${last}`;
-  return `${s.cube_year}: ${janela}, UF de arquivo ${s.ufs_arquivo.join("/")}, safra healthbr-data ${safraOf(s.retrieved_at)}${behindMark(s.cube_year)}`;
+  return `${s.cube_year}: ${janela}, UF de arquivo ${s.ufs_arquivo.join("/")}, safra healthbr-data ${safraOf(s.retrieved_at)}`;
 }
 
 // =============================================================================
@@ -533,18 +530,23 @@ export function revisionOf(used: readonly Pick<SihSidecar, "cube_year" | "window
 /** Listas de referência e população: versão vigente na fonte, sem texto próprio publicado sobre revisão. */
 const REVISAO_VIGENTE: SihRevision = { status: "current", note: null };
 
-/** Avisos de frescor (bloco canônico/detailed). Vazio quando não há o que dizer. */
+/**
+ * Texto aprovado pelo dono (decisão 56) para o cubo ATRÁS do espelho: diz ao
+ * leitor o que isso significa para os números, sem o vocabulário do pipeline.
+ */
+export const AVISO_CUBO_ATRAS =
+  "Há meses mais recentes já recebidos do DATASUS que ainda não entraram nestes números; a atualização é semanal.";
+
+/**
+ * Avisos de frescor (saem no concise desde a 1.3). Vazio quando não há o que
+ * dizer. O "atrás" sai UMA vez por bloco, venha de quantos anos vier: o texto
+ * vale para a resposta inteira.
+ */
 function freshnessNotices(used: SihSidecar[]): string[] {
   const f = getFreshness();
   if (f.status === "stale") {
-    return used
-      .map((s) => cubeFreshness(s.cube_year))
-      .filter((c): c is NonNullable<typeof c> => !!c && c.behind)
-      .map(
-        (c) =>
-          `Cubo ${c.cube_year} está ATRÁS do espelho healthbr-data: ${describeBehind(c, f.manifest_last_updated_remote)}. ` +
-          `Os números vêm dos arquivos da safra do sidecar; rebuild pendente.`,
-      );
+    const algumAtras = used.some((s) => cubeFreshness(s.cube_year)?.behind);
+    return algumAtras ? [AVISO_CUBO_ATRAS] : [];
   }
   if (f.status === "unknown") {
     return [`Frescor dos cubos não verificado contra o espelho healthbr-data (${f.error ?? "sem resposta"}).`];

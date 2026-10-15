@@ -26,8 +26,8 @@
  *
  * Resultado: `current` | `stale` | `unknown` (rede/timeout) | `pending` |
  * `disabled` (SIH_FRESHNESS_CHECK=off — smoke e golden usam, para que o CI
- * nunca dependa do portal). Quem lê: `sihProvenance()` (marca `data_vintage`
- * e `notices` quando está atrás), `get_available_years` (campo `freshness`)
+ * nunca dependa do portal). Quem lê: `sihProvenance()` (aviso em `notices`
+ * quando está atrás, decisão 56), `get_available_years` (campo `freshness`)
  * e o job `decide` de `rebuild-sih-cubes.yml` no healthbr-data (produtor dos
  * cubos desde 2026-09-08), que roda esta mesma CLI (`scripts/freshness-check.mjs
  * --fixtures <sidecars do canal> --out`) e reconstrói os cubos `behind`.
@@ -411,16 +411,4 @@ export function cubeConferencia(year: number): ConferenciaDoCubo | null {
 /** Frescor de um cubo específico; null se não há veredito para ele. */
 export function cubeFreshness(year: number): CubeFreshness | null {
   return state.cubes.find((c) => c.cube_year === year) ?? null;
-}
-
-/** Frase curta para o `data_vintage`/`notices` de um cubo atrás do espelho. */
-export function describeBehind(c: CubeFreshness, remoteDate: string | null): string {
-  const partes: string[] = [];
-  const lista = (xs: string[]) => (xs.length <= 4 ? xs.join(", ") : `${xs.slice(0, 4).join(", ")} e mais ${xs.length - 4}`);
-  const pl = (n: number, s: string, p: string) => `${n} ${n === 1 ? s : p}`;
-  if (c.reedited.length) partes.push(`${pl(c.reedited.length, "partição reeditada", "partições reeditadas")} pelo MS (${lista(c.reedited)})`);
-  if (c.reprocessed.length) partes.push(`${pl(c.reprocessed.length, "partição regenerada", "partições regeneradas")} no espelho (${lista(c.reprocessed)})`);
-  if (c.removed.length) partes.push(`${pl(c.removed.length, "partição retirada", "partições retiradas")} do espelho (${lista(c.removed)})`);
-  if (c.new_in_window.length) partes.push(`${pl(c.new_in_window.length, "competência nova", "competências novas")} na janela (${lista(c.new_in_window)})`);
-  return `${partes.join("; ")}${remoteDate ? `; manifesto do espelho de ${remoteDate}` : ""}`;
 }

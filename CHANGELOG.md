@@ -21,6 +21,31 @@ de dados pelo `rebuild-cubes.yml`, antes de o produtor migrar para o healthbr-da
 
 ## [Não lançado]
 
+## [1.7.1] — 2026-10-15
+
+Tempo 2 do contrato de proveniência 1.3 (decisão 56): o que a 1.6.0 passou a ACEITAR
+no esquema passa a SAIR nas respostas, sete dias depois, como manda o rollout em dois
+tempos. O `tools/list` não muda (`surface.lock.json` idêntico), daí o patch.
+
+### Alterado
+
+- **O servidor emite o contrato 1.3.** O bloco de proveniência do concise (o JSON do
+  texto e o `structuredContent`) leva `revision` em todo bloco que a tem —
+  `provisional` quando algum ano consultado tem a janela de competências aberta, com
+  a nota que nomeia os anos; `current` nos demais, com a nota de que o DATASUS
+  reedita competências passadas —, `derived` + `derivation_note` nos blocos dos cubos
+  (e nos de população e da tabela de referência derivada) e `notices` quando há
+  aviso. Sem aviso, a chave fica ausente, não vazia.
+- **O `data_vintage` diz só de quando é o dado.** Saíram as marcas
+  " (janela INCOMPLETA)" e " [ATRÁS do espelho healthbr-data: …]", que existiam
+  porque o concise não mostrava `revision` nem `notices`: a janela aberta agora é
+  `revision: provisional`, e o cubo atrás do espelho vira o aviso "Há meses mais
+  recentes já recebidos do DATASUS que ainda não entraram nestes números; a
+  atualização é semanal." — uma vez por bloco, venha de quantos anos vier. O
+  detalhe das partições atrás continua em `get_available_years.freshness`.
+- Golden regravado: só as chaves novas e a versão na citação (a fixture tem a janela
+  completa e o frescor desligado, então o vintage não muda).
+
 ## [1.7.0] — 2026-10-12
 
 A citação da proveniência diz quando os arquivos de origem foram conferidos iguais ao
