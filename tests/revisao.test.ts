@@ -2,15 +2,15 @@
  * `revision` (contrato de proveniência v1.3), decisão do dono em 08/10/2026:
  * `provisional` quando algum ano usado no bloco tem a janela de competências
  * INCOMPLETA no sidecar (`window.complete === false`); `current` nos demais e
- * quando o sidecar não tem `window`. O servidor emite o contrato 1.2, então o
- * fio (concise) ainda não leva a chave — a lib a descarta —, mas o canônico
- * já a carrega: é o terreno da 1.3, provado aqui nos dois casos.
+ * quando o sidecar não tem `window`. Desde a 1.7.1 (decisão 56) o servidor
+ * emite a 1.3: a chave sai no fio (concise), e as marcas que faziam esse papel
+ * no `data_vintage` — "(janela INCOMPLETA)" e "[ATRÁS do espelho…]" — saíram;
+ * o "atrás" virou aviso em `notices`, com o texto aprovado pelo dono.
  *
  * A fixture congelada só tem 2023, com janela completa. O caso provisório usa
  * uma CÓPIA do sidecar dela numa pasta temporária, com a janela aberta — a
  * fixture não é tocada (decisão 46).
  */
-
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -59,7 +59,7 @@ describe("revisionOf (função pura)", () => {
   });
 });
 
-describe("sihProvenance: o canônico carrega a revision, o fio 1.2 ainda não", () => {
+describe("sihProvenance: contrato 1.3 no fio (revision, notices, derived)", () => {
   const envOriginal = { ...process.env };
   let temporaria: string | null = null;
   afterAll(() => {
@@ -73,39 +73,82 @@ describe("sihProvenance: o canônico carrega a revision, o fio 1.2 ainda não", 
     Object.assign(process.env, { SIH_DATA_DIR: pasta, SIH_CUBES_CACHE: "off", SIH_FRESHNESS_CHECK: "off" });
     vi.resetModules();
     const mod = await import("../src/provenance.js");
+    const frescor = await import("../src/freshness.js");
     mod.resetSidecars();
-    return { bloco: mod.sihProvenance(anos), ctx: mod.provenance };
+    return { bloco: () => mod.sihProvenance(anos), ctx: mod.provenance, frescor, aviso: mod.AVISO_CUBO_ATRAS };
   }
 
-  it("fixture 2023 (janela completa): current no canônico; contrato 1.2; concise sem a chave", async () => {
-    const { bloco, ctx } = await blocoCom(FIXTURE, [2023]);
-    expect(ctx.contractVersion).toBe("1.2");
-    expect(bloco.contract_version).toBe("1.2");
-    expect(bloco.revision?.status).toBe("current");
+  it("fixture 2023 (janela completa): contrato 1.3; o concise leva revision current e derived, sem notices", async () => {
+    const { bloco: gerar, ctx } = await blocoCom(FIXTURE, [2023]);
+    const bloco = gerar();
+    expect(ctx.contractVersion).toBe("1.3");
+    expect(bloco.contract_version).toBe("1.3");
     expect(bloco.field_sources).toBeNull();
-    expect(Object.keys(ctx.render(bloco))).not.toContain("revision");
-    // Quando o servidor ligar a 1.3, a mesma revision sai no fio — e current não ganha rodapé.
-    expect(renderConcise({ ...bloco, contract_version: "1.3" }).revision).toEqual(bloco.revision);
+    const fio = ctx.render(bloco) as Record<string, unknown>;
+    expect(fio.revision).toEqual(bloco.revision);
+    expect((fio.revision as { status: string }).status).toBe("current");
+    expect(fio.derived).toBe(true);
+    expect(String(fio.derivation_note)).toContain("Agregação em cubos");
+    // Sem aviso: a chave fica ausente, não vazia.
+    expect(fio).not.toHaveProperty("notices");
+    expect(renderConcise(bloco)).toEqual(fio);
   });
 
-  it("cópia do sidecar com a janela ABERTA (pasta temporária): provisional no canônico", async () => {
+  it("cópia do sidecar com a janela ABERTA (pasta temporária): provisional no fio, e o vintage sem a marca", async () => {
     temporaria = mkdtempSync(join(tmpdir(), "sih-revisao-"));
     writeFileSync(join(temporaria, "sih_provenance_2023.json"), JSON.stringify(comJanela(2023, false)));
-    const { bloco, ctx } = await blocoCom(temporaria, [2023]);
-    expect(bloco.revision).toEqual({
+    const { bloco: gerar, ctx } = await blocoCom(temporaria, [2023]);
+    const bloco = gerar();
+    const esperado = {
       status: "provisional",
       note: "Internações de 2023: competências ainda abertas no SIH; o total ainda pode crescer.",
+    };
+    expect(bloco.revision).toEqual(esperado);
+    expect((ctx.render(bloco) as Record<string, unknown>).revision).toEqual(esperado);
+    // Decisão 56: a janela aberta mora em `revision`, não no vintage.
+    expect(bloco.data_vintage).toMatch(/^2023: internações de 2023 em competências \d{4}-\d{2} a \d{4}-\d{2}, UF de arquivo /);
+    expect(bloco.data_vintage).not.toContain("INCOMPLETA");
+  });
+
+  it("cubo ATRÁS do espelho: o aviso aprovado sai em notices, uma vez, e o vintage fica limpo", async () => {
+    const { bloco: gerar, ctx, frescor, aviso } = await blocoCom(FIXTURE, [2023]);
+    expect(aviso).toBe(
+      "Há meses mais recentes já recebidos do DATASUS que ainda não entraram nestes números; a atualização é semanal.",
+    );
+    const limpo = gerar().data_vintage;
+    frescor.setFreshnessForTests({
+      ...frescor.getFreshness(),
+      status: "stale",
+      checked_at: new Date().toISOString(),
+      cubes: [
+        { cube_year: 2023, reedited: ["RDSP2301"], reprocessed: [], removed: [], new_in_window: ["2024-03"], behind: true },
+      ],
     });
-    // A marca da janela no vintage continua (o fio não muda neste passo).
-    expect(bloco.data_vintage).toContain("(janela INCOMPLETA)");
-    expect(Object.keys(ctx.render(bloco))).not.toContain("revision");
-    expect(renderConcise({ ...bloco, contract_version: "1.3" }).revision?.status).toBe("provisional");
+    const bloco = gerar();
+    expect(bloco.notices).toEqual([aviso]);
+    expect((ctx.render(bloco) as Record<string, unknown>).notices).toEqual([aviso]);
+    expect(bloco.data_vintage).toBe(limpo);
+    expect(bloco.data_vintage).not.toContain("ATRÁS");
+  });
+
+  it("frescor em dia (stale em outro ano): sem aviso", async () => {
+    const { bloco: gerar, frescor } = await blocoCom(FIXTURE, [2023]);
+    frescor.setFreshnessForTests({
+      ...frescor.getFreshness(),
+      status: "stale",
+      checked_at: new Date().toISOString(),
+      cubes: [
+        { cube_year: 2023, reedited: [], reprocessed: [], removed: [], new_in_window: [], behind: false },
+        { cube_year: 2024, reedited: ["RDSP2401"], reprocessed: [], removed: [], new_in_window: [], behind: true },
+      ],
+    });
+    expect(gerar().notices).toEqual([]);
   });
 });
 
-describe("o outputSchema LISTADO já aceita um bloco 1.3 completo (tempo 1 da 1.3 no ar)", () => {
+describe("o outputSchema LISTADO aceita um bloco 1.3 completo", () => {
   const bloco13 = {
-    notices: ["Cubo 2025 está ATRÁS do espelho healthbr-data."],
+    notices: ["Há meses mais recentes já recebidos do DATASUS que ainda não entraram nestes números; a atualização é semanal."],
     derived: true,
     derivation_note: "Agregação em cubos por ano de internação.",
     revision: { status: "provisional", note: "Internações de 2025: competências ainda abertas no SIH; o total ainda pode crescer." },
