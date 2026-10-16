@@ -1,8 +1,8 @@
 {
   "$comentario": "Impressão digital da superfície (@sbissoli/mcp-surface). Não editar à mão: `npm run surface:lock` regrava, e só aceita superfície nova sob versão nova.",
   "declarada": {
-    "versao": "1.6.0",
-    "sha256": "5c24f924326c66c9ef29cbe58c6d9b6e265bb62f65069f854f0d354b637a3422",
+    "versao": "1.8.0",
+    "sha256": "35a18858723718647c3dc7226b213984fb1c56b4d14787f78319ad41d812d0a9",
     "conteudo": {
       "initialize": {
         "capabilities": {
@@ -2210,7 +2210,7 @@
                       ]
                     },
                     "rate": {
-                      "description": "Internações por `rate_per` habitantes, duas casas",
+                      "description": "Internações por `rate_per` habitantes, com no mínimo 3 algarismos significativos e nunca menos de duas casas (taxa pequena não vira 0)",
                       "type": "number"
                     },
                     "rate_per": {
@@ -2219,7 +2219,7 @@
                     },
                     "rate_per_100k": {
                       "deprecated": true,
-                      "description": "DEPRECADO — use `rate` com `rate_per`. Internações por 100 mil habitantes, qualquer que seja `rate_per`; sai numa versão futura",
+                      "description": "DEPRECADO — use `rate` com `rate_per`. Internações por 100 mil habitantes, qualquer que seja `rate_per`, mesmo arredondamento de `rate`; sai numa versão futura",
                       "type": "number"
                     },
                     "uf": {
@@ -2705,7 +2705,7 @@
                 "additionalProperties": false,
                 "properties": {
                   "overall_rate": {
-                    "description": "Taxa do conjunto, na base `rate_per`",
+                    "description": "Taxa do conjunto, na base `rate_per`, mesmo arredondamento de `rate`",
                     "type": "number"
                   },
                   "rate_per": {

@@ -719,10 +719,10 @@ const get_hospitalization_rates = (inputSchema: JsonSchemaType): Corpo => ({
           n_hospitalizations: num("Internações"),
           deaths: num("Óbitos"),
           population: num("População do estrato (denominador)"),
-          rate: num("Internações por `rate_per` habitantes, duas casas"),
+          rate: num("Internações por `rate_per` habitantes, com no mínimo 3 algarismos significativos e nunca menos de duas casas (taxa pequena não vira 0)"),
           rate_per: num("Base da taxa (1000, 10000 ou 100000)"),
           rate_per_100k: {
-            ...num("DEPRECADO — use `rate` com `rate_per`. Internações por 100 mil habitantes, qualquer que seja `rate_per`; sai numa versão futura"),
+            ...num("DEPRECADO — use `rate` com `rate_per`. Internações por 100 mil habitantes, qualquer que seja `rate_per`, mesmo arredondamento de `rate`; sai numa versão futura"),
             deprecated: true,
           },
           population_source: { enum: ["detailed", "aggregated", null], description: "Arquivo de população que serviu o ano" },
@@ -736,7 +736,7 @@ const get_hospitalization_rates = (inputSchema: JsonSchemaType): Corpo => ({
       {
         total_hospitalizations: num("Internações somadas"),
         total_population: num("População somada"),
-        overall_rate: num("Taxa do conjunto, na base `rate_per`"),
+        overall_rate: num("Taxa do conjunto, na base `rate_per`, mesmo arredondamento de `rate`"),
         rate_per: num("Base da taxa"),
         rate_type: enumDe(["crude", "specific"], "Bruta ou específica"),
       },

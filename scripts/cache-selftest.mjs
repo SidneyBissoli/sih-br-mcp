@@ -142,6 +142,60 @@ ok(s4.downloaded.length === 0, "sidecar já conferido não é baixado a cada cha
 rmSync(cacheSide, { recursive: true, force: true });
 rmSync(cacheAssado, { recursive: true, force: true });
 
+// 7. DESSINCRONIA CUBO × SIDECAR (decisão 57, 1.8.0). O ano é a unidade: o
+// bloco de proveniência sai do sidecar, a soma sai do cubo, e os dois têm de
+// ser do MESMO build. Até a 1.7.1 o cache não atualizava cubo presente
+// (yearsPresent só olhava existência; ensureYear, só tamanho), enquanto
+// ensureSidecars rebaixava o sidecar quando o sha mudava — depois de um
+// rebuild, a chamada pelo resumo trazia o sidecar novo (T1) e a chamada pelo
+// cubo somava o cubo velho (T0) publicando a proveniência de T1.
+const cacheSync = mkdtempSync(join(tmpdir(), "sih-cache-sync-"));
+const m0 = await mod.loadCubesManifest();
+await mod.ensureYears(cacheSync, [2001], undefined, ["series"]);
+await mod.ensureYears(cacheSync, [2001], undefined, ["icsap"]);
+const icsapT0 = readFileSync(join(cacheSync, "sih_icsap_2001.parquet"), "utf8");
+// Rebuild no canal: 2001 muda (série com OUTRO tamanho, icsap com o MESMO
+// tamanho — só o SHA-256 pega —, sidecar novo); 2002 não existe neste cache.
+const rebuild = (name, content) => {
+  const buf = Buffer.from(content);
+  writeFileSync(join(site, name), buf);
+  return { name, size_bytes: buf.length, sha256: sha(buf) };
+};
+const t1 = structuredClone(m0.manifest);
+t1.years[2001].files.series = rebuild("sih_series_2001.parquet", "series-2001-T1");
+t1.years[2001].files.icsap = rebuild("sih_icsap_2001.parquet", "icsap-20O1");
+t1.years[2001].files.provenance = rebuild("sih_provenance_2001.json", JSON.stringify({ cube_year: 2001, build: "T1" }));
+ok(t1.years[2001].files.icsap.size_bytes === Buffer.byteLength(icsapT0), "icsap de T1 tem o mesmo tamanho do de T0");
+mod.setCubesManifestForTests(t1);
+// Caminho do resumo primeiro (só o sidecar), depois o caminho do cubo.
+await mod.ensureSidecars(cacheSync, [2001]);
+const rs = await mod.ensureYears(cacheSync, [2001], undefined, ["series"]);
+ok(JSON.stringify(rs.downloaded) === "[2001]", "cubo de série mudou na fonte: ensureYears rebaixa o ano");
+ok(readFileSync(join(cacheSync, "sih_series_2001.parquet"), "utf8") === "series-2001-T1", "série no cache = a de T1 (mesmo build do sidecar)");
+const ri = await mod.ensureYears(cacheSync, [2001], undefined, ["icsap"]);
+ok(JSON.stringify(ri.downloaded) === "[2001]" && readFileSync(join(cacheSync, "sih_icsap_2001.parquet"), "utf8") === "icsap-20O1", "cubo de mesmo TAMANHO e outro SHA-256 também é rebaixado");
+ok(JSON.parse(readFileSync(join(cacheSync, "sih_provenance_2001.json"), "utf8")).build === "T1", "sidecar no cache = T1");
+const rq = await mod.ensureYears(cacheSync, [2001], undefined, ["series", "icsap"]);
+ok(rq.downloaded.length === 0, "ano já conferido contra o manifesto não é baixado de novo");
+// Ordem inversa: o caminho do cubo traz o PAR, não só o cubo.
+const cacheSync2 = mkdtempSync(join(tmpdir(), "sih-cache-sync2-"));
+mod.setCubesManifestForTests(m0.manifest);
+writeFileSync(join(site, "sih_series_2001.parquet"), "series-2001");
+writeFileSync(join(site, "sih_provenance_2001.json"), JSON.stringify({ cube_year: 2001 }));
+await mod.ensureYears(cacheSync2, [2001], undefined, ["series"]);
+writeFileSync(join(site, "sih_series_2001.parquet"), "series-2001-T1");
+writeFileSync(join(site, "sih_provenance_2001.json"), JSON.stringify({ cube_year: 2001, build: "T1" }));
+mod.setCubesManifestForTests(t1);
+await mod.ensureYears(cacheSync2, [2001], undefined, ["series"]);
+ok(JSON.parse(readFileSync(join(cacheSync2, "sih_provenance_2001.json"), "utf8")).build === "T1", "caminho do cubo rebaixa o sidecar junto (o par)");
+rmSync(cacheSync, { recursive: true, force: true });
+rmSync(cacheSync2, { recursive: true, force: true });
+// devolve o canal a T0 para os casos seguintes
+writeFileSync(join(site, "sih_series_2001.parquet"), "series-2001");
+writeFileSync(join(site, "sih_icsap_2001.parquet"), "icsap-2001");
+writeFileSync(join(site, "sih_provenance_2001.json"), JSON.stringify({ cube_year: 2001 }));
+mod.setCubesManifestForTests(m0.manifest);
+
 // 5. população: baixa os quatro, idempotente, verifica SHA-256, e "sem bloco" = available=false
 ok(mod.populationPresent(cache) === false, "populationPresent: cache sem população");
 const p1 = await mod.ensurePopulation(cache);

@@ -1250,6 +1250,21 @@ interface GetHospitalizationRatesArgs {
   group_by?: string[];
 }
 
+/**
+ * Arredondamento das taxas por população (1.8.0, ROADMAP :225): no mínimo 3
+ * algarismos significativos e nunca menos de duas casas. Até a 1.7.1 era
+ * `Math.round(x * 100) / 100`, e taxa abaixo de 0,005 na base pedida saía 0 —
+ * zero calado, que se lê como "nenhuma internação" (SP com 2 internações para
+ * 45,8 M de habitantes, medido em 30/09/2026). Taxa ≥ 1 sai como antes.
+ * População 0 ainda sai como taxa 0 (o `null` muda o tipo no outputSchema e a
+ * trava da superfície pede major; item aberto no ROADMAP).
+ */
+export function arredondarTaxa(x: number): number {
+  if (!Number.isFinite(x) || x === 0) return 0;
+  const casas = Math.max(2, 2 - Math.floor(Math.log10(Math.abs(x))));
+  return Number(x.toFixed(Math.min(casas, 20)));
+}
+
 async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) {
   // Verifica se dados populacionais estão disponíveis (pasta de dados ou cache
   // local, enchido do canal por ensurePopulation() antes deste handler)
@@ -1411,12 +1426,12 @@ async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) 
       n_hospitalizations: nHosp,
       deaths,
       population,
-      rate: Math.round(rate * 100) / 100,
+      rate: arredondarTaxa(rate),
       rate_per: ratePer,
       // Deprecado: mantido uma versão para quem lia o nome antigo. Até a 1.1.x
       // este campo carregava a taxa na base `rate_per` (por mil, por 10 mil),
       // contradizendo o próprio nome; agora vale sempre por 100 mil.
-      rate_per_100k: population > 0 ? Math.round((nHosp / population) * 100000 * 100) / 100 : 0,
+      rate_per_100k: population > 0 ? arredondarTaxa((nHosp / population) * 100000) : 0,
       population_source: popSources[hospYear] ?? null,
       mortality_rate: nHosp > 0 ? Math.round((deaths / nHosp) * 10000) / 100 : 0,
     });
@@ -1432,7 +1447,7 @@ async function handleGetHospitalizationRates(args: GetHospitalizationRatesArgs) 
     summary: {
       total_hospitalizations: totalHosp,
       total_population: totalPop,
-      overall_rate: Math.round(overallRate * 100) / 100,
+      overall_rate: arredondarTaxa(overallRate),
       rate_per: ratePer,
       rate_type: args.rate_type || "crude",
     },

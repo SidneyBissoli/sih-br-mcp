@@ -19,9 +19,16 @@
  *   SIH_CACHE_DIR=<pasta>    onde guardar (padrão ~/.cache/sih-br-mcp/cubos).
  *   SIH_CUBES_BASE_URL=<url> outro canal (espelho, teste local).
  *
- * O que NÃO faz: não apaga nada, não atualiza cubo já presente (quem decide
- * que um cubo está atrás é o frescor, `src/freshness.ts`; a reposição é
- * apagar o arquivo do cache e chamar de novo).
+ * O ano é a UNIDADE (decisão 57, 1.8.0): cubo e sidecar de um ano têm de ser
+ * do mesmo build, porque a soma sai do cubo e o bloco de proveniência sai do
+ * sidecar. Todo arquivo do ano é conferido contra o sha256 do manifesto
+ * (uma vez por processo, e lembrado em disco em `.sha256-conferidos.json`
+ * para não pagar o hash de novo no próximo processo); o que não confere é
+ * rebaixado. Até a 1.7.1 o cache não atualizava cubo presente, enquanto
+ * ensureSidecars rebaixava o sidecar: depois de um rebuild, o cubo velho saía
+ * com a proveniência do build novo.
+ *
+ * O que NÃO faz: não apaga arquivo de ano que saiu do canal.
  */
 import { createHash } from "node:crypto";
 import { createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
@@ -302,9 +309,79 @@ async function downloadVerified(file: CubesManifestFile, dir: string, timeoutMs:
     throw new OrigemError(`${file.name}: SHA-256 não confere com o manifesto`, "verificacao", res.status);
   }
   renameSync(tmp, final);
+  lembrarConferido(dir, file);
 }
 
-const inFlight = new Map<string, Promise<void>>();
+// ---------------------------------------------------------------------------
+// Conferência por SHA-256 contra o manifesto (decisão 57)
+
+/**
+ * Arquivos já conferidos por SHA-256 NESTE processo: caminho → sha do
+ * manifesto que bateu. Nasceu (como `sidecarVerificado`, 0.14.x) por causa dos
+ * sidecars PRÉ-ASSADOS na imagem do container: o tamanho sozinho não distingue
+ * um arquivo reescrito por um rebuild que por acaso manteve o mesmo número de
+ * bytes. Desde a 1.8.0 vale para todo arquivo de ano — cubo e sidecar —, que é
+ * o que mantém o par do mesmo build. Se o manifesto passar a assinar outro
+ * sha, o memo não bate e o arquivo é conferido (e rebaixado) de novo.
+ */
+const conferido = new Map<string, string>();
+
+/**
+ * O mesmo memo, em disco, por pasta: nome → sha256, tamanho e mtime do
+ * arquivo quando foi conferido. Sem ele, todo processo novo (cada sessão do
+ * npx) pagaria o hash dos cubos que lê — 1,25 GB nos 34 anos de causas. Um
+ * registro só vale se tamanho e mtime ainda forem os do arquivo; perdê-lo
+ * (corrida entre dois processos, arquivo apagado) só custa um hash a mais.
+ */
+const REGISTRO_CONFERIDOS = ".sha256-conferidos.json";
+type RegistroConferidos = Record<string, { sha256: string; size: number; mtimeMs: number }>;
+
+function lerRegistro(dir: string): RegistroConferidos {
+  try {
+    const r = JSON.parse(readFileSync(join(dir, REGISTRO_CONFERIDOS), "utf8"));
+    return r && typeof r === "object" ? (r as RegistroConferidos) : {};
+  } catch {
+    return {};
+  }
+}
+
+function lembrarConferido(dir: string, f: CubesManifestFile): void {
+  const path = join(dir, f.name);
+  conferido.set(path, f.sha256);
+  try {
+    const st = statSync(path);
+    const reg = lerRegistro(dir);
+    reg[f.name] = { sha256: f.sha256, size: st.size, mtimeMs: st.mtimeMs };
+    const tmp = join(dir, `${REGISTRO_CONFERIDOS}.part-${process.pid}`);
+    writeFileSync(tmp, JSON.stringify(reg));
+    renameSync(tmp, join(dir, REGISTRO_CONFERIDOS));
+  } catch {
+    /* o registro em disco é conveniência; o memo do processo basta */
+  }
+}
+
+/** O arquivo da pasta é o que o manifesto assina (sha256)? Nunca lança. */
+async function confereComManifesto(dir: string, f: CubesManifestFile): Promise<boolean> {
+  const path = join(dir, f.name);
+  if (!existsSync(path)) return false;
+  const st = statSync(path);
+  if (st.size !== f.size_bytes) return false;
+  if (conferido.get(path) === f.sha256) return true;
+  const reg = lerRegistro(dir)[f.name];
+  if (reg && reg.sha256 === f.sha256 && reg.size === st.size && reg.mtimeMs === st.mtimeMs) {
+    conferido.set(path, f.sha256);
+    return true;
+  }
+  try {
+    if ((await sha256File(path)) !== f.sha256) return false;
+  } catch {
+    return false;
+  }
+  lembrarConferido(dir, f);
+  return true;
+}
+
+const inFlight = new Map<string, Promise<boolean>>();
 
 /**
  * Um ano = os cubos dos TIPOS pedidos + sidecar, todos verificados (0.14.1:
@@ -312,8 +389,12 @@ const inFlight = new Map<string, Promise<void>>();
  * séries, não dos 1,6 GB dos três tipos; medido em 09/09/2026, a pergunta do
  * usuário no chat levou 4 min só baixando cubo que a consulta não lê).
  * Idempotente e sem corrida; sem `kinds`, os três, como sempre.
+ *
+ * Arquivo presente só vale se for o que o manifesto assina (sha256, decisão
+ * 57): cubo ou sidecar de outro build é rebaixado, e o ano sai com o PAR do
+ * build publicado. Devolve true se baixou algum arquivo.
  */
-export function ensureYear(dir: string, year: number, manifest: CubesManifest, log: (msg: string) => void = () => {}, kinds: CubeKind[] = CUBE_KINDS): Promise<void> {
+export function ensureYear(dir: string, year: number, manifest: CubesManifest, log: (msg: string) => void = () => {}, kinds: CubeKind[] = CUBE_KINDS): Promise<boolean> {
   const entry = manifest.years[String(year)];
   // Inalcançável pelo ensureYears, que separa antes os anos fora do canal:
   // chegar aqui é bug de quem chamou (`defeito`).
@@ -327,14 +408,17 @@ export function ensureYear(dir: string, year: number, manifest: CubesManifest, l
     // Arquivos do ano em SEQUÊNCIA (contrato do selftest: ano recusado não
     // deixa rastro novo); o paralelismo fica no LOTE de anos do ensureYears —
     // é lá que a latência por requisição dominava (68 arquivos ≈ 68 s).
+    let baixou = false;
     for (const f of wanted) {
-      const path = join(dir, f.name);
-      if (existsSync(path) && statSync(path).size === f.size_bytes) continue;
+      if (await confereComManifesto(dir, f)) continue;
       const t0 = Date.now();
-      log(`baixando ${f.name} (${(f.size_bytes / 1e6).toFixed(1)} MB) de ${CUBES_BASE_URL}`);
+      const motivo = existsSync(join(dir, f.name)) ? " — o da pasta não é o que o manifesto assina" : "";
+      log(`baixando ${f.name} (${(f.size_bytes / 1e6).toFixed(1)} MB) de ${CUBES_BASE_URL}${motivo}`);
       await downloadVerified(f, dir, 10 * 60 * 1000);
       log(`  ${f.name} ok em ${((Date.now() - t0) / 1000).toFixed(1)} s (SHA-256 confere)`);
+      baixou = true;
     }
+    return baixou;
   })().finally(() => inFlight.delete(key));
   inFlight.set(key, p);
   return p;
@@ -348,8 +432,10 @@ export function ensureYear(dir: string, year: number, manifest: CubesManifest, l
 export async function ensureYears(dir: string, years: number[] | null, log?: (msg: string) => void, kinds: CubeKind[] = CUBE_KINDS): Promise<{ downloaded: number[]; unavailable: number[] }> {
   const { manifest } = await loadCubesManifest();
   if (!manifest) throw new FalhaDaFonte(`manifesto dos cubos indisponível (${CUBES_BASE_URL}manifest.json) e sem cópia local`);
-  const present = new Set(yearsPresent(dir, kinds));
-  const wanted = (years ?? publishedYears(manifest)).filter((y) => !present.has(y));
+  // Todo ano pedido passa pelo ensureYear, presente ou não: é lá que o arquivo
+  // presente é conferido contra o manifesto (decisão 57). Até a 1.7.1 o filtro
+  // aqui era yearsPresent(), só existência, e cubo velho nunca era trocado.
+  const wanted = years ?? publishedYears(manifest);
   const downloaded: number[] = [];
   const unavailable: number[] = [];
   const fila = wanted.filter((y) => {
@@ -364,8 +450,8 @@ export async function ensureYears(dir: string, years: number[] | null, log?: (ms
   const LOTE = 4;
   for (let i = 0; i < fila.length; i += LOTE) {
     const lote = fila.slice(i, i + LOTE);
-    await Promise.all(lote.map((y) => ensureYear(dir, y, manifest, log, kinds)));
-    downloaded.push(...lote);
+    const baixou = await Promise.all(lote.map((y) => ensureYear(dir, y, manifest, log, kinds)));
+    downloaded.push(...lote.filter((_, j) => baixou[j]));
   }
   return { downloaded, unavailable };
 }
@@ -381,18 +467,6 @@ export async function ensureYears(dir: string, years: number[] | null, log?: (ms
  * aviso que o torna interpretável. 0,3 MB por ano; nunca lança (a ressalva é
  * importante, mas derrubar a consulta por causa dela seria pior).
  */
-/**
- * Sidecars já conferidos por SHA-256 NESTE processo: caminho → sha do
- * manifesto que bateu. Existe por causa dos sidecars PRÉ-ASSADOS na imagem do
- * container: um arquivo que veio da imagem precisa ser conferido pelo hash (o
- * tamanho sozinho não distingue um sidecar reescrito por um rebuild que por
- * acaso manteve o mesmo número de bytes), mas conferir os 34 a cada chamada
- * seria pagar o hash de 10 MB toda vez. Confere uma vez por processo e por
- * arquivo; se o manifesto passar a assinar outro sha, o memo não bate e o
- * arquivo é rebaixado.
- */
-const sidecarVerificado = new Map<string, string>();
-
 export async function ensureSidecars(dir: string, years: number[] | null, log: (msg: string) => void = () => {}): Promise<{ downloaded: number[] }> {
   const downloaded: number[] = [];
   try {
@@ -403,14 +477,8 @@ export async function ensureSidecars(dir: string, years: number[] | null, log: (
     for (const y of wanted) {
       const f = manifest.years[String(y)]?.files?.provenance;
       if (!f) continue;
-      const path = join(dir, f.name);
-      if (sidecarVerificado.get(path) === f.sha256) continue;
-      if (existsSync(path) && statSync(path).size === f.size_bytes && (await sha256File(path)) === f.sha256) {
-        sidecarVerificado.set(path, f.sha256);
-        continue;
-      }
+      if (await confereComManifesto(dir, f)) continue;
       await downloadVerified(f, dir, 60 * 1000);
-      sidecarVerificado.set(path, f.sha256);
       log(`  ${f.name} ok (SHA-256 confere)`);
       downloaded.push(y);
     }

@@ -172,7 +172,8 @@ describe("download verificado (ensureYear) pelo fetch comum", () => {
     });
     expect(chamadas[0]!.url).toBe(`${CUBES_BASE_URL}${arquivo.name}?v=${arquivo.sha256.slice(0, 16)}`);
     expect(existsSync(join(dir, arquivo.name))).toBe(true);
-    expect(readdirSync(dir)).toEqual([arquivo.name]); // sem .part sobrando
+    // sem .part sobrando; o registro do que já foi conferido por SHA-256 é da 1.8.0 (decisão 57)
+    expect(readdirSync(dir).sort()).toEqual([".sha256-conferidos.json", arquivo.name]);
     expect(retrieval).toEqual({ requests: 1, attempts: 1, anomalies: [] });
   });
 
