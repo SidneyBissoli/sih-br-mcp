@@ -21,6 +21,32 @@ de dados pelo `rebuild-cubes.yml`, antes de o produtor migrar para o healthbr-da
 
 ## [Não lançado]
 
+## [1.8.0] — 2026-10-15
+
+Dois consertos da fase "Ideias de leitores de 29/09/2026" (decisão 57). Minor porque
+mudam três descrições do outputSchema (os tipos não mudam).
+
+### Corrigido
+
+- **Cubo e sidecar de proveniência de um ano saem sempre do mesmo build.** O bloco de
+  proveniência sai do sidecar do ano; os números, do cubo. Até a 1.7.1 o cache local
+  nunca trocava um cubo já presente (só conferia existência e tamanho), enquanto o
+  caminho dos pré-agregados rebaixava o sidecar sempre que o sha mudava: depois de um
+  rebuild do healthbr-data, uma resposta somada do cubo velho podia sair com a
+  proveniência do build novo, e o aviso de cubo atrás do espelho sumia. Agora todo
+  arquivo de um ano pedido (cubos dos tipos pedidos + sidecar) é conferido contra o
+  SHA-256 do manifesto e rebaixado quando não confere — só o ano que mudou. A
+  conferência fica memorizada por processo e num registro pequeno por pasta
+  (`.sha256-conferidos.json`), para uma sessão nova do `npx` não pagar de novo o hash
+  de cubo já conferido. Caso 7 do `scripts/cache-selftest.mjs`, que reprova a 1.7.1.
+- **Taxa pequena não vira mais zero em `get_hospitalization_rates`.** `rate`,
+  `rate_per_100k` e `overall_rate` eram arredondadas a duas casas, e toda taxa abaixo
+  de 0,005 na base pedida saía `0` (São Paulo, 2 internações para 45,8 M de
+  habitantes). Medido em 15/10/2026 com a ferramenta real: por mil, 135 de 5.586
+  estratos ano × UF × capítulo (2015–2024) e 148 de 16.463 estratos 2023 × UF ×
+  capítulo × sexo × faixa quinquenal saíam zerados. Agora a taxa guarda no mínimo
+  3 algarismos significativos e nunca menos de duas casas; taxa ≥ 1 sai como antes.
+
 ## [1.7.1] — 2026-10-15
 
 Tempo 2 do contrato de proveniência 1.3 (decisão 56): o que a 1.6.0 passou a ACEITAR

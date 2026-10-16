@@ -2112,7 +2112,7 @@
               },
               "rate": {
                 "type": "number",
-                "description": "Internações por `rate_per` habitantes, duas casas"
+                "description": "Internações por `rate_per` habitantes, com no mínimo 3 algarismos significativos e nunca menos de duas casas (taxa pequena não vira 0)"
               },
               "rate_per": {
                 "type": "number",
@@ -2120,7 +2120,7 @@
               },
               "rate_per_100k": {
                 "type": "number",
-                "description": "DEPRECADO — use `rate` com `rate_per`. Internações por 100 mil habitantes, qualquer que seja `rate_per`; sai numa versão futura",
+                "description": "DEPRECADO — use `rate` com `rate_per`. Internações por 100 mil habitantes, qualquer que seja `rate_per`, mesmo arredondamento de `rate`; sai numa versão futura",
                 "deprecated": true
               },
               "population_source": {
@@ -2163,7 +2163,7 @@
             },
             "overall_rate": {
               "type": "number",
-              "description": "Taxa do conjunto, na base `rate_per`"
+              "description": "Taxa do conjunto, na base `rate_per`, mesmo arredondamento de `rate`"
             },
             "rate_per": {
               "type": "number",

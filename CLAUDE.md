@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 Orientação para o Claude Code neste repositório. O **diário de decisões** é o
-`CONTEXT.md` (decisões numeradas 1–56, com o porquê e a medição de cada uma);
+`CONTEXT.md` (decisões numeradas 1–57, com o porquê e a medição de cada uma);
 `docs/` guarda o ADR, os planos e as análises. Este arquivo resume o que é
 preciso saber para mexer no código sem repetir erro já pago — e aponta para lá
 em vez de duplicar. Ao fechar uma decisão nova, ela vai para o `CONTEXT.md`
