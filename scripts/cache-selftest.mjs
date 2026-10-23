@@ -12,7 +12,11 @@
 //      tamanho: desde 10/09/2026 os 34 sidecars vêm PRÉ-ASSADOS na imagem do
 //      container, e um sidecar reescrito por um rebuild que por acaso mantenha o
 //      mesmo número de bytes passaria batido pela checagem de tamanho — a
-//      resposta sairia com a nota de era do build anterior.
+//      resposta sairia com a nota de era do build anterior;
+//   7. cubo e sidecar do mesmo build (decisão 57): ano cujo sha mudou no manifesto é rebaixado;
+//   8. o PRAZO do manifesto é de quem chama: loadCubesManifest({ timeoutMs }) vence a
+//      política interativa de 8 s — é o que o warm-cache.mjs usa no build da imagem
+//      (achado de 15/10/2026: o deploy da v1.8.0 caiu por um manifesto lento).
 // Sem tocar em data.sidneybissoli.com — o CI roda isto sem rede externa.
 import { createHash } from "node:crypto";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -68,12 +72,14 @@ const manifest = {
 writeFileSync(join(site, "sih_causas_2002.parquet"), "causas-2OO2");
 writeFileSync(join(site, "manifest.json"), JSON.stringify(manifest));
 
+let atrasoManifestoMs = 0; // caso 8: o "canal" demora a responder o manifesto
 const server = createServer((req, res) => {
   // o cliente anexa ?v=<sha256> (chave de cache por versão) — o "canal" ignora a query
   const name = decodeURIComponent((req.url ?? "/").replace(/^\/+/, "").replace(/\?.*$/, ""));
   const p = join(site, name);
   if (!existsSync(p)) { res.statusCode = 404; return res.end("nao existe"); }
-  res.end(readFileSync(p));
+  const espera = name === "manifest.json" ? atrasoManifestoMs : 0;
+  setTimeout(() => { if (!res.destroyed) res.end(readFileSync(p)); }, espera);
 });
 
 await new Promise((r) => server.listen(0, "127.0.0.1", r));
@@ -218,9 +224,22 @@ ok(p3.available === false && p3.downloaded.length === 0, "manifesto sem populati
 mod.setCubesManifestForTests(null);
 await mod.loadCubesManifest();
 
-// 3. sem rede: manifesto da cópia em disco
-server.close();
-await new Promise((r) => setTimeout(r, 100));
+// 8. PRAZO DO MANIFESTO É DE QUEM CHAMA. O mesmo canal lento falha no prazo curto
+// (cai para a cópia em disco gravada pelas leituras anteriores) e passa no prazo
+// longo. É o contrato que o warm-cache.mjs usa no build da imagem.
+atrasoManifestoMs = 1_200;
+mod.setCubesManifestForTests(null);
+const m8a = await mod.loadCubesManifest({ timeoutMs: 300 });
+ok(m8a.source === "disk", `manifesto lento além do prazo curto cai para o disco (source=${m8a.source})`);
+mod.setCubesManifestForTests(null);
+const m8b = await mod.loadCubesManifest({ timeoutMs: 6_000 });
+ok(m8b.source === "remote", `o mesmo manifesto lento dentro de um prazo maior vem do canal (source=${m8b.source})`);
+atrasoManifestoMs = 0;
+
+// 3. sem rede: manifesto da cópia em disco. Fechar o servidor não basta: o fetch
+// mantém a conexão keep-alive do caso 8 aberta e ela seguiria respondendo —
+// derrubar as conexões e ESPERAR o fechamento é o que tira a rede de verdade.
+await new Promise((r) => { server.close(r); server.closeAllConnections(); });
 mod.setCubesManifestForTests(null);
 const m3 = await mod.loadCubesManifest({ timeoutMs: 1500 });
 ok(m3.source === "disk" && m3.manifest && Object.keys(m3.manifest.years).length === 2, `sem rede: manifesto do disco (source=${m3.source})`);

@@ -21,6 +21,18 @@ de dados pelo `rebuild-cubes.yml`, antes de o produtor migrar para o healthbr-da
 
 ## [Não lançado]
 
+### Corrigido
+
+- **O build da imagem não cai mais por um manifesto lento.** `scripts/warm-cache.mjs`
+  (passo `RUN` do Dockerfile) lia o manifesto do canal pela política interativa do
+  servidor (8 s, 1 retry), pensada para uma consulta MCP esperando resposta: o deploy da
+  tag v1.8.0 caiu com "manifesto remoto indisponível (timeout antes da resposta)" e "sem
+  cópia local", e passou na re-execução sem mudar nada. Agora o script carrega o manifesto
+  antes de qualquer outra rotina, com prazo de build (`SIH_WARM_MANIFEST_TIMEOUT_MS`,
+  padrão 60 s); o resto do aquecimento herda o memo e, se ele expirar, a cópia em disco
+  que essa leitura gravou. Caso 8 do `scripts/cache-selftest.mjs` prova que o prazo é de
+  quem chama. Só o build da imagem muda: nada em `src/`.
+
 ## [1.8.0] — 2026-10-15
 
 Dois consertos da fase "Ideias de leitores de 29/09/2026" (decisão 57). Minor porque
