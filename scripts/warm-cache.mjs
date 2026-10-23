@@ -56,6 +56,17 @@
 //   node scripts/warm-cache.mjs --skip-sidecars # só população (imagem mínima)
 //
 // Respeita SIH_CACHE_DIR e SIH_CUBES_BASE_URL como o servidor.
+//
+// PRAZO DO MANIFESTO (achado de 15/10/2026). Toda rotina de src/cache.ts lê o
+// manifesto por loadCubesManifest(), que memoiza por 10 min e, na primeira ida,
+// usa a política INTERATIVA (UPSTREAM_POLICY.manifesto: 8 s, 1 retry) — o teto
+// certo para uma consulta MCP esperando resposta, errado para um build: o deploy
+// da tag v1.8.0 caiu aqui com "timeout antes da resposta" e "sem cópia local"
+// (imagem nova não tem cópia) e passou na re-execução sem mudar nada. Por isso
+// este script carrega o manifesto ANTES de qualquer ensure*, com um prazo de
+// build (SIH_WARM_MANIFEST_TIMEOUT_MS, padrão 60 s); as rotinas seguintes
+// recebem o memo e, se ele expirar no meio, caem na cópia em disco que essa
+// primeira leitura gravou. Caso 8 do scripts/cache-selftest.mjs prova o prazo.
 import { statSync } from "node:fs";
 import { join } from "node:path";
 import {
@@ -81,6 +92,14 @@ const skipEstratos = skipSidecars || args.includes("--skip-estratos");
 
 const dir = cubesCacheDir();
 const log = (m) => console.error(`[warm] ${m}`);
+
+const prazoManifestoMs = Number(process.env.SIH_WARM_MANIFEST_TIMEOUT_MS) || 60_000;
+const primeira = await loadCubesManifest({ timeoutMs: prazoManifestoMs });
+if (!primeira.manifest) {
+  console.error(`[warm] manifesto do canal indisponível em ${prazoManifestoMs} ms e sem cópia local — nada a assar`);
+  process.exit(1);
+}
+console.error(`[warm] manifesto lido (${primeira.source}; prazo ${prazoManifestoMs} ms; ${publishedYears(primeira.manifest).length} anos publicados)`);
 
 const pop = await ensurePopulation(dir, log);
 if (!pop.available) {

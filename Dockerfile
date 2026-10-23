@@ -54,6 +54,8 @@ COPY scripts/warm-cache.mjs ./scripts/
 # Para assar também os CUBOS de anos específicos (custa tamanho de imagem,
 # poupa o download deles a frio): --build-arg WARM_YEARS=2024,2025
 ARG WARM_YEARS=""
+# O manifesto é lido com prazo de BUILD (SIH_WARM_MANIFEST_TIMEOUT_MS, 60 s), não
+# com a política interativa de 8 s do servidor — ver o cabeçalho do script.
 RUN node scripts/warm-cache.mjs --years "$WARM_YEARS"
 EXPOSE 8080
 CMD ["node", "dist/http.js"]
