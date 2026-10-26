@@ -1,6 +1,6 @@
 # DATASUS SIH/SUS — MCP Server de internações hospitalares (AIH) do Brasil, 1992–2025
 
-[![smithery badge](https://smithery.ai/badge/sidneybissoli/sih-br-mcp)](https://smithery.ai/servers/sidneybissoli/sih-br-mcp)
+[![LightNow capabilities](https://lightnow.ai/badge/io.github.SidneyBissoli/sih-br-mcp)](https://lightnow.ai/servers/io.github.SidneyBissoli/sih-br-mcp)
 
 Servidor MCP (Model Context Protocol) que responde perguntas sobre as **internações
 hospitalares do SUS** — o SIH/SUS do DATASUS, AIH reduzida — dentro do assistente de
