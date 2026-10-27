@@ -64,7 +64,7 @@
   "author": "Sidney da Silva Pereira Bissoli",
   "license": "MIT",
   "dependencies": {
-    "@duckdb/node-api": "^1.5.5-r.4",
+    "@duckdb/node-api": "^2.0.0-r.1",
     "@modelcontextprotocol/node": "^2.0.0",
     "@modelcontextprotocol/server": "^2.0.0",
     "@sbissoli/mcp-provenance": "^0.4.0",
