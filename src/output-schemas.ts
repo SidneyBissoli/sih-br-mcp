@@ -526,6 +526,7 @@ const classify_as_csap: Corpo = {
         not_classified: num("Só quando houver: quantos não são CID-10"),
       },
       ["total", "csap", "non_csap"],
+      "Contagem dos códigos informados: sensíveis, não sensíveis e não classificados",
     ),
     error: str("Só quando houver código não classificado: quantos foram e para onde olhar"),
   },
@@ -697,6 +698,7 @@ const rank_csap_groups: Corpo = {
     concentration: obj(
       { top_3_percentage: num("Soma da participação dos 3 primeiros, %"), top_5_percentage: num("Soma dos 5 primeiros, %") },
       ["top_3_percentage", "top_5_percentage"],
+      "Concentração da métrica nos primeiros grupos do ranking (soma de `pct_of_total`, duas casas)",
     ),
     total_groups: num("Quantos grupos no ranking"),
     years_not_available: ANOS_AUSENTES,
@@ -741,6 +743,7 @@ const get_hospitalization_rates = (inputSchema: JsonSchemaType): Corpo => ({
         rate_type: enumDe(["crude", "specific"], "Bruta ou específica"),
       },
       ["total_hospitalizations", "total_population", "overall_rate", "rate_per", "rate_type"],
+      "Totais somados sobre as linhas de `data` e a taxa do conjunto",
     ),
     metadata: obj(
       {
@@ -751,6 +754,7 @@ const get_hospitalization_rates = (inputSchema: JsonSchemaType): Corpo => ({
         available_sih_years: ANOS_DISPONIVEIS,
       },
       ["population_source", "filters_applied"],
+      "De onde veio o denominador (arquivo de população por ano, avisos) e os argumentos efetivamente atendidos",
     ),
     years_not_available: ANOS_AUSENTES,
     notes: NOTAS,
@@ -767,7 +771,7 @@ const compare_icsap_trends: Corpo = {
     "Séries anuais do indicador ICSAP por UF ou grupo CSAP, com tendência linear e melhor/pior desempenho; `error` quando o intervalo está fora da cobertura",
   properties: {
     indicator: enumDe(["percentage", "count", "rate_per_10k"], "Indicador das séries"),
-    period: obj({ start: num("Ano inicial pedido"), end: num("Ano final pedido") }, ["start", "end"]),
+    period: obj({ start: num("Ano inicial pedido"), end: num("Ano final pedido") }, ["start", "end"], "Intervalo de anos pedido"),
     compare_by: str("Eixo comparado: uf, csap_group ou total (sem eixo)"),
     series: lista(
       {
@@ -801,6 +805,7 @@ const compare_icsap_trends: Corpo = {
         note: str("Como ler o indicador; só para `percentage`"),
       },
       [],
+      "Melhor e pior evolução entre os valores comparados (pela variação entre as pontas) e como ler o indicador; vazio quando não há o que dizer",
     ),
     years_not_available: ANOS_AUSENTES,
     data: lista({}, "Sempre vazio: só aparece no caminho de erro-mole do funil"),

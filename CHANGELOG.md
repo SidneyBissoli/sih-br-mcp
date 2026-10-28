@@ -21,8 +21,16 @@ de dados pelo `rebuild-cubes.yml`, antes de o produtor migrar para o healthbr-da
 
 ## [Não lançado]
 
+## [1.8.1] — 2026-10-27
+
 ### Corrigido
 
+- **Toda propriedade de primeiro nível dos `outputSchema` agora tem `description`.** Regra
+  nova do `mcpscore` 1.29 (`tools_output_properties_documented`): eram 6 sem descrição —
+  `concentration` de `rank_csap_groups`, `summary` de `classify_as_csap`, `summary` e
+  `metadata` de `get_hospitalization_rates`, `period` e `summary` de
+  `compare_icsap_trends`. Produção estava em 148/149. Só descrição muda; nenhum campo,
+  tipo ou valor.
 - **O build da imagem não cai mais por um manifesto lento.** `scripts/warm-cache.mjs`
   (passo `RUN` do Dockerfile) lia o manifesto do canal pela política interativa do
   servidor (8 s, 1 retry), pensada para uma consulta MCP esperando resposta: o deploy da

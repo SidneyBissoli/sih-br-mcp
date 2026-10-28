@@ -17,13 +17,13 @@
     "url": "https://github.com/SidneyBissoli/sih-br-mcp",
     "source": "github"
   },
-  "version": "1.8.0",
+  "version": "1.8.1",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "sih-br-mcp",
-      "version": "1.8.0",
+      "version": "1.8.1",
       "transport": {
         "type": "stdio"
       },
@@ -54,8 +54,8 @@
         "spec": "https://github.com/SidneyBissoli/mcp-br-commons/blob/main/packages/mcp-surface/SPEC.md",
         "endpoint": "https://sih.sidneybissoli.com/mcp",
         "declared": {
-          "sha256": "35a18858723718647c3dc7226b213984fb1c56b4d14787f78319ad41d812d0a9",
-          "lockedAt": "1.8.0"
+          "sha256": "5e54f2d064db92f93806c9d4afd542217c58129a4416a581f28566323b88ad50",
+          "lockedAt": "1.8.1"
         },
         "anonymous": {
           "sha256": "7c0483c507734556e662d7b01f3c967b5149ef6979a42d9d63feb0b2bce8e922",
