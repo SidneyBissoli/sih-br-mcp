@@ -21,6 +21,17 @@ de dados pelo `rebuild-cubes.yml`, antes de o produtor migrar para o healthbr-da
 
 ## [Não lançado]
 
+### Corrigido
+
+- **A guarda de versão do deploy passa a esperar o CONTAINER, não só o Worker**
+  (`deploy-container.yml`; só CI, nada do pacote muda). Ela lia `/status`, que o Worker
+  responde com a versão dele e troca em segundos; quem serve `/mcp` é o contêiner, que
+  troca minutos depois. Na tag v1.8.1 a guarda passou na 1ª tentativa e o
+  `mcp-surface verificar` seguinte pegou a superfície da 1.8.0 seis vezes — deploy
+  vermelho com o servidor certo a caminho; re-rodado o job, passou (mcpscore 149/149).
+  Agora ela exige também o `serverInfo.version` do `initialize` em `/mcp`, e espera até
+  6 min.
+
 ## [1.8.1] — 2026-10-27
 
 ### Corrigido

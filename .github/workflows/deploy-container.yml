@@ -109,32 +109,48 @@ jobs:
       # IGUAL servindo a versão anterior — foi exatamente o que aconteceu ao
       # conferir o deploy à mão: a sonda respondeu com dados corretos e citação
       # `v0.15.3`, a versão VELHA, porque a instância antiga ainda drenava.
-      # Comparar o que /status reporta com o package.json é o que distingue
+      # Comparar a versão hospedada com o package.json é o que distingue
       # "respondeu" de "respondeu a versão nova".
+      #
+      # SÃO DUAS VERSÕES, e até a 1.8.1 a guarda só lia uma. `/status` é
+      # respondido pelo WORKER (worker/src/status.ts lê SERVER_CONFIG.version),
+      # que troca em segundos; quem serve `/mcp` é o CONTAINER, cuja instância
+      # troca minutos depois. Na tag v1.8.1 (28/10/2026) o /status já dizia
+      # 1.8.1, a guarda passou na 1ª tentativa, e o `mcp-surface verificar`
+      # seguinte pegou a superfície da 1.8.0 seis vezes seguidas; re-rodado o
+      # job, passou. Agora a guarda espera também o `serverInfo.version` do
+      # `initialize` em /mcp — esse vem de src/server.ts, de dentro do container.
       #
       # A espera é generosa porque a troca de instância do container não é
       # instantânea, e tentar de novo é mais barato que um falso negativo.
       - if: steps.cf.outputs.ok == 'true'
-        name: Versão hospedada bate com o package.json
+        name: Versão hospedada (Worker e container) bate com o package.json
         run: |
           ESPERADA=$(node -p "require('./package.json').version")
-          for i in $(seq 1 12); do
-            NO_AR=$(curl -sS --max-time 30 https://sih.sidneybissoli.com/status 2>/dev/null \
+          INIT='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"deploy-guard","version":"1"}}}'
+          for i in $(seq 1 18); do
+            WORKER=$(curl -sS --max-time 30 https://sih.sidneybissoli.com/status 2>/dev/null \
               | node -p "try { JSON.parse(require('fs').readFileSync(0,'utf8')).version } catch (e) { '' }")
-            echo "tentativa $i: package.json=$ESPERADA  hospedado=${NO_AR:-(sem resposta)}"
-            if [ "$ESPERADA" = "$NO_AR" ]; then
-              echo "o endpoint serve a versão desta tag"
+            # A resposta vem em SSE (`data: {...}`) ou JSON puro: pega a 1ª linha que parseia.
+            CONTAINER=$(curl -sS --max-time 60 -X POST https://sih.sidneybissoli.com/mcp \
+                -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+                -d "$INIT" 2>/dev/null \
+              | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{for(const l of s.split('\n')){try{const j=JSON.parse(l.replace(/^data: ?/,''));if(j.result){console.log(j.result.serverInfo.version);return}}catch{}}console.log('')})")
+            echo "tentativa $i: package.json=$ESPERADA  worker=${WORKER:-(sem resposta)}  container=${CONTAINER:-(sem resposta)}"
+            if [ "$ESPERADA" = "$WORKER" ] && [ "$ESPERADA" = "$CONTAINER" ]; then
+              echo "Worker e container servem a versão desta tag"
               exit 0
             fi
             sleep 20
           done
-          echo "::error::deriva: depois de 4 min o endpoint ainda não serve $ESPERADA"
+          echo "::error::deriva: depois de 6 min o Worker ou o container ainda não serve $ESPERADA"
           exit 1
 
       # O que subiu é o que foi travado: superfície declarada servida sem
       # credencial e, método a método, quem responde sem token (produção =
       # API_KEY ausente). Os testes provam o CÓDIGO; isto prova o ENDPOINT.
-      # Roda depois da guarda de versão, que já esperou o container novo.
+      # Roda depois da guarda de versão, que já esperou o container novo (desde
+      # a correção de 28/10/2026 ela lê o serverInfo do /mcp, não só o /status).
       - if: steps.cf.outputs.ok == 'true'
         name: Superfície no ar = surface.lock.json
         run: npx mcp-surface verificar https://sih.sidneybissoli.com/mcp --tool list_cid_chapters --args '{}'
