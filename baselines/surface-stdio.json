@@ -68,6 +68,7 @@
         },
         "summary": {
           "type": "object",
+          "description": "Contagem dos códigos informados: sensíveis, não sensíveis e não classificados",
           "properties": {
             "total": {
               "type": "number",
@@ -405,6 +406,7 @@
         },
         "period": {
           "type": "object",
+          "description": "Intervalo de anos pedido",
           "properties": {
             "start": {
               "type": "number",
@@ -501,6 +503,7 @@
         },
         "summary": {
           "type": "object",
+          "description": "Melhor e pior evolução entre os valores comparados (pela variação entre as pontas) e como ler o indicador; vazio quando não há o que dizer",
           "properties": {
             "best_performer": {
               "type": "string",
@@ -2152,6 +2155,7 @@
         },
         "summary": {
           "type": "object",
+          "description": "Totais somados sobre as linhas de `data` e a taxa do conjunto",
           "properties": {
             "total_hospitalizations": {
               "type": "number",
@@ -2188,6 +2192,7 @@
         },
         "metadata": {
           "type": "object",
+          "description": "De onde veio o denominador (arquivo de população por ano, avisos) e os argumentos efetivamente atendidos",
           "properties": {
             "population_source": {
               "type": "object",
@@ -5683,6 +5688,7 @@
         },
         "concentration": {
           "type": "object",
+          "description": "Concentração da métrica nos primeiros grupos do ranking (soma de `pct_of_total`, duas casas)",
           "properties": {
             "top_3_percentage": {
               "type": "number",

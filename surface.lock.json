@@ -1,8 +1,8 @@
 {
   "$comentario": "Impressão digital da superfície (@sbissoli/mcp-surface). Não editar à mão: `npm run surface:lock` regrava, e só aceita superfície nova sob versão nova.",
   "declarada": {
-    "versao": "1.8.0",
-    "sha256": "35a18858723718647c3dc7226b213984fb1c56b4d14787f78319ad41d812d0a9",
+    "versao": "1.8.1",
+    "sha256": "5e54f2d064db92f93806c9d4afd542217c58129a4416a581f28566323b88ad50",
     "conteudo": {
       "initialize": {
         "capabilities": {
@@ -340,6 +340,7 @@
               },
               "summary": {
                 "additionalProperties": false,
+                "description": "Contagem dos códigos informados: sensíveis, não sensíveis e não classificados",
                 "properties": {
                   "csap": {
                     "description": "Quantos são sensíveis",
@@ -506,6 +507,7 @@
               },
               "period": {
                 "additionalProperties": false,
+                "description": "Intervalo de anos pedido",
                 "properties": {
                   "end": {
                     "description": "Ano final pedido",
@@ -789,6 +791,7 @@
               },
               "summary": {
                 "additionalProperties": false,
+                "description": "Melhor e pior evolução entre os valores comparados (pela variação entre as pontas) e como ler o indicador; vazio quando não há o que dizer",
                 "properties": {
                   "best_performer": {
                     "description": "Valor comparado com a melhor evolução; só com mais de uma tendência",
@@ -2251,6 +2254,7 @@
               },
               "metadata": {
                 "additionalProperties": false,
+                "description": "De onde veio o denominador (arquivo de população por ano, avisos) e os argumentos efetivamente atendidos",
                 "properties": {
                   "available_sih_years": {
                     "description": "Anos com dados SIH atendíveis por este servidor",
@@ -2703,6 +2707,7 @@
               },
               "summary": {
                 "additionalProperties": false,
+                "description": "Totais somados sobre as linhas de `data` e a taxa do conjunto",
                 "properties": {
                   "overall_rate": {
                     "description": "Taxa do conjunto, na base `rate_per`, mesmo arredondamento de `rate`",
@@ -5756,6 +5761,7 @@
               },
               "concentration": {
                 "additionalProperties": false,
+                "description": "Concentração da métrica nos primeiros grupos do ranking (soma de `pct_of_total`, duas casas)",
                 "properties": {
                   "top_3_percentage": {
                     "description": "Soma da participação dos 3 primeiros, %",
