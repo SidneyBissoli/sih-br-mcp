@@ -19,13 +19,14 @@
  * desenho — ela prova posse do domínio justamente por estar servida nele, então
  * versioná-la não é vazamento.
  *
- * O sitemap tem UMA URL: a raiz. É o que este domínio serve de conteúdo — os
- * artigos moram no GitHub. Isso é pouco, e é honesto: um sitemap não pode
- * listar URL de outro host. Servir os artigos aqui é o passo que tornaria este
- * arquivo valer mais do que a linha `Sitemap:`.
+ * O sitemap tinha UMA URL, a raiz, até 02/11/2026: os artigos moravam no
+ * GitHub, e um sitemap não pode listar URL de outro host. Desde então ele lista
+ * também a página de comparação com microdatasus e PySUS (`comparativo.ts`), o
+ * primeiro conteúdo servido aqui além da landing.
  */
 
 import { SERVER_CONFIG } from "./config.js";
+import { COMPARATIVO_ROUTE, MEDIDO } from "./comparativo.js";
 
 /** Quando a superfície mudou pela última vez — vira o `lastmod` do sitemap. */
 const ULTIMA_MUDANCA = "2026-08-31";
@@ -65,6 +66,12 @@ export function sitemapXml(): string {
     <lastmod>${ULTIMA_MUDANCA}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${SERVER_CONFIG.websiteUrl}${COMPARATIVO_ROUTE}</loc>
+    <lastmod>${MEDIDO.data}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
 </urlset>
 `;

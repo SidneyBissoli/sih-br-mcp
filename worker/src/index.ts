@@ -20,6 +20,7 @@ import { discoveryResponseForPath } from "./discovery.js";
 import { desfechosDoCorpo, resolveDesfecho, type Desfecho } from "./envelope.js";
 import { ICON_PNG_BASE64 } from "./icon.js";
 import { landingResponse } from "./landing.js";
+import { COMPARATIVO_ROUTE, comparativoResponse } from "./comparativo.js";
 import { logger } from "./logger.js";
 import {
   corsHeaders,
@@ -74,6 +75,9 @@ export default {
 
     // --- Rotas públicas, servidas antes de qualquer auth ---
     if (url.pathname === "/") return landingResponse();
+    // A comparação com microdatasus e PySUS: a segunda página de conteúdo do
+    // domínio (ação geo:sih-br-mcp, 02/11/2026; ver src/comparativo.ts).
+    if (url.pathname === COMPARATIVO_ROUTE) return comparativoResponse();
     // O ícone declarado em server.json e no serverInfo do contêiner. Público e
     // ANTES de qualquer auth: quem o busca é o crawler do diretório e o
     // cliente MCP que renderiza o handshake, nunca um chamador autenticado.
