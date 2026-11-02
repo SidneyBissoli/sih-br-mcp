@@ -1,5 +1,10 @@
 # Comparativo: sih-br-mcp e as alternativas para o SIH/SUS
 
+> **Versão publicada e remedida (02/11/2026):**
+> <https://sih.sidneybissoli.com/vs-microdatasus-pysus> — a mesma pergunta respondida por
+> microdatasus, PySUS e sih-br-mcp, com os scripts em [`scripts/comparativo/`](../scripts/comparativo/).
+> Os volumes abaixo são de 13/09/2026; os de 02/11 (23,86 GiB em 11.211 partições) estão na página.
+
 **Quem trabalha com internações hospitalares do SUS** (SIH/SUS, AIH, DATASUS) já tem
 ferramentas consolidadas em R e em Python: [microdatasus][md], [PySUS][py],
 [read.dbc][rd], [csapAIH][cs], [brpop][bp]. Elas vieram antes e resolvem um problema

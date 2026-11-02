@@ -23,6 +23,7 @@
  */
 
 import { SERVER_CONFIG, LANDING, TOOLS } from "./config.js";
+import { COMPARATIVO_ROUTE } from "./comparativo.js";
 
 /** Escapa texto de configuração para interpolação segura em HTML. */
 function esc(s: string): string {
@@ -45,6 +46,7 @@ const T = {
     endpoints: "Endpoints",
     links: "Links",
     contato: "Contato",
+    comparativo: "sih-br-mcp, microdatasus e PySUS: a mesma pergunta pelos três caminhos",
     repo: "Código-fonte no GitHub",
     pacote: "Pacote no npm",
     docs: "Documentação",
@@ -61,6 +63,7 @@ const T = {
     endpoints: "Endpoints",
     links: "Links",
     contato: "Contact",
+    comparativo: "sih-br-mcp, microdatasus and PySUS: one question, three ways",
     repo: "Source on GitHub",
     pacote: "Package on npm",
     docs: "Documentation",
@@ -96,6 +99,7 @@ export function landingHtml(): string {
   };
 
   const listaLinks = [
+    `<li><a href="${COMPARATIVO_ROUTE}">${t.comparativo}</a></li>`,
     `<li><a href="${esc(l.repoUrl)}">${t.repo}</a></li>`,
     l.npmUrl ? `<li><a href="${esc(l.npmUrl)}">${t.pacote}</a></li>` : "",
     l.docsUrl ? `<li><a href="${esc(l.docsUrl)}">${t.docs}</a></li>` : "",

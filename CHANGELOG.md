@@ -19,7 +19,22 @@ seguinte. Não tinham release no GitHub em 08/10/2026 (só tag e npm): 0.15.5, 0
 de dados pelo `rebuild-cubes.yml`, antes de o produtor migrar para o healthbr-data na
 0.11.0 — são publicações de dados, não do servidor.
 
-## [Não lançado]
+## [1.8.2] — 2026-11-02
+
+### Adicionado
+
+- **Página de comparação em `https://sih.sidneybissoli.com/vs-microdatasus-pysus`**
+  (`worker/src/comparativo.ts`; só a borda muda, nenhuma ferramenta): a mesma pergunta —
+  internações por pneumonia de moradores do ES em 2024 — respondida pelo microdatasus
+  (R), pelo PySUS (Python) e pelo sih-br-mcp, medida em 02/11/2026. microdatasus 3.0.0
+  e sih-br-mcp deram 13.305 internações e 1.250 óbitos, iguais grupo a grupo; o
+  microdado exigiu 432 arquivos (1.358 MiB) e 40,6 min. PySUS 2.11.7 com `group="RD"`
+  não viu 87 dos 432 arquivos (o catálogo dele traz 4.526 dos 10.946 arquivos RD sem
+  grupo). Os scripts da medição estão em `scripts/comparativo/`; todo número da página
+  mora em `MEDIDO` e `worker/tests/comparativo.test.ts` exige cada um no HTML. A página
+  entra no `sitemap.xml` e ganha link na landing. Ação `geo:sih-br-mcp` do monitor: o
+  comparativo existia desde 13/09 só como `docs/comparativo-alternativas.md`, dentro do
+  repositório, onde motor com busca não chega.
 
 ### Corrigido
 
