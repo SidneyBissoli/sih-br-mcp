@@ -75,9 +75,12 @@ writeFileSync(join(site, "manifest.json"), JSON.stringify(manifest));
 let atrasoManifestoMs = 0; // caso 8: o "canal" demora a responder o manifesto
 const server = createServer((req, res) => {
   // o cliente anexa ?v=<sha256> (chave de cache por versão) — o "canal" ignora a query
-  const name = decodeURIComponent((req.url ?? "/").replace(/^\/+/, "").replace(/\?.*$/, ""));
+  const pedido = decodeURIComponent((req.url ?? "/").replace(/^\/+/, "").replace(/\?.*$/, ""));
+  // O nome servido sai da LISTAGEM da pasta, nunca do pedido: caminho com `..`
+  // não casa com arquivo nenhum e dá 404 (js/path-injection).
+  const name = readdirSync(site).find((f) => f === pedido);
+  if (name === undefined) { res.statusCode = 404; return res.end("nao existe"); }
   const p = join(site, name);
-  if (!existsSync(p)) { res.statusCode = 404; return res.end("nao existe"); }
   const espera = name === "manifest.json" ? atrasoManifestoMs : 0;
   setTimeout(() => { if (!res.destroyed) res.end(readFileSync(p)); }, espera);
 });
