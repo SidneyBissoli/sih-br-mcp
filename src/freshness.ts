@@ -212,7 +212,8 @@ export const HEALTHBR_DOMAIN = process.env.HEALTHBR_DATA_DOMAIN ?? "https://data
 
 /** A mesma URL no domínio próprio (ou ela mesma, se já não é do r2.dev). */
 export function preferDomain(url: string): string {
-  return url.startsWith(R2_DEV_HOST) ? HEALTHBR_DOMAIN + url.slice(R2_DEV_HOST.length) : url;
+  // Com a barra: sem ela, `…r2.dev.outro-host.com` também casaria com o prefixo.
+  return url.startsWith(R2_DEV_HOST + "/") ? HEALTHBR_DOMAIN + url.slice(R2_DEV_HOST.length) : url;
 }
 
 /**
