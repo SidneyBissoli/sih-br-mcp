@@ -19,6 +19,27 @@ seguinte. Não tinham release no GitHub em 08/10/2026 (só tag e npm): 0.15.5, 0
 de dados pelo `rebuild-cubes.yml`, antes de o produtor migrar para o healthbr-data na
 0.11.0 — são publicações de dados, não do servidor.
 
+## [1.8.3] — 2026-11-15
+
+Versão só de segurança: nenhuma ferramenta, esquema ou resposta muda além do número
+da versão na citação.
+
+### Segurança
+
+- **`hono` 4.13.13 → 4.13.18** (#80). Chega por `@modelcontextprotocol/node`
+  (`^4.11.4`), então só o `package-lock.json` muda. Fecha os cinco alertas do
+  Dependabot corrigidos na 4.13.16: GHSA-46wx-v44x-9hh2 (`csrf()` e `text/ping`),
+  GHSA-4m76-xfj5-7975 (`mount()` e middleware do prefixo), GHSA-3gg2-335m-rxc6
+  (helper `css`), GHSA-h7mg-cq63-vhpq (RegExpRouter e middleware curinga) e
+  GHSA-4h7h-rv7c-7m2v (`validator('form')` e `multipart/form-data`). Atinge o
+  contêiner HTTP em `https://sih.sidneybissoli.com/mcp` e quem instala o pacote do npm.
+- **Os 7 alertas do code scanning fechados** (#79): permissões mínimas nos workflows,
+  prefixo do `r2.dev` e o servidor do autoteste.
+
+### Manutenção
+
+- Dependências de desenvolvimento atualizadas pelo Dependabot (#77, #78).
+
 ## [1.8.2] — 2026-11-02
 
 ### Adicionado
